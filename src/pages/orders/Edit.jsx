@@ -1,0 +1,612 @@
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import Select from "react-select";
+
+import api from "@/apiService";
+import LoadingData from "@/Components/LoadingData";
+import FormattedDateLong from "@/Utils/FormattedDateLong";
+
+import Svg from "@/components/Svg";
+import HeaderEdit from "@/components/HeaderEdit";
+import DeleteSvg from "@/Assets/Svg/DeleteSvg";
+import BlackLogo from "@/components/BlackLogo";
+
+export default function Edit() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { user, token } = useAuth();
+  const [processing, setProcessing] = useState(false);
+
+  const errorRef = useRef();
+  const [subTotal, setSubTotal] = useState(0);
+  const [downPayment, setDownPayment] = useState(0);
+  const [balance, setBalance] = useState(0);
+
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [getErrors, setGetErrors] = useState({});
+  const [error, setError] = useState(null);
+
+  const [isSelected, setIsSelected] = useState(false);
+  const [selectedRowId, setSelectedRowId] = useState(null);
+  const [rows, setRows] = useState([]);
+
+  const [client, setClient] = useState();
+  const [order, setOrder] = useState();
+  const [clothingTypeOptions, setClothingTypeOptions] = useState([]);
+  const [materialOptions, setMaterialOptions] = useState([]);
+
+  const [orderDetails, setOrderDetails] = useState([]);
+
+  const handleSelectMaterialChange = (selectedOption, index) => {
+    rows[index].material_id = selectedOption.value;
+    orderDetails[index].material_id = selectedOption.value;
+    setOrder((prevOrder) => ({
+      ...prevOrder,
+      material_id: selectedOption.value,
+    }));
+  };
+
+  const handleSelectTypeChange = (selectedOption, index) => {
+    let rowIndex = index;
+    const exists = rows.some((row) => row.value === selectedOption.value);
+    const updatedRows = [...rows];
+    if (exists) {
+      const getIndex = rows.findIndex(
+        (row) => row.value === selectedOption.value,
+      );
+      rowIndex = getIndex;
+    } else {
+      updatedRows[rowIndex].value = selectedOption.value;
+      updatedRows[rowIndex].material_number = rows[index].material_number;
+      updatedRows[rowIndex].clothing_type = selectedOption.type;
+      updatedRows[rowIndex].qty = rows[index].qty;
+      updatedRows[rowIndex].price = rows[index].price;
+      updatedRows[rowIndex].total = rows[index].total;
+    }
+    setRows(updatedRows);
+    setSelectedRowId(rowIndex);
+    setIsSelected(true);
+
+    if (rowIndex === rows.length - 1 && selectedOption) {
+      const newOrderDetail = {
+        clothing_type_id: selectedOption.value,
+        material_id: null,
+        qty: 0,
+        price: 0,
+        fabric_consumed_meter: 0,
+        notes: null,
+      };
+      setOrderDetails([...orderDetails, newOrderDetail]);
+      setRows([
+        ...updatedRows,
+        {
+          value: null,
+          material_number: null,
+          clothing_type: null,
+          qty: 0,
+          price: 0,
+          total: 0,
+        },
+      ]);
+    } else {
+      const newOrderDetails = [...orderDetails];
+      const newOrderDetail = {
+        clothing_type_id: selectedOption.value,
+        material_id: orderDetails[rowIndex].material_id,
+        qty: orderDetails[rowIndex].qty,
+        price: orderDetails[rowIndex].price,
+        fabric_consumed_meter: 0,
+      };
+      newOrderDetails[rowIndex] = newOrderDetail;
+      setOrderDetails(newOrderDetails);
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setOrder((prevOrder) => ({
+      ...prevOrder,
+      [name]: value,
+    }));
+  };
+
+  const handlePriceChange = (e, index) => {
+    const newRows = [...rows];
+    const newOrderDetails = [...orderDetails];
+    newOrderDetails[index].price = Number(e.target.value);
+    newRows[index].price = Number(e.target.value);
+    newRows[index].total = newRows[index].price * newRows[index].qty;
+    setRows(newRows);
+    setOrderDetails(newOrderDetails);
+    const getSubTotal = newRows.reduce(
+      (acc, current) => acc + Number(current.total),
+      0,
+    );
+    setSubTotal(getSubTotal);
+    setBalance(getSubTotal - downPayment);
+    setOrder((prevOrder) => ({
+      ...prevOrder,
+      total: getSubTotal,
+    }));
+  };
+
+  const handleQtyChange = (e, index) => {
+    const newRows = [...rows];
+    const newOrderDetails = [...orderDetails];
+    newOrderDetails[index].qty = Number(e.target.value);
+    newRows[index].qty = Number(e.target.value);
+    newRows[index].total = newRows[index].price * newRows[index].qty;
+    setRows(newRows);
+    setOrderDetails(newOrderDetails);
+    const getSubTotal = newRows.reduce(
+      (acc, current) => acc + Number(current.total),
+      0,
+    );
+    setSubTotal(getSubTotal);
+    setBalance(getSubTotal - downPayment);
+    setOrder((prevOrder) => ({
+      ...prevOrder,
+      total: getSubTotal,
+    }));
+  };
+
+  const handleDepositChange = (e) => {
+    setDownPayment(e.target.value);
+    setBalance(Number(subTotal) - Number(e.target.value));
+    setOrder((prevOrder) => ({
+      ...prevOrder,
+      amount_paid: e.target.value,
+    }));
+  };
+
+  const removeRow = (indexToRemove) => {
+    const updatedRows = rows.filter((_, index) => index !== indexToRemove);
+    const updatedOrderDetails = orderDetails.filter(
+      (_, index) => index !== indexToRemove,
+    );
+    setOrderDetails(updatedOrderDetails);
+    setRows(updatedRows);
+    const getSubTotal = updatedRows.reduce(
+      (acc, current) => acc + Number(current.total),
+      0,
+    );
+    setSubTotal(getSubTotal);
+    setBalance(getSubTotal - downPayment);
+    setOrder((prevOrder) => ({
+      ...prevOrder,
+      total: getSubTotal,
+    }));
+  };
+
+  useEffect(() => {
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "mulipart/form-data",
+    };
+    const requestOrder = api.get("/api/orders/" + id, {
+      headers,
+    });
+    const requestMaterials = api.get("/api/materials", {
+      headers,
+    });
+    const requestClothingTypes = api.get("/api/clothing-types", {
+      headers,
+    });
+
+    const fetchMultipleData = async () => {
+      try {
+        setLoading(true);
+        const [responseOrder, responseMaterials, responseClothingTypes] =
+          await Promise.all([
+            requestOrder,
+            requestMaterials,
+            requestClothingTypes,
+          ]);
+
+        const formattedClothingTypeOptions = responseClothingTypes.data.map(
+          (item) => ({
+            value: item.hashed_id,
+            label: item.type,
+          }),
+        );
+
+        const formattedMaterialOptions = responseMaterials.data.map((item) => ({
+          value: item.hashed_id,
+          label: item.code + " | " + item.name,
+          number: item.code,
+        }));
+        setRows([]);
+        responseOrder.data.order.order_details.map((item) => {
+          const newFormatedRow = {
+            value: item.hashed_id,
+            material_number: item.material.code,
+            clothing_type: item.clothing_type.type,
+            qty: item.quantity,
+            price: item.price,
+            total: item.quantity * item.price,
+          };
+          setRows((prevRows) => [...prevRows, newFormatedRow]);
+          const newOrderDetail = {
+            clothing_type_id: item.clothing_type_id,
+            material_id: item.material_id,
+            qty: item.quantity,
+            price: item.price,
+            fabric_consumed_meter: item.fabric_consumed_meter,
+            notes: item.notes,
+          };
+          setOrderDetails([...orderDetails, newOrderDetail]);
+        });
+        const newFormatedRow = {
+          value: null,
+          material_number: null,
+          clothing_type: null,
+          qty: null,
+          price: null,
+          total: null,
+        };
+        const getDownPayment = responseOrder.data.order.payments.find(
+          (downPayment) => downPayment.payment_status == "down_payment",
+        );
+        const getAmountPaid = getDownPayment ? getDownPayment.amount_paid : 0;
+        setRows((prevRows) => [...prevRows, newFormatedRow]);
+        setClothingTypeOptions(formattedClothingTypeOptions);
+        setMaterialOptions(formattedMaterialOptions);
+        setClient(responseOrder.data.order.client);
+        setOrder(responseOrder.data.order);
+        setSubTotal(responseOrder.data.order.total);
+        setDownPayment(getAmountPaid);
+        setBalance(responseOrder.data.order.total - getAmountPaid);
+      } catch (err) {
+        if (!err?.response) {
+          setError("No Server Response..!!");
+        } else if (err.response?.status === 401) {
+          setError("Unauthorized..!!");
+        } else {
+          setError(err.response.data.message);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMultipleData();
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setGetErrors("");
+    const orderData = new FormData();
+    orderData.append("user_id", user.hashed_id);
+    orderData.append("client_id", order.client_id);
+    orderData.append("order_date", order.order_date);
+    orderData.append("fitting_date", order.fitting_date);
+    orderData.append("due_date", order.due_date);
+    orderData.append("tax", order.tax);
+    orderData.append("total", order.total);
+    orderData.append("amount_paid", order.amount_paid);
+    orderData.append("payment_method", order.payment_method);
+    orderData.append("payment_date", order.payment_date);
+    orderData.append("notes", order.notes);
+    orderDetails.map((orderDetail, index) => {
+      orderData.append(
+        `order_details[${index}][clothing_type_id]`,
+        orderDetail.clothing_type_id,
+      );
+      orderData.append(
+        `order_details[${index}][material_id]`,
+        orderDetail.material_id,
+      );
+      orderData.append(`order_details[${index}][qty]`, orderDetail.qty);
+      orderData.append(`order_details[${index}][price]`, orderDetail.price);
+      orderData.append(`order_details[${index}][notes]`, orderDetail.notes);
+    });
+
+    try {
+      setProcessing(true);
+      const response = await api.post(`/api/orders/${id}/edit`, orderData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "mulipart/form-data",
+        },
+      });
+      navigate("/dashboard/orders", {
+        state: {
+          message: "Edit data pesanan berhasil..!!",
+        },
+      });
+    } catch (err) {
+      if (!err?.response) {
+        setErrorMessage("No Server Response..!!");
+      } else if (err.response?.status === 401) {
+        setErrorMessage("Unauthorized..!!");
+      } else {
+        setGetErrors(err.response.data.errors);
+        console.log(err.response);
+      }
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  if (loading) {
+    return <LoadingData />;
+  }
+
+  return (
+    <>
+      <div className="w-250">
+        <form onSubmit={handleSubmit}>
+          <HeaderEdit
+            titleEdit="Data Pesanan"
+            backUrl="/dashboard/orders"
+            getProcessing={processing}
+          />
+          <div className="flex-all-center w-full border-3 border-stone-900 rounded-4xl h-28 mt-4">
+            <div className="grid grid-cols-3 gap-4 w-full h-full p-4">
+              <div className="flex col-span-2">
+                <BlackLogo />
+              </div>
+              <div>
+                <div className="flex-all-center">
+                  <span className="border-b-2 border-stone-900 font-bold text-xl col-span-1">
+                    NOTA PESANAN
+                  </span>
+                </div>
+                <div className="flex-all-center">
+                  <label className="w-20">NO. NOTA</label>
+                  <label>:</label>
+                  <label className="ml-2 font-bold text-lg">
+                    {order.number}
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 mt-4">
+            <div className="col-span-2 border border-stone-900 rounded-lg p-2">
+              <div className="flex items-center">
+                <label className="w-40">Nama Pelanggan</label>
+                <label>:</label>
+                <label className="ml-2 font-semibold text-sm w-100">
+                  {client ? client.name : "-"}
+                </label>
+              </div>
+              <div className="flex items-start mt-2">
+                <label className="w-40">Alamat</label>
+                <label>:</label>
+                <label className="ml-2 font-semibold text-sm w-100 h-14">
+                  {client ? client.address : "-"}
+                </label>
+              </div>
+              <div className="flex items-center mt-2">
+                <label className="w-40">No. Handphone</label>
+                <label>:</label>
+                <label className="ml-2 font-semibold text-sm">
+                  {client ? client.phone : "-"}
+                </label>
+              </div>
+              <div className="flex items-center mt-2">
+                <label className="w-40">Email</label>
+                <label>:</label>
+                <label className="ml-2 font-semibold text-sm">
+                  {client ? client.email : "-"}
+                </label>
+              </div>
+            </div>
+            <div className="border border-stone-900 rounded-xl p-2 texl-lg col-span-1">
+              <div className="flex items-center">
+                <label className="w-28">Tgl. Pesan</label>
+                <label>:</label>
+                <label className="font-semibold ml-2 text-teal-900">
+                  {FormattedDateLong(order.order_date)}
+                </label>
+              </div>
+              <div className="flex items-center mt-2">
+                <label className="w-28">Tgl. Fitting</label>
+                <label>:</label>
+                <input
+                  defaultValue={order.fitting_date}
+                  name="fitting_date"
+                  onChange={handleChange}
+                  className="ml-2 outline-none px-2"
+                  type="date"
+                />
+              </div>
+              <div className="flex items-center mt-2">
+                <label className="w-28">Tgl. Selesai</label>
+                <label>:</label>
+                <input
+                  defaultValue={order.due_date}
+                  name="due_date"
+                  onChange={handleChange}
+                  className="ml-2 outline-none px-2"
+                  type="date"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex-all-center border-b-2 w-full mt-2"></div>
+          <div className="flex-all-center w-full mt-1">
+            <table className="table-auto w-full">
+              <thead>
+                <tr className="h-10 bg-stone-200">
+                  <th className="th-center text-xs w-10">No.</th>
+                  <th className="th-center text-sm">Jenis</th>
+                  <th className="th-center text-sm w-48">No. Kain</th>
+                  <th className="th-center text-sm w-16">Qty</th>
+                  <th className="th-center text-sm w-36">Harga</th>
+                  <th className="th-center text-sm w-40">Total</th>
+                  <th className="th-center text-sm w-24">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, index) => (
+                  <tr key={index} className="bg-white">
+                    <td className="td-center">{index + 1}</td>
+                    <td className="td-left">
+                      <Select
+                        value={
+                          row.value
+                            ? clothingTypeOptions.find(
+                                (opt) => opt.label == row.clothing_type,
+                              )
+                            : null
+                        }
+                        onChange={(selectedOption) =>
+                          handleSelectTypeChange(selectedOption, index)
+                        }
+                        options={clothingTypeOptions}
+                        required={rows.length === 1}
+                      />
+                    </td>
+                    <td className="td-left">
+                      <Select
+                        value={
+                          row.value
+                            ? materialOptions.find(
+                                (opt) => opt.number == row.material_number,
+                              )
+                            : null
+                        }
+                        onChange={(selectedOption) =>
+                          handleSelectMaterialChange(selectedOption, index)
+                        }
+                        options={materialOptions}
+                        required={row.value}
+                        isDisabled={row.value ? false : true}
+                      />
+                    </td>
+                    <td className="td-center">
+                      <div className="flex w-full justify-center">
+                        <input
+                          className="w-14 text-center"
+                          type="number"
+                          min={1}
+                          defaultValue={row.qty ? row.qty : ""}
+                          onChange={(event) => handleQtyChange(event, index)}
+                          disabled={row.value ? false : true}
+                          hidden={row.value ? false : true}
+                          required={row.value}
+                        />
+                      </div>
+                    </td>
+                    <td className="td-center">
+                      <div className="flex w-full justify-center">
+                        <input
+                          className="px-2 w-32 text-right spinner-disabled"
+                          type="number"
+                          min={0}
+                          defaultValue={row.total ? Number(row.total) : ""}
+                          onChange={(event) => handlePriceChange(event, index)}
+                          disabled={row.value ? false : true}
+                          hidden={row.value ? false : true}
+                          required={row.value}
+                        />
+                      </div>
+                    </td>
+                    <td className="td-right">
+                      <div
+                        className={row.value ? "flex w-full" : "hidden w-full"}
+                      >
+                        <label className="w-3">Rp.</label>
+                        <label className="w-32 ml-2 text-right">
+                          {Number(row.total).toLocaleString()}
+                        </label>
+                      </div>
+                    </td>
+                    <td className="td-center">
+                      <div className="flex-all-center">
+                        {rows.length > 1 && row.value !== null && (
+                          <button
+                            type="button"
+                            onClick={() => removeRow(index)}
+                            className="flex-all-center p-1 m-1 rounded-md text-white bg-red-700 hover:bg-red-500 cursor-pointer"
+                          >
+                            <Svg title="Delete" c={"w-5 fill-current"}>
+                              <DeleteSvg />
+                            </Svg>
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                <tr className="h-10">
+                  <td
+                    className="td-center align-top text-sm"
+                    colSpan={4}
+                    rowSpan={3}
+                  >
+                    <div>
+                      <span className="flex mt-2 font-semibold">Catatan :</span>
+                      <div className="flex">
+                        <span className="flex w-2">1.</span>
+                        <span className="flex text-left ml-2 w-150">
+                          Lebih dari 2 bulan barang tidak diambil, segala
+                          kehilangan / kerusakan dan lain-lain diluar tanggung
+                          jawab kami
+                        </span>
+                      </div>
+                      <div className="flex">
+                        <span className="flex w-2">2.</span>
+                        <span className="flex ml-2 w-150">
+                          Dengan nota tersebut barang bisa diterima
+                        </span>
+                      </div>
+                      <div className="flex">
+                        <span className="flex w-2">3.</span>
+                        <span className="flex ml-2 w-150">
+                          Kehilangan nota pengambilan bukan tanggung jawab kami
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="td-right text-sm font-semibold">Total</td>
+                  <td className="td-right text-sm font-semibold">
+                    <div className="flex w-full">
+                      <label className="w-3">Rp.</label>
+                      <label className="w-32 ml-2 text-right">
+                        {Number(subTotal).toLocaleString()}
+                      </label>
+                    </div>
+                  </td>
+                  <td className="td-center bg-slate-200"></td>
+                </tr>
+                <tr className="h-10">
+                  <td className="td-right text-sm font-semibold">Uang Muka</td>
+                  <td className="td-right text-sm font-semibold">
+                    <div className="flex w-full">
+                      <label className="w-5 flex">Rp.</label>
+                      <input
+                        className="flex ml-2 px-1 w-full text-right spinner-disabled"
+                        type="number"
+                        value={Number(downPayment)}
+                        min={0}
+                        onChange={handleDepositChange}
+                      />
+                    </div>
+                  </td>
+                  <td className="td-center bg-slate-200"></td>
+                </tr>
+                <tr className="h-10">
+                  <td className="td-right text-sm font-semibold">Sisa</td>
+                  <td className="td-right text-sm font-semibold">
+                    <div className="flex w-full">
+                      <label className="w-3">Rp.</label>
+                      <label className="w-32 ml-2 text-right">
+                        {Number(balance).toLocaleString()}
+                      </label>
+                    </div>
+                  </td>
+                  <td className="td-center bg-slate-200"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </form>
+      </div>
+    </>
+  );
+}

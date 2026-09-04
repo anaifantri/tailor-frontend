@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@layer components {
+  input[type="text"],
+  input[type="date"],
+  input[type="month"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  select,
+  textarea {
+    @apply text-base rounded-md border border-stone-50 text-stone-900 drop-shadow-sm tracking-wider outline-none bg-white;
+  }
+  .flex-all-center {
+    @apply flex items-center justify-center;
+  }
+  .nav-link {
+    @apply flex text-base justify-center items-center w-full text-stone-50 relative group-hover:text-stone-300 cursor-pointer;
+  }
+  .li-nav-link {
+    @apply flex my-1 w-full text-stone-700 hover:text-stone-400 text-base;
+  }
+  .nav-svg {
+    @apply w-4 fill-current;
+  }
+  .button-disabled {
+    @apply bg-slate-800 text-white rounded-lg p-1;
+  }
+  .button-success {
+    @apply bg-green-800 text-white rounded-lg p-1 hover:bg-green-500 mx-1;
+  }
+  .button-login {
+    @apply bg-stone-900 text-white rounded-lg p-1 hover:bg-stone-800 mx-1;
+  }
+  .button-primary {
+    @apply bg-teal-800 text-white rounded-lg p-1 hover:bg-teal-500 mx-1;
+  }
+  .button-warning {
+    @apply bg-amber-800 text-white rounded-lg p-1 hover:bg-amber-500 mx-1;
+  }
+  .button-danger {
+    @apply bg-red-800 text-white rounded-lg p-1 hover:bg-red-500 mx-1;
+  }
+  .th-center {
+    @apply border border-stone-900 text-stone-900;
+  }
+  .td-center {
+    @apply text-center px-1 border border-stone-900 text-stone-900;
+  }
+  .td-left {
+    @apply px-1 border border-stone-900 text-stone-900;
+  }
+  .td-right {
+    @apply text-right px-1 border border-stone-900 text-stone-900;
+  }
+  .spinner-disabled {
+    @apply [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none;
+  }
+  .my-select-container .select__control {
+    @apply border border-amber-700;
+  }
+}
