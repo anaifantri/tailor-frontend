@@ -6,11 +6,15 @@ import Select from "react-select";
 import api from "@/apiService";
 import LoadingData from "@/Components/LoadingData";
 import FormattedDateLong from "@/Utils/FormattedDateLong";
+import MeasurementModal from "@/components/Modal";
 
 import Svg from "@/components/Svg";
+import MenuSvg from "@/Assets/Svg/MenuSvg";
 import HeaderEdit from "@/components/HeaderEdit";
 import DeleteSvg from "@/Assets/Svg/DeleteSvg";
 import BlackLogo from "@/components/BlackLogo";
+import CheckSvg from "@/Assets/Svg/CheckSvg";
+import ArrowSvg from "@/assets/Svg/ArrowSvg";
 
 export default function Edit() {
   const { id } = useParams();
@@ -38,9 +42,66 @@ export default function Edit() {
   const [materialOptions, setMaterialOptions] = useState([]);
 
   const [orderDetails, setOrderDetails] = useState([]);
+  const [showMeasurementModalOpen, setShowMeasurementModalOpen] =
+    useState(false);
+  const [measurementHistoryId, setMeasurementHistoryId] = useState(null);
+  const [measurementHistories, setMeasurementHistories] = useState(null);
+  const [orderDetailIndex, setOrderDetailIndex] = useState(null);
+  const [showDetail, setShowDetail] = useState([]);
 
+  const handleBtnDetail = (index) => {
+    if (showDetail.includes(index)) {
+      setShowDetail(showDetail.filter((i) => i !== index));
+    } else {
+      setShowDetail([...showDetail, index]);
+    }
+  };
+
+  const handleMeasurementHistoryId = (e, detailIndex) => {
+    setMeasurementHistoryId(e.target.value);
+    const updateOrderDetails = [...orderDetails];
+    updateOrderDetails[detailIndex].measurement_history_id = e.target.value;
+    setOrderDetails(updateOrderDetails);
+  };
+
+  const handleBtnMeasurement = (clothingTypeId, clientData, detailIndex) => {
+    if (clientData == null) {
+      alert("Silahkan pilih pelanggan terlebih dahulu..!!");
+    } else {
+      setOrderDetailIndex(detailIndex);
+      setMeasurementHistoryId(orderDetails[detailIndex].measurement_history_id);
+      const clientId = clientData.hashed_id;
+      const fetchData = async () => {
+        try {
+          const response = await api.get("/api/getbyclientandclothing", {
+            params: { clientId, clothingTypeId },
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          if (measurementHistories != response.data.measurement_histories) {
+            setMeasurementHistories(response.data.measurement_histories);
+          }
+        } catch (err) {
+          if (!err?.response) {
+            setError("No Server Response..!!");
+          } else if (err.response?.status === 401) {
+            setError("Unauthorized..!!");
+          } else {
+            setError(err.response.data.message);
+            console.log(err.response.data.message);
+          }
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchData();
+      setShowMeasurementModalOpen(true);
+    }
+  };
   const handleSelectMaterialChange = (selectedOption, index) => {
-    rows[index].material_id = selectedOption.value;
+    rows[index].material_number = selectedOption.number;
     orderDetails[index].material_id = selectedOption.value;
     setOrder((prevOrder) => ({
       ...prevOrder,
@@ -72,8 +133,9 @@ export default function Edit() {
     if (rowIndex === rows.length - 1 && selectedOption) {
       const newOrderDetail = {
         clothing_type_id: selectedOption.value,
+        measurement_history_id: null,
         material_id: null,
-        qty: 0,
+        quantity: 0,
         price: 0,
         fabric_consumed_meter: 0,
         notes: null,
@@ -95,7 +157,8 @@ export default function Edit() {
       const newOrderDetail = {
         clothing_type_id: selectedOption.value,
         material_id: orderDetails[rowIndex].material_id,
-        qty: orderDetails[rowIndex].qty,
+        measurement_history_id: orderDetails[rowIndex].measurement_history_id,
+        quantity: orderDetails[rowIndex].quantity,
         price: orderDetails[rowIndex].price,
         fabric_consumed_meter: 0,
       };
@@ -135,7 +198,7 @@ export default function Edit() {
   const handleQtyChange = (e, index) => {
     const newRows = [...rows];
     const newOrderDetails = [...orderDetails];
-    newOrderDetails[index].qty = Number(e.target.value);
+    newOrderDetails[index].quantity = Number(e.target.value);
     newRows[index].qty = Number(e.target.value);
     newRows[index].total = newRows[index].price * newRows[index].qty;
     setRows(newRows);
@@ -220,7 +283,7 @@ export default function Edit() {
         setRows([]);
         responseOrder.data.order.order_details.map((item) => {
           const newFormatedRow = {
-            value: item.hashed_id,
+            value: item.clothing_type.hashed_id,
             material_number: item.material.code,
             clothing_type: item.clothing_type.type,
             qty: item.quantity,
@@ -228,15 +291,6 @@ export default function Edit() {
             total: item.quantity * item.price,
           };
           setRows((prevRows) => [...prevRows, newFormatedRow]);
-          const newOrderDetail = {
-            clothing_type_id: item.clothing_type_id,
-            material_id: item.material_id,
-            qty: item.quantity,
-            price: item.price,
-            fabric_consumed_meter: item.fabric_consumed_meter,
-            notes: item.notes,
-          };
-          setOrderDetails([...orderDetails, newOrderDetail]);
         });
         const newFormatedRow = {
           value: null,
@@ -246,11 +300,12 @@ export default function Edit() {
           price: null,
           total: null,
         };
+        setRows((prevRows) => [...prevRows, newFormatedRow]);
         const getDownPayment = responseOrder.data.order.payments.find(
           (downPayment) => downPayment.payment_status == "down_payment",
         );
         const getAmountPaid = getDownPayment ? getDownPayment.amount_paid : 0;
-        setRows((prevRows) => [...prevRows, newFormatedRow]);
+        setOrderDetails(responseOrder.data.order.order_details);
         setClothingTypeOptions(formattedClothingTypeOptions);
         setMaterialOptions(formattedMaterialOptions);
         setClient(responseOrder.data.order.client);
@@ -295,13 +350,18 @@ export default function Edit() {
         orderDetail.clothing_type_id,
       );
       orderData.append(
+        `order_details[${index}][measurement_history_id]`,
+        orderDetail.measurement_history_id,
+      );
+      orderData.append(
         `order_details[${index}][material_id]`,
         orderDetail.material_id,
       );
-      orderData.append(`order_details[${index}][qty]`, orderDetail.qty);
+      orderData.append(`order_details[${index}][qty]`, orderDetail.quantity);
       orderData.append(`order_details[${index}][price]`, orderDetail.price);
       orderData.append(`order_details[${index}][notes]`, orderDetail.notes);
     });
+    console.log(orderDetails);
 
     try {
       setProcessing(true);
@@ -336,7 +396,7 @@ export default function Edit() {
 
   return (
     <>
-      <div className="w-250">
+      <div className="w-300">
         <form onSubmit={handleSubmit}>
           <HeaderEdit
             titleEdit="Data Pesanan"
@@ -433,8 +493,9 @@ export default function Edit() {
               <thead>
                 <tr className="h-10 bg-stone-200">
                   <th className="th-center text-xs w-10">No.</th>
-                  <th className="th-center text-sm">Jenis</th>
-                  <th className="th-center text-sm w-48">No. Kain</th>
+                  <th className="th-center text-sm">Jenis Pesanan</th>
+                  <th className="th-center text-sm w-24">Ukuran</th>
+                  <th className="th-center text-sm w-72">No. Kain</th>
                   <th className="th-center text-sm w-16">Qty</th>
                   <th className="th-center text-sm w-36">Harga</th>
                   <th className="th-center text-sm w-40">Total</th>
@@ -461,22 +522,63 @@ export default function Edit() {
                         required={rows.length === 1}
                       />
                     </td>
+                    <td className="td-center">
+                      {row.value &&
+                      orderDetails[index].measurement_history_id ? (
+                        <div className="flex-all-center w-full">
+                          <button
+                            type="button"
+                            className={
+                              "flex-all-center text-green-700 cursor-pointer"
+                            }
+                            onClick={() =>
+                              handleBtnMeasurement(row.value, client, index)
+                            }
+                          >
+                            <Svg title="Menu" c={"w-5 fill-current mx-1"}>
+                              <CheckSvg />
+                            </Svg>
+                          </button>
+                        </div>
+                      ) : (
+                        row.value && (
+                          <div className="flex-all-center w-full">
+                            <button
+                              type="button"
+                              className={
+                                "flex-all-center button-success cursor-pointer"
+                              }
+                              onClick={() =>
+                                handleBtnMeasurement(row.value, client, index)
+                              }
+                            >
+                              <span className="mx-1">Pilih</span>
+                              <Svg title="Menu" c={"w-5 fill-current mx-1"}>
+                                <MenuSvg />
+                              </Svg>
+                            </button>
+                          </div>
+                        )
+                      )}
+                    </td>
                     <td className="td-left">
-                      <Select
-                        value={
-                          row.value
-                            ? materialOptions.find(
-                                (opt) => opt.number == row.material_number,
-                              )
-                            : null
-                        }
-                        onChange={(selectedOption) =>
-                          handleSelectMaterialChange(selectedOption, index)
-                        }
-                        options={materialOptions}
-                        required={row.value}
-                        isDisabled={row.value ? false : true}
-                      />
+                      {row.value && (
+                        <Select
+                          value={
+                            row.value
+                              ? materialOptions.find(
+                                  (opt) => opt.number == row.material_number,
+                                )
+                              : null
+                          }
+                          onChange={(selectedOption) =>
+                            handleSelectMaterialChange(selectedOption, index)
+                          }
+                          options={materialOptions}
+                          required={row.value}
+                          // isDisabled={row.value ? false : true}
+                        />
+                      )}
                     </td>
                     <td className="td-center">
                       <div className="flex w-full justify-center">
@@ -536,7 +638,7 @@ export default function Edit() {
                 <tr className="h-10">
                   <td
                     className="td-center align-top text-sm"
-                    colSpan={4}
+                    colSpan={5}
                     rowSpan={3}
                   >
                     <div>
@@ -607,6 +709,142 @@ export default function Edit() {
           </div>
         </form>
       </div>
+      <MeasurementModal
+        title={"Pilih Ukuran"}
+        isOpen={showMeasurementModalOpen}
+        onClose={() => setShowMeasurementModalOpen(false)}
+      >
+        <div>
+          <table className="table-auto mt-2 w-full">
+            <thead>
+              <tr className="h-10 bg-stone-200">
+                <th className="th-center w-10">No.</th>
+                <th className="th-center w-32">Jenis Pakaian</th>
+                <th className="th-center w-28">Tanggal Ukur</th>
+                <th className="th-center w-60">Diukur Oleh</th>
+                <th className="th-center w-72">Detail Ukuran</th>
+                <th className="th-center w-32">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {measurementHistories &&
+                measurementHistories.map((measurement, index) => {
+                  const isShow = showDetail.includes(index);
+                  const measurementDetails = JSON.parse(
+                    measurement.measurement_details,
+                  );
+                  return (
+                    <tr className="bg-white" key={index}>
+                      <td className="td-center">{index + 1}</td>
+                      <td className="td-center">
+                        {measurement.clothing_type.type}
+                      </td>
+                      <td className="td-center">{measurement.measured_at}</td>
+                      <td className="td-left"></td>
+                      <td className="td-left">
+                        <div className="flex w-full">
+                          {isShow ? (
+                            <div className="w-72">
+                              <div className="w-full border-b py-1">
+                                Detail Ukuran
+                              </div>
+                              <div className="mt-2">
+                                {measurementDetails.map(
+                                  (itemDetail, indexDetail) => (
+                                    <div
+                                      key={indexDetail}
+                                      className="flex items-start"
+                                    >
+                                      <label className="w-6">
+                                        {indexDetail + 1}.{" "}
+                                      </label>
+                                      <label className="w-36">
+                                        {itemDetail.name}
+                                      </label>
+                                      <label>=</label>
+                                      <label className="ml-2">
+                                        {itemDetail.value}
+                                      </label>
+                                      <label className="flex w-6 ml-2">
+                                        cm
+                                      </label>
+                                    </div>
+                                  ),
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="w-72">Tampilkan Detail Ukuran</div>
+                          )}
+
+                          <button
+                            type="button"
+                            className="flex justify-center items-center w-4 mx-auto hover:text-stone-900 cursor-pointer"
+                            onClick={() => handleBtnDetail(index)}
+                          >
+                            <Svg
+                              title="Arrow"
+                              c={
+                                isShow
+                                  ? "nav-svg w-5 fill-current rotate-180"
+                                  : "nav-svg w-5 fill-current"
+                              }
+                            >
+                              <ArrowSvg />
+                            </Svg>
+                          </button>
+                        </div>
+                      </td>
+                      <td className="td-center">
+                        <div className="w-full flex-all-center p-1 my-1">
+                          <input
+                            name="measurement_history_id"
+                            type="radio"
+                            value={measurement.hashed_id}
+                            defaultChecked={
+                              measurementHistoryId == measurement.hashed_id
+                                ? true
+                                : false
+                            }
+                            onClick={(e) =>
+                              handleMeasurementHistoryId(e, orderDetailIndex)
+                            }
+                          />
+                          <label className="ml-1">Pilih</label>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+            </tbody>
+          </table>
+          {!measurementHistories ||
+            (measurementHistories.length == 0 && (
+              <div className="w-full flex-all-center text-red-700 p-2">
+                Belum ada ukuran untuk pelanggan dan jenis pakaian yang
+                dipilih...!! silahkan input data pengukuran terlebih dahulu.
+              </div>
+            ))}
+        </div>
+        <div className="flex justify-end mt-2">
+          <button
+            type="button"
+            onClick={() => {
+              if (measurementHistoryId == null) {
+                alert("Silahkan pilih ukuran terlebih dahulu..!!");
+              } else {
+                setShowMeasurementModalOpen(false);
+              }
+            }}
+            className="flex-all-center button-success mx-1 cursor-pointer"
+          >
+            <Svg title="Close" c={"w-5 fill-current mx-1"}>
+              <CheckSvg />
+            </Svg>
+            <span className="mx-1">Submit</span>
+          </button>
+        </div>
+      </MeasurementModal>
     </>
   );
 }

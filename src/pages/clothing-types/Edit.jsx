@@ -36,10 +36,10 @@ export default function Show() {
           },
         });
         setClothingType(response.data.clothing_type);
-        const getMeasurements = response.data.clothing_type.measurements.map(
-          (measurement) => measurement.measurement,
-        );
-        console.log(getMeasurements);
+        const getMeasurements =
+          response.data.clothing_type.measurement_details.map(
+            (measurement) => measurement.measurement,
+          );
         setMeasurements(getMeasurements);
       } catch (err) {
         if (!err?.response) {

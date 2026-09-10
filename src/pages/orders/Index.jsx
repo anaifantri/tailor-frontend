@@ -5,6 +5,7 @@ import { useLocation, useSearchParams } from "react-router-dom";
 import api from "@/apiService";
 
 import HeaderIndex from "@/components/HeaderIndex";
+import MeasurementModal from "@/components/Modal";
 import TdAction from "@/components/TdAction";
 import Filters from "@/components/Filters";
 import SuccessMessage from "@/components/SuccessMessage";
@@ -12,6 +13,8 @@ import FailedMessage from "@/components/FailedMessage";
 import LoadingData from "@/components/LoadingData";
 import Svg from "@/components/Svg";
 import ArrowSvg from "@/assets/Svg/ArrowSvg";
+import ShowSvg from "@/assets/Svg/ShowSvg";
+import DeleteSvg from "@/assets/Svg/DeleteSvg";
 
 export default function Index() {
   const [searchParams] = useSearchParams();
@@ -22,6 +25,12 @@ export default function Index() {
   const message = location.state?.message;
   const failed = location.state?.failed;
   const [orders, setOrders] = useState(null);
+  const [measurementHistory, setMeasurementHistory] = useState(null);
+  const [client, setClient] = useState(null);
+  const [clothingType, setClothingType] = useState(null);
+  const [measurementDetails, setMeasurementDetails] = useState([]);
+  const [showMeasurementModalOpen, setShowMeasurementModalOpen] =
+    useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showDetail, setShowDetail] = useState([]);
@@ -31,6 +40,34 @@ export default function Index() {
   const [search, setSearch] = useState("");
   const [month, setMonth] = useState(currentMonthIndex + 1);
   const [year, setYear] = useState(currentYear);
+
+  const handleShowMeasurement = (measurementHistoryId) => {
+    const fetchData = async () => {
+      try {
+        const response = await api.get(
+          "/api/measurement-histories/" + measurementHistoryId,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        setMeasurementHistory(response.data.measurement_history);
+        setMeasurementDetails(
+          JSON.parse(response.data.measurement_history.measurement_details),
+        );
+        setClient(response.data.measurement_history.client);
+        setClothingType(response.data.measurement_history.clothing_type);
+      } catch (error) {
+        setError(error);
+        console.log(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+    setShowMeasurementModalOpen(true);
+  };
 
   const handleSearchChange = (event) => {
     setSearch(event.target.value);
@@ -113,11 +150,11 @@ export default function Index() {
               <th className="th-center text-xs w-24" rowSpan={2}>
                 No. Pesanan
               </th>
-              <th className="th-center text-xs w-24" rowSpan={2}>
+              <th className="th-center text-xs w-20" rowSpan={2}>
                 Tgl. Pesan
               </th>
-              <th className="th-center text-xs w-24" rowSpan={2}>
-                Jadwal Fitting
+              <th className="th-center text-xs w-20" rowSpan={2}>
+                Tgl. Fitting
               </th>
               <th className="th-center text-xs w-56" rowSpan={2}>
                 Nama Pelanggan
@@ -154,12 +191,13 @@ export default function Index() {
                   <td className="td-center text-xs">{order.fitting_date}</td>
                   <td className="td-left">{order.client.name}</td>
                   <td className="td-left p-1">
-                    <div className="flex w-full">
-                      {isShow ? (
+                    {isShow ? (
+                      <div className="flex w-full">
                         <table key={index}>
                           <thead>
                             <tr className="h-6 bg-stone-200">
-                              <th className="th-center text-xs w-44">Jenis</th>
+                              <th className="th-center text-xs w-54">Jenis</th>
+                              <th className="th-center text-xs w-20">Ukuran</th>
                               <th className="th-center text-xs w-12">Qty</th>
                               <th className="th-center text-xs w-20">price</th>
                               <th className="th-center text-xs w-24">
@@ -176,11 +214,28 @@ export default function Index() {
                                 <td className="td-center">
                                   {item.clothing_type.type}
                                 </td>
-                                <td className="td-center">{item.quantity}</td>
                                 <td className="td-center">
+                                  <div className="w-full flex-all-center">
+                                    <button
+                                      onClick={() =>
+                                        handleShowMeasurement(
+                                          item.measurement_history.hashed_id,
+                                        )
+                                      }
+                                      title="Lihat ukuran"
+                                      className="flex-all-center p-1 m-1 rounded-md bg-teal-700 text-white hover:bg-teal-500 cursor-pointer"
+                                    >
+                                      <Svg title="Show" c={"w-5 fill-current"}>
+                                        <ShowSvg />
+                                      </Svg>
+                                    </button>
+                                  </div>
+                                </td>
+                                <td className="td-center">{item.quantity}</td>
+                                <td className="td-right">
                                   {Number(item.price).toLocaleString()}
                                 </td>
-                                <td className="td-center">
+                                <td className="td-right">
                                   {Number(
                                     item.price * item.quantity,
                                   ).toLocaleString()}
@@ -196,32 +251,45 @@ export default function Index() {
                             ))}
                           </tbody>
                         </table>
-                      ) : (
-                        <label className="w-120">
-                          {order.order_details.map((detail, i) => (
-                            <label className="ml-1" key={i}>
-                              {detail.clothing_type.type},
-                            </label>
-                          ))}
-                        </label>
-                      )}
 
-                      <button
-                        className="flex justify-center items-center w-4 mx-auto hover:text-teal-700 cursor-pointer"
-                        onClick={() => handleBtnDetail(index)}
-                      >
-                        <Svg
-                          title="Arrow"
-                          c={
-                            isShow
-                              ? "nav-svg w-5 fill-current rotate-180"
-                              : "nav-svg w-5 fill-current"
-                          }
+                        <button
+                          className="flex justify-center items-center w-9 mx-auto hover:text-teal-700 cursor-pointer"
+                          onClick={() => handleBtnDetail(index)}
                         >
-                          <ArrowSvg />
-                        </Svg>
-                      </button>
-                    </div>
+                          <Svg
+                            title="Arrow"
+                            c={
+                              isShow
+                                ? "nav-svg w-5 fill-current rotate-180"
+                                : "nav-svg w-5 fill-current"
+                            }
+                          >
+                            <ArrowSvg />
+                          </Svg>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex w-full">
+                        <label className="ml-1 w-full">
+                          Tampilkan Detail Pesanan
+                        </label>
+                        <button
+                          className="flex justify-center items-center w-9 mx-auto hover:text-teal-700 cursor-pointer"
+                          onClick={() => handleBtnDetail(index)}
+                        >
+                          <Svg
+                            title="Arrow"
+                            c={
+                              isShow
+                                ? "nav-svg w-5 fill-current rotate-180"
+                                : "nav-svg w-5 fill-current"
+                            }
+                          >
+                            <ArrowSvg />
+                          </Svg>
+                        </button>
+                      </div>
+                    )}
                   </td>
                   <td className="td-right text-xs">
                     <div className="flex w-full">
@@ -240,12 +308,16 @@ export default function Index() {
                     </div>
                   </td>
                   <td className="td-right text-xs">
-                    <div className="flex w-full">
-                      <label className="w-3">Rp.</label>
-                      <label className="w-16 ml-2 text-right">
-                        {(order.total - totalPayment).toLocaleString()}
-                      </label>
-                    </div>
+                    {order.total - totalPayment <= 0 ? (
+                      <div className="flex justify-center w-full">LUNAS</div>
+                    ) : (
+                      <div className="flex w-full">
+                        <label className="w-3">Rp.</label>
+                        <label className="w-16 ml-2 text-right">
+                          {(order.total - totalPayment).toLocaleString()}
+                        </label>
+                      </div>
+                    )}
                   </td>
                   <td className="td-center">
                     <TdAction
@@ -263,6 +335,106 @@ export default function Index() {
           </tbody>
         </table>
       </div>
+
+      <MeasurementModal
+        title={"Detail Ukuran"}
+        isOpen={showMeasurementModalOpen}
+        onClose={() => setShowMeasurementModalOpen(false)}
+      >
+        <div className="w-150">
+          <div className="flex-all-center mt-4">
+            <div>
+              <label className="w-44">INFORMASI PELANGGAN</label>
+              <div className="flex p-2 border rounded-xl w-full mt-1">
+                <div>
+                  <div className="flex items-center">
+                    <label className="w-44">Nama Pelanggan</label>
+                    <label>:</label>
+                    <label className="ml-2">{client ? client.name : "-"}</label>
+                  </div>
+                  <div className="flex items-center mt-2">
+                    <label className="w-44">Nomor Telepon</label>
+                    <label>:</label>
+                    <label className="ml-2">
+                      {client ? client.phone : "-"}
+                    </label>
+                  </div>
+                  <div className="flex mt-2">
+                    <label className="w-44">Alamat</label>
+                    <label>:</label>
+                    <label className="ml-2 w-96 h-10">
+                      {client ? client.address : "-"}
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <label className="flex w-44 mt-4">DETAIL PENGUKURAN</label>
+              <div className="flex p-2 border rounded-xl w-full mt-1">
+                <div>
+                  <div className="flex items-center">
+                    <label className="w-44">Jenis Pakaian</label>
+                    <label>:</label>
+                    <label className="ml-2">
+                      {clothingType && clothingType.type}
+                    </label>
+                  </div>
+                  <div className="flex items-center mt-2">
+                    <label className="w-44">Tanggal Ukur</label>
+                    <label>:</label>
+                    <label className="ml-2">
+                      {measurementHistory && measurementHistory.measured_at}
+                    </label>
+                  </div>
+                  <div className="flex items-center mt-2">
+                    <label className="w-44">Diukur Oleh</label>
+                    <label>:</label>
+                    <label className="ml-2">
+                      {measurementHistory && measurementHistory.measured_by}
+                    </label>
+                  </div>
+                  <div className="mt-4">
+                    <div className="flex items-center border-b p-1 w-72">
+                      <label className="w-44">Detail Ukuran</label>
+                    </div>
+                    {measurementDetails.map((measurement, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center border-b p-1 w-72"
+                      >
+                        <label className="w-6">{index + 1}. </label>
+                        <label className="w-44">{measurement.name}</label>
+                        <label>=</label>
+                        <label className="ml-2 w-6 text-right">
+                          {measurement.value}
+                        </label>
+                        <label className="flex w-6 ml-2">cm</label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <label className="flex w-32 mt-4">Catatan tambahan :</label>
+              <label className="flex mt-2 border rounded-md w-full min-h-16 px-2 py-1">
+                {measurementHistory && measurementHistory.notes}
+              </label>
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-end mt-2">
+          <button
+            onClick={() => {
+              setShowMeasurementModalOpen(false);
+            }}
+            className="flex-all-center button-danger mx-1 cursor-pointer"
+          >
+            <Svg title="Close" c={"w-5 fill-current mx-1"}>
+              <DeleteSvg />
+            </Svg>
+            <span className="mx-1">Close</span>
+          </button>
+        </div>
+      </MeasurementModal>
     </>
   );
 }

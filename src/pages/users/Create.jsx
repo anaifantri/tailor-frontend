@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 import api from "@/apiService";
 
-import Svg from "@/components/Svg";
 import HeaderCreate from "@/components/HeaderCreate";
+import Svg from "@/components/Svg";
 import ProfileSvg from "@/assets/Svg/ProfileSvg";
 
 export default function Create() {
@@ -21,6 +21,7 @@ export default function Create() {
   const [errorPassword, setErrorPassword] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [getErrors, setGetErrors] = useState({});
+  const [error, setError] = useState(null);
   const [photoPreview, setPhotoPreview] = useState("");
 
   const [formData, setFormData] = useState({
@@ -31,6 +32,7 @@ export default function Create() {
     password: "",
     confirm_password: "",
     photo: null,
+    is_active: 1,
   });
 
   const handleChange = (e) => {
@@ -48,23 +50,23 @@ export default function Create() {
     } else if (name == "password") {
       setFormData((prevData) => ({
         ...prevData,
-        [name]: e.target.value,
+        [name]: value,
       }));
       if (errorPassword) setErrorPassword("");
     } else if (name == "confirm_password") {
       setFormData((prevData) => ({
         ...prevData,
-        [name]: e.target.value,
+        [name]: value,
       }));
-      if (formData.password !== e.target.value) {
-        setErrorPassword("Passwords do not match");
+      if (formData.password !== value) {
+        setErrorPassword("Password tidak cocok");
       } else {
         setErrorPassword("");
       }
     } else {
       setFormData((prevData) => ({
         ...prevData,
-        [name]: e.target.value,
+        [name]: value,
       }));
     }
   };
@@ -82,7 +84,7 @@ export default function Create() {
     setGetErrors("");
 
     if (formData.password !== formData.confirm_password) {
-      setErrorPassword("Passwords do not match");
+      setErrorPassword("Password tidak cocok");
       alert("Konfirmasi password tidak cocok..!!");
       confirmPasswordRef.current.focus();
     } else {
@@ -94,7 +96,7 @@ export default function Create() {
       dataUser.append("phone", formData.phone);
       dataUser.append("gender", formData.gender);
       dataUser.append("password", formData.password);
-      dataUser.append("is_active", "1");
+      dataUser.append("is_active", formData.is_active);
 
       if (formData.photo) {
         dataUser.append("photo", formData.photo);
@@ -107,8 +109,6 @@ export default function Create() {
             "Content-Type": "mulipart/form-data",
           },
         });
-        const registerToken = response?.data?.token;
-        const registerUser = response?.data?.user;
         navigate("/dashboard/users", {
           state: {
             message: "Penambahan user baru berhasil..!!",
@@ -122,13 +122,16 @@ export default function Create() {
         } else {
           setGetErrors(err.response.data.errors);
           nameRef.current.focus();
-          console.log(err.response.data.errors);
         }
       } finally {
         setProcessing(false);
       }
     }
   };
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   return (
     <>
@@ -139,14 +142,21 @@ export default function Create() {
             backUrl="/dashboard/users"
             getProcessing={processing}
           />
-          <div className="grid grid-cols-3 gap-2 mt-4">
-            <div className="flex-all-center col-span-1">
+          <div className="grid grid-cols-3 gap-2 mt-4 w-full">
+            <div className="flex-all-center col-span-1 p-2">
               <div>
                 <div className="flex-all-center">
                   {photoPreview ? (
-                    <img src={photoPreview} alt="" className="flex w-36 mx-2" />
+                    <img
+                      src={photoPreview}
+                      alt=""
+                      className="flex w-64 h-64 rounded-full mx-2"
+                    />
                   ) : (
-                    <Svg title="Profile" c={"w-36 fill-current mx-2"}>
+                    <Svg
+                      title="Profile"
+                      c={"w-64 h-64 rounded-full fill-current mx-2"}
+                    >
                       <ProfileSvg />
                     </Svg>
                   )}
@@ -182,153 +192,162 @@ export default function Create() {
                 )}
               </div>
             </div>
-            <div className="flex w-120 h-80 p-2 border rounded-xl col-span-2">
-              <div>
-                <div className="flex items-center">
-                  <label className="w-44">Nama</label>
-                  <input
-                    type="text"
-                    name="name"
-                    className="flex p-2 h-8 w-72"
-                    placeholder="Input Nama Lengkap"
-                    autoComplete="off"
-                    ref={nameRef}
-                    onChange={handleChange}
-                    // value={formData.name}
-                    required
-                  />
-                </div>
-                {getErrors.name && (
-                  <span
-                    ref={errorRef}
-                    className={
-                      getErrors
-                        ? "flex w-full text-red-500 text-xs items-center"
-                        : "hidden"
-                    }
-                  >
-                    {getErrors.name}
-                  </span>
-                )}
-                <div className="flex items-center mt-2">
-                  <label className="w-44">Username</label>
-                  <input
-                    type="text"
-                    name="username"
-                    className="flex p-2 h-8 w-72"
-                    placeholder="Input username"
-                    autoComplete="off"
-                    onChange={handleChange}
-                    // value={formData.username}
-                    required
-                  />
-                </div>
-                {getErrors.username && (
-                  <span
-                    ref={errorRef}
-                    className={
-                      getErrors
-                        ? "flex w-full text-red-500 text-xs items-center"
-                        : "hidden"
-                    }
-                  >
-                    {getErrors.username}
-                  </span>
-                )}
+            <div className="p-4 border rounded-xl col-span-2">
+              <label className="flex">Nama Lengkap</label>
+              <input
+                type="text"
+                name="name"
+                className="flex p-2 h-8 w-full"
+                placeholder="Masukkan Nama Lengkap"
+                autoComplete="off"
+                ref={nameRef}
+                onChange={handleChange}
+                // value={formData.name}
+                required
+              />
+              {getErrors.name && (
+                <span
+                  ref={errorRef}
+                  className={
+                    getErrors
+                      ? "flex w-full text-red-500 text-xs items-center"
+                      : "hidden"
+                  }
+                >
+                  {getErrors.name}
+                </span>
+              )}
+              <label className="flex mt-2">Username</label>
+              <input
+                type="text"
+                name="username"
+                className="flex p-2 h-8 w-full"
+                placeholder="Masukkan username (min. 6 karakter)"
+                autoComplete="off"
+                onChange={handleChange}
+                required
+              />
+              {getErrors.username && (
+                <span
+                  ref={errorRef}
+                  className={
+                    getErrors
+                      ? "flex w-full text-red-500 text-xs items-center"
+                      : "hidden"
+                  }
+                >
+                  {getErrors.username}
+                </span>
+              )}
 
-                <div className="flex items-center mt-2">
-                  <label className="w-44">Password</label>
-                  <input
-                    type="password"
-                    name="password"
-                    className="flex p-2 h-8 w-72"
-                    placeholder="Input Password"
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div className="flex items-center mt-2">
-                  <label className="w-44">Konfirmasi Password</label>
-                  <input
-                    type="password"
-                    name="confirm_password"
-                    className="flex p-2 h-8 w-72"
-                    placeholder="Konfirmasi Password"
-                    onChange={handleChange}
-                    ref={confirmPasswordRef}
-                    required
-                  />
-                </div>
-                {errorPassword && (
-                  <p style={{ color: "red" }}>{errorPassword}</p>
-                )}
-                {getErrors.password && (
-                  <span
-                    ref={errorRef}
-                    className={
-                      getErrors
-                        ? "flex w-full text-red-500 text-xs items-center"
-                        : "hidden"
-                    }
-                  >
-                    {getErrors.password}
-                  </span>
-                )}
-                <div className="flex items-center mt-2">
-                  <label className="w-44">Nomor Hp.</label>
-                  <input
-                    type="text"
-                    name="phone"
-                    className="flex p-2 h-8 w-72"
-                    placeholder="Input Nomor Hp."
-                    autoComplete="off"
-                    onChange={handleChange}
-                    required
-                    // value={formData.phone}
-                  />
-                </div>
-                {getErrors.phone && (
-                  <span
-                    ref={errorRef}
-                    className={
-                      getErrors
-                        ? "flex w-full text-red-500 text-xs items-center"
-                        : "hidden"
-                    }
-                  >
-                    {getErrors.phone}
-                  </span>
-                )}
-                <div className="flex items-center mt-2">
-                  <label className="w-44">Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    className="flex p-2 h-8 w-72"
-                    placeholder="Input email"
-                    autoComplete="off"
-                    onChange={handleChange}
-                    required
-                    // value={formData.email}
-                  />
-                </div>
-                {getErrors.email && (
-                  <span
-                    ref={errorRef}
-                    className={
-                      getErrors
-                        ? "flex w-full text-red-500 text-xs items-center"
-                        : "hidden"
-                    }
-                  >
-                    {getErrors.email}
-                  </span>
-                )}
-                {/* <div className="flex-all-center mt-4 p-2 border-b border-t w-full">
-                                <BtnSave p={loading} />
-                                <BtnCancel backUrl="/users" />
-                            </div> */}
+              <label className="flex mt-2">Password</label>
+              <input
+                type="password"
+                name="password"
+                className="flex p-2 h-8 w-full"
+                placeholder="Input Password"
+                onChange={handleChange}
+                required
+              />
+
+              <label className="mt-2">Konfirmasi Password</label>
+              <input
+                type="password"
+                name="confirm_password"
+                className="flex p-2 h-8 w-full"
+                placeholder="Konfirmasi Password"
+                onChange={handleChange}
+                ref={confirmPasswordRef}
+                required
+              />
+              {errorPassword && <p style={{ color: "red" }}>{errorPassword}</p>}
+              {getErrors.password && (
+                <span
+                  ref={errorRef}
+                  className={
+                    getErrors
+                      ? "flex w-full text-red-500 text-xs items-center"
+                      : "hidden"
+                  }
+                >
+                  {getErrors.password}
+                </span>
+              )}
+              <label className="flex mt-2">Nomor Hp.</label>
+              <input
+                type="text"
+                name="phone"
+                className="flex p-2 h-8 w-full"
+                placeholder="Masukkan Nomor Hp."
+                autoComplete="off"
+                onChange={handleChange}
+                required
+              />
+              {getErrors.phone && (
+                <span
+                  ref={errorRef}
+                  className={
+                    getErrors
+                      ? "flex w-full text-red-500 text-xs items-center"
+                      : "hidden"
+                  }
+                >
+                  {getErrors.phone}
+                </span>
+              )}
+              <label className="flex mt-2">Email</label>
+              <input
+                type="email"
+                name="email"
+                className="flex p-2 h-8 w-full"
+                placeholder="Masukkan email"
+                autoComplete="off"
+                onChange={handleChange}
+                required
+              />
+              {getErrors.email && (
+                <span
+                  ref={errorRef}
+                  className={
+                    getErrors
+                      ? "flex w-full text-red-500 text-xs items-center"
+                      : "hidden"
+                  }
+                >
+                  {getErrors.email}
+                </span>
+              )}
+              <label className="flex mt-2">Pilih Status</label>
+              <div className="flex">
+                <input
+                  name="is_active"
+                  type="radio"
+                  value={1}
+                  onClick={handleChange}
+                  checked={formData.is_active}
+                />
+                <label className="flex ml-1">Aktif</label>
+                <input
+                  name="is_active"
+                  className="flex ml-8"
+                  type="radio"
+                  value={0}
+                  onClick={handleChange}
+                />
+                <label className="flex ml-1">Tidak Aktif</label>
               </div>
+              {getErrors.is_active && (
+                <span
+                  ref={errorRef}
+                  className={
+                    getErrors
+                      ? "flex w-full text-red-500 text-xs items-center"
+                      : "hidden"
+                  }
+                >
+                  {getErrors.is_active}
+                </span>
+              )}
             </div>
           </div>
         </form>

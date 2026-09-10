@@ -6,7 +6,7 @@ import Svg from "@/components/Svg";
 import SettingSvg from "@/assets/Svg/SettingSvg";
 import ArrowSvg from "@/assets/Svg/ArrowSvg";
 import HomeSvg from "@/assets/Svg/HomeSvg";
-import ClientSvg from "@/assets/Svg/ClientSvg";
+import CustomerSvg from "@/assets/Svg/CustomerSvg";
 import OrderSvg from "@/assets/Svg/OrderSvg";
 import EmployeeSvg from "@/assets/Svg/EmployeeSvg";
 
@@ -50,10 +50,10 @@ export default function NavBar() {
         </NavLink>
         <Link
           className="flex justify-center items-center w-full text-stone-50 relative hover:text-stone-300 text-base"
-          to={"/dashboard/clients"}
+          to={"/dashboard/customers"}
         >
           <Svg title="Request" c={"nav-svg"}>
-            <ClientSvg />
+            <CustomerSvg />
           </Svg>
           <span className="text-base ml-2">Data Pelanggan</span>
         </Link>

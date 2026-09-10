@@ -76,54 +76,44 @@ export default function Show() {
     <>
       <div>
         <HeaderShow
-          titleShow="Data User"
+          titleShow="Data Pengguna"
           url="/users"
           getId={user.hashed_id}
           token={token}
         />
         <SuccessMessage message={message} duration="3000" />
-        <div className="grid grid-cols-3 gap-2 mt-4">
+        <div className="grid grid-cols-3 gap-4 mt-4 w-full">
           <div className="flex-all-center col-span-1">
-            {user.photo ? (
-              <img
-                src={user.photo}
-                alt=""
-                className="flex w-56 h-56 mx-2 rounded-full"
-              />
-            ) : (
-              <Svg title="Profile" c={"w-36 fill-current mx-2"}>
-                <ProfileSvg />
-              </Svg>
-            )}
-          </div>
-          <div className=" border rounded-xl p-2 col-span-2 texl-lg w-120 h-60">
-            <div className="flex w-full p-1">
-              <label className="flex w-32">Nama</label>
-              <label>:</label>
-              <label className="flex ml-2 font-semibold">{user.name}</label>
-            </div>
-            <div className="flex w-full p-1">
-              <label className="flex w-32">Username</label>
-              <label>:</label>
-              <label className="flex ml-2 font-semibold">{user.username}</label>
-            </div>
-            <div className="flex w-full p-1">
-              <label className="flex w-32">Email</label>
-              <label>:</label>
-              <label className="flex ml-2 font-semibold">{user.email}</label>
-            </div>
-            <div className="flex w-full p-1">
-              <label className="flex w-32">Nomor Hp.</label>
-              <label>:</label>
-              <label className="flex ml-2 font-semibold">{user.phone}</label>
-            </div>
-            <div className="flex w-full p-1">
-              <label className="flex w-32">Status</label>
-              <label>:</label>
-              <label className="flex ml-2 font-semibold">
-                {user.is_active == true ? "Aktif" : "Non Aktif"}
+            <div>
+              <label className="flex-all-center w-full font-semibold">
+                Photo Profile
               </label>
+              {user.photo ? (
+                <img
+                  src={user.photo}
+                  alt=""
+                  className="flex border border-slate-200 shadow-xl w-64 h-64 mx-2 mt-2 rounded-full"
+                />
+              ) : (
+                <Svg title="Profile" c={" w-64 h-64 fill-current mx-2 mt-2"}>
+                  <ProfileSvg />
+                </Svg>
+              )}
             </div>
+          </div>
+          <div className="border border-slate-200 shadow-xl rounded-xl p-4 col-span-2 w-full text-lg">
+            <label className="flex w-full">Nama Lengkap</label>
+            <label className="flex font-semibold">{user.name}</label>
+            <label className="flex mt-2">Username</label>
+            <label className="flex font-semibold">{user.username}</label>
+            <label className="flex mt-2">Email</label>
+            <label className="flex font-semibold">{user.email}</label>
+            <label className="flex mt-2">Nomor Hp.</label>
+            <label className="flex font-semibold">{user.phone}</label>
+            <label className="flex mt-2">Status</label>
+            <label className="flex font-semibold">
+              {user.is_active == true ? "Aktif" : "Non Aktif"}
+            </label>
           </div>
         </div>
         {/* <div className="grid grid-cols-3 gap-2 w-full p-1 mt-2">

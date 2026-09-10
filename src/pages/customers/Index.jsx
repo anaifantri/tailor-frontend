@@ -19,7 +19,7 @@ export default function Index() {
   const { token } = useAuth();
   const message = location.state?.message;
   const failed = location.state?.failed;
-  const [users, setUsers] = useState(null);
+  const [customers, setCustomers] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
@@ -32,11 +32,11 @@ export default function Index() {
   const handleSearchChange = (event) => {
     setSearch(event.target.value);
   };
-  // fetch data all user
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await api.get("/api/users", {
+        const response = await api.get("/api/customers", {
           params: {
             page: currentPage,
             per_page: perPage,
@@ -46,13 +46,12 @@ export default function Index() {
             Authorization: `Bearer ${token}`,
           },
         });
-        setUsers(response.data.data);
+        setCustomers(response.data.data);
         setCurrentPage(response.data.current_page);
         setTotalPages(response.data.last_page);
         setTotalItems(response.data.total);
       } catch (error) {
         setError(error);
-        console.log(error);
       } finally {
         setLoading(false);
       }
@@ -79,9 +78,9 @@ export default function Index() {
     <>
       <div className="w-300">
         <HeaderIndex
-          title="Daftar Pengguna"
-          addTitle="Tambah Pengguna"
-          addUrl="/dashboard/users/create"
+          title="Daftar Pelanggan"
+          addTitle="Tambah Pelanggan"
+          addUrl="/dashboard/customers/create"
         />
         <div className="flex items-center">
           <div className="flex items-center border border-gray-200 shadow-sm rounded-md py-1 px-2 mt-2">
@@ -94,6 +93,8 @@ export default function Index() {
               <option value={5}>5</option>
               <option value={10}>10</option>
               <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
             </select>
             <span className="text-sm text-gray-600 ml-1">data</span>
           </div>
@@ -116,33 +117,35 @@ export default function Index() {
         )}
         {message && <SuccessMessage message={message} duration="3000" />}
         {failed && <FailedMessage message={failed} duration="3000" />}
-        <table className="table-auto w-full mt-2">
+        <table className="table-auto mt-2 w-full">
           <thead>
             <tr className="h-10 bg-stone-200">
               <th className="th-center w-10">No.</th>
-              <th className="th-center">Nama</th>
-              <th className="th-center w-36">Username</th>
-              <th className="th-center">Email</th>
-              <th className="th-center w-44">No. Hp.</th>
+              <th className="th-center w-24">Kode</th>
+              <th className="th-center w-44">Nama</th>
+              <th className="th-center">Alamat</th>
+              <th className="th-center w-56">Email</th>
+              <th className="th-center w-36">No. Hp.</th>
               <th className="th-center w-32">Action</th>
             </tr>
           </thead>
           <tbody>
-            {users.map((user, index) => (
+            {customers.map((customer, index) => (
               <tr className="bg-white" key={index}>
                 <td className="td-center">{getRowNumber(index)}</td>
-                <td className="td-center">{user.name}</td>
-                <td className="td-center">{user.username}</td>
-                <td className="td-center">{user.email}</td>
-                <td className="td-center">{user.phone}</td>
+                <td className="td-center">{customer.code}</td>
+                <td className="td-center">{customer.name}</td>
+                <td className="td-left">{customer.address}</td>
+                <td className="td-center">{customer.email}</td>
+                <td className="td-center">{customer.phone}</td>
                 <td className="td-center">
                   <TdAction
-                    showUrl={`/dashboard/users/${user.hashed_id}`}
-                    editUrl={`/dashboard/users/edit/${user.hashed_id}`}
-                    deleteUrl="/api/users/destroy/"
-                    deleteId={user.hashed_id}
+                    showUrl={`/dashboard/customers/${customer.hashed_id}`}
+                    editUrl={`/dashboard/customers/edit/${customer.hashed_id}`}
+                    deleteUrl="/api/customers/delete/"
+                    deleteId={customer.hashed_id}
                     getToken={token}
-                    returnUrl="/dashboard/users"
+                    returnUrl="/dashboard/customers"
                   />
                 </td>
               </tr>

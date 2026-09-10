@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 import api from "@/apiService";
 
-import Svg from "@/components/Svg";
 import HeaderCreate from "@/components/HeaderCreate";
-import ProfileSvg from "@/assets/Svg/ProfileSvg";
 
 export default function Create() {
   const navigate = useNavigate();
@@ -15,7 +13,6 @@ export default function Create() {
 
   const errorRef = useRef();
   const nameRef = useRef();
-  const fileInputRef = useRef(null);
 
   const [errorMessage, setErrorMessage] = useState("");
   const [getErrors, setGetErrors] = useState({});
@@ -33,7 +30,7 @@ export default function Create() {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
-      [name]: e.target.value,
+      [name]: value,
     }));
   };
 
@@ -45,22 +42,22 @@ export default function Create() {
     e.preventDefault();
     setGetErrors("");
 
-    const dataClient = new FormData();
-    dataClient.append("code", formData.code);
-    dataClient.append("name", formData.name);
-    dataClient.append("email", formData.email);
-    dataClient.append("phone", formData.phone);
-    dataClient.append("address", formData.address);
+    const dataCustomer = new FormData();
+    dataCustomer.append("code", formData.code);
+    dataCustomer.append("name", formData.name);
+    dataCustomer.append("email", formData.email);
+    dataCustomer.append("phone", formData.phone);
+    dataCustomer.append("address", formData.address);
 
     try {
       setProcessing(true);
-      const response = await api.post("/api/clients", dataClient, {
+      const response = await api.post("/api/customers", dataCustomer, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "mulipart/form-data",
         },
       });
-      navigate("/dashboard/clients", {
+      navigate("/dashboard/customers", {
         state: {
           message: "Penambahan data pelanggan berhasil..!!",
         },
@@ -85,7 +82,7 @@ export default function Create() {
         <form onSubmit={handleSubmit}>
           <HeaderCreate
             titleCreate="Data Pelanggan"
-            backUrl="/dashboard/clients"
+            backUrl="/dashboard/customers"
             getProcessing={processing}
           />
           <div className="flex-all-center mt-4">

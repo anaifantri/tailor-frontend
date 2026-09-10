@@ -6,11 +6,15 @@ import Select from "react-select";
 import api from "@/apiService";
 import LoadingData from "@/Components/LoadingData";
 import FormattedDateLong from "@/Utils/FormattedDateLong";
+import MeasurementModal from "@/components/Modal";
 
 import Svg from "@/components/Svg";
+import MenuSvg from "@/Assets/Svg/MenuSvg";
 import HeaderCreate from "@/components/HeaderCreate";
 import BlackLogo from "@/components/BlackLogo";
 import DeleteSvg from "@/Assets/Svg/DeleteSvg";
+import CheckSvg from "@/Assets/Svg/CheckSvg";
+import ArrowSvg from "@/assets/Svg/ArrowSvg";
 
 export default function Create() {
   const navigate = useNavigate();
@@ -27,9 +31,16 @@ export default function Create() {
   const priceRef = useRef(null);
   const fittingDateRef = useRef(null);
   const dueDateRef = useRef(null);
+
   const [subTotal, setSubTotal] = useState(0);
   const [downPayment, setDownPayment] = useState(0);
   const [balance, setBalance] = useState(0);
+  const [showDetail, setShowDetail] = useState([]);
+  const [measurementHistories, setMeasurementHistories] = useState(null);
+  const [orderDetailIndex, setOrderDetailIndex] = useState(null);
+  const [showMeasurementModalOpen, setShowMeasurementModalOpen] =
+    useState(false);
+  const [measurementHistoryId, setMeasurementHistoryId] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -49,7 +60,7 @@ export default function Create() {
     },
   ]);
 
-  const [client, setClient] = useState();
+  const [client, setClient] = useState(null);
   const [clientOptions, setClientOptions] = useState([]);
   const [clothingTypeOptions, setClothingTypeOptions] = useState([]);
   const [materialOptions, setMaterialOptions] = useState([]);
@@ -69,12 +80,29 @@ export default function Create() {
     notes: "",
   });
 
+  const handleBtnDetail = (index) => {
+    if (showDetail.includes(index)) {
+      setShowDetail(showDetail.filter((i) => i !== index));
+    } else {
+      setShowDetail([...showDetail, index]);
+    }
+  };
+
+  const handleMeasurementHistoryId = (measurementHistoryId, detailIndex) => {
+    setMeasurementHistoryId(measurementHistoryId);
+    const updateOrderDetails = [...orderDetails];
+    updateOrderDetails[detailIndex].measurement_history_id =
+      measurementHistoryId;
+    setOrderDetails(updateOrderDetails);
+  };
+
   const handleSelectClientChange = (selectedOption) => {
     setFormData((prevFormData) => ({
       ...prevFormData,
       client_id: selectedOption.value,
     }));
     setClient({
+      hashed_id: selectedOption.value,
       code: selectedOption.code,
       name: selectedOption.name,
       address: selectedOption.address,
@@ -83,6 +111,49 @@ export default function Create() {
     });
     if (fittingDateRef.current) {
       fittingDateRef.current.focus();
+    }
+  };
+
+  const handleBtnMeasurement = (
+    clothingTypeId,
+    clientData,
+    orderDetailIndex,
+  ) => {
+    if (clientData == null) {
+      alert("Silahkan pilih pelanggan terlebih dahulu..!!");
+    } else {
+      setOrderDetailIndex(orderDetailIndex);
+      setMeasurementHistoryId(
+        orderDetails[orderDetailIndex].measurement_history_id,
+      );
+      const clientId = clientData.hashed_id;
+      const fetchData = async () => {
+        try {
+          const response = await api.get("/api/getbyclientandclothing", {
+            params: { clientId, clothingTypeId },
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          if (measurementHistories != response.data.measurement_histories) {
+            setMeasurementHistories(response.data.measurement_histories);
+          }
+        } catch (err) {
+          if (!err?.response) {
+            setError("No Server Response..!!");
+          } else if (err.response?.status === 401) {
+            setError("Unauthorized..!!");
+          } else {
+            setError(err.response.data.message);
+            console.log(err.response.data.message);
+          }
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchData();
+      setShowMeasurementModalOpen(true);
     }
   };
 
@@ -123,6 +194,7 @@ export default function Create() {
       const newOrderDetail = {
         clothing_type_id: selectedOption.value,
         material_id: null,
+        measurement_history_id: null,
         qty: 0,
         price: 0,
         fabric_consumed_meter: 0,
@@ -145,6 +217,7 @@ export default function Create() {
       const newOrderDetail = {
         clothing_type_id: selectedOption.value,
         material_id: orderDetails[rowIndex].material_id,
+        measurement_history_id: orderDetails[rowIndex].measurement_history_id,
         qty: orderDetails[rowIndex].qty,
         price: orderDetails[rowIndex].price,
         fabric_consumed_meter: 0,
@@ -284,6 +357,7 @@ export default function Create() {
         const formattedClientOptions = responseClients.data.map((item) => ({
           value: item.hashed_id,
           label: item.name,
+          code: item.code,
           name: item.name,
           address: item.address,
           phone: item.phone,
@@ -341,6 +415,10 @@ export default function Create() {
         orderDetail.clothing_type_id,
       );
       order.append(
+        `order_details[${index}][measurement_history_id]`,
+        orderDetail.measurement_history_id,
+      );
+      order.append(
         `order_details[${index}][material_id]`,
         orderDetail.material_id,
       );
@@ -382,7 +460,7 @@ export default function Create() {
 
   return (
     <>
-      <div className="w-250">
+      <div className="w-300">
         <form onSubmit={handleSubmit}>
           <HeaderCreate
             titleCreate="Data pesanan"
@@ -478,8 +556,9 @@ export default function Create() {
               <thead>
                 <tr className="h-10 bg-stone-200">
                   <th className="th-center text-xs w-10">No.</th>
-                  <th className="th-center text-sm">Jenis</th>
-                  <th className="th-center text-sm w-48">No. Kain</th>
+                  <th className="th-center text-sm">Jenis Pesanan</th>
+                  <th className="th-center text-sm w-24">Ukuran</th>
+                  <th className="th-center text-sm w-72">No. Kain</th>
                   <th className="th-center text-sm w-16">Qty</th>
                   <th className="th-center text-sm w-36">Harga</th>
                   <th className="th-center text-sm w-40">Total</th>
@@ -504,21 +583,60 @@ export default function Create() {
                         }
                         options={clothingTypeOptions}
                         required={rows.length === 1}
-                        // inputId={`select-${index}`}
                         ref={clothingTypeRef}
                       />
                     </td>
+                    <td className="td-center">
+                      {row.value &&
+                      orderDetails[index].measurement_history_id ? (
+                        <div className="flex-all-center w-full">
+                          <button
+                            type="button"
+                            className={
+                              "flex-all-center text-green-700 cursor-pointer"
+                            }
+                            onClick={() =>
+                              handleBtnMeasurement(row.value, client, index)
+                            }
+                          >
+                            <Svg title="Menu" c={"w-5 fill-current mx-1"}>
+                              <CheckSvg />
+                            </Svg>
+                          </button>
+                        </div>
+                      ) : (
+                        row.value && (
+                          <div className="flex-all-center w-full">
+                            <button
+                              type="button"
+                              className={
+                                "flex-all-center button-success cursor-pointer"
+                              }
+                              onClick={() =>
+                                handleBtnMeasurement(row.value, client, index)
+                              }
+                            >
+                              <span className="mx-1">Pilih</span>
+                              <Svg title="Menu" c={"w-5 fill-current mx-1"}>
+                                <MenuSvg />
+                              </Svg>
+                            </button>
+                          </div>
+                        )
+                      )}
+                    </td>
                     <td className="td-left">
-                      <Select
-                        onChange={(selectedOption) =>
-                          handleSelectMaterialChange(selectedOption, index)
-                        }
-                        ref={materialRef}
-                        options={materialOptions}
-                        required={row.value}
-                        isDisabled={row.value ? false : true}
-                        // inputId={`select-${index}`}
-                      />
+                      {row.value && (
+                        <Select
+                          onChange={(selectedOption) =>
+                            handleSelectMaterialChange(selectedOption, index)
+                          }
+                          ref={materialRef}
+                          options={materialOptions}
+                          required={row.value}
+                          isDisabled={row.value ? false : true}
+                        />
+                      )}
                     </td>
                     <td className="td-center">
                       <div className="flex w-full justify-center">
@@ -580,7 +698,7 @@ export default function Create() {
                 <tr className="h-10">
                   <td
                     className="td-center align-top text-sm"
-                    colSpan={4}
+                    colSpan={5}
                     rowSpan={3}
                   >
                     <div>
@@ -650,6 +768,146 @@ export default function Create() {
           </div>
         </form>
       </div>
+
+      <MeasurementModal
+        title={"Pilih Ukuran"}
+        isOpen={showMeasurementModalOpen}
+        onClose={() => setShowMeasurementModalOpen(false)}
+      >
+        <div>
+          <table className="table-auto mt-2 w-full">
+            <thead>
+              <tr className="h-10 bg-stone-200">
+                <th className="th-center w-10">No.</th>
+                <th className="th-center w-32">Jenis Pakaian</th>
+                <th className="th-center w-28">Tanggal Ukur</th>
+                <th className="th-center w-60">Diukur Oleh</th>
+                <th className="th-center w-72">Detail Ukuran</th>
+                <th className="th-center w-32">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {measurementHistories &&
+                measurementHistories.map((measurement, index) => {
+                  const isShow = showDetail.includes(index);
+                  const measurementDetails = JSON.parse(
+                    measurement.measurement_details,
+                  );
+                  return (
+                    <tr className="bg-white" key={index}>
+                      <td className="td-center">{index + 1}</td>
+                      <td className="td-center">
+                        {measurement.clothing_type.type}
+                      </td>
+                      <td className="td-center">{measurement.measured_at}</td>
+                      <td className="td-left"></td>
+                      <td className="td-left">
+                        <div className="flex w-full">
+                          {isShow ? (
+                            <div className="w-72">
+                              <div className="w-full border-b py-1">
+                                Detail Ukuran
+                              </div>
+                              <div className="mt-2">
+                                {measurementDetails.map(
+                                  (itemDetail, indexDetail) => (
+                                    <div
+                                      key={indexDetail}
+                                      className="flex items-start"
+                                    >
+                                      <label className="w-6">
+                                        {indexDetail + 1}.{" "}
+                                      </label>
+                                      <label className="w-36">
+                                        {itemDetail.name}
+                                      </label>
+                                      <label>=</label>
+                                      <label className="ml-2">
+                                        {itemDetail.value}
+                                      </label>
+                                      <label className="flex w-6 ml-2">
+                                        cm
+                                      </label>
+                                    </div>
+                                  ),
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="w-72">Tampilkan Detail Ukuran</div>
+                          )}
+
+                          <button
+                            type="button"
+                            className="flex justify-center items-center w-4 mx-auto hover:text-stone-900 cursor-pointer"
+                            onClick={() => handleBtnDetail(index)}
+                          >
+                            <Svg
+                              title="Arrow"
+                              c={
+                                isShow
+                                  ? "nav-svg w-5 fill-current rotate-180"
+                                  : "nav-svg w-5 fill-current"
+                              }
+                            >
+                              <ArrowSvg />
+                            </Svg>
+                          </button>
+                        </div>
+                      </td>
+                      <td className="td-center">
+                        <div className="w-full flex-all-center p-1 my-1">
+                          <input
+                            name="measurement_history_id"
+                            type="radio"
+                            value={measurement.hashed_id}
+                            defaultChecked={
+                              measurementHistoryId == measurement.hashed_id
+                                ? true
+                                : false
+                            }
+                            onClick={() =>
+                              handleMeasurementHistoryId(
+                                measurement.hashed_id,
+                                orderDetailIndex,
+                              )
+                            }
+                          />
+                          <label className="ml-1">Pilih</label>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+            </tbody>
+          </table>
+          {!measurementHistories ||
+            (measurementHistories.length == 0 && (
+              <div className="w-full flex-all-center text-red-700 p-2">
+                Belum ada ukuran untuk pelanggan dan jenis pakaian yang
+                dipilih...!! silahkan input data pengukuran terlebih dahulu.
+              </div>
+            ))}
+        </div>
+        <div className="flex justify-end mt-2">
+          <button
+            type="button"
+            onClick={() => {
+              if (measurementHistoryId == null) {
+                alert("Silahkan pilih ukuran terlebih dahulu..!!");
+              } else {
+                setShowMeasurementModalOpen(false);
+              }
+            }}
+            className="flex-all-center button-success mx-1 cursor-pointer"
+          >
+            <Svg title="Close" c={"w-5 fill-current mx-1"}>
+              <CheckSvg />
+            </Svg>
+            <span className="mx-1">Submit</span>
+          </button>
+        </div>
+      </MeasurementModal>
     </>
   );
 }

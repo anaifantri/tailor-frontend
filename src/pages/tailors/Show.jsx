@@ -82,7 +82,7 @@ export default function Show() {
               </Svg>
             )}
           </div>
-          <div className=" border rounded-xl p-2 col-span-2 texl-lg w-120 h-60">
+          <div className=" border rounded-xl p-2 col-span-2 texl-lg w-120">
             <div className="flex w-full p-1">
               <label className="flex w-32">ID Penjahit</label>
               <label>:</label>

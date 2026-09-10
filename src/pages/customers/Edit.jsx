@@ -1,24 +1,21 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import api from "@/apiService";
 import { useAuth } from "@/context/AuthContext";
 
-import Svg from "@/components/Svg";
 import HeaderEdit from "@/components/HeaderEdit";
-import ProfileSvg from "@/assets/Svg/ProfileSvg";
 import LoadingData from "@/components/LoadingData";
 
 export default function Edit() {
   const { id } = useParams();
   const { token } = useAuth();
   const navigate = useNavigate();
-  const fileInputRef = useRef(null);
   const nameRef = useRef();
   const errorRef = useRef();
   const [getErrors, setGetErrors] = useState({});
   const [errorMessage, setErrorMessage] = useState("");
 
-  const [editClient, setEditClient] = useState({
+  const [editCustomer, setEditCustomer] = useState({
     hashed_id: "",
     code: "",
     name: "",
@@ -32,19 +29,19 @@ export default function Edit() {
   const [error, setError] = useState(null);
 
   const handleChange = (e) => {
-    setEditClient({ ...editClient, [e.target.name]: e.target.value });
+    setEditCustomer({ ...editCustomer, [e.target.name]: e.target.value });
   };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await api.get("/api/clients/" + id, {
+        const response = await api.get("/api/customers/" + id, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        setEditClient(response.data.client);
+        setEditCustomer(response.data.customer);
       } catch (err) {
         if (!err?.response) {
           setError("No Server Response..!!");
@@ -74,22 +71,22 @@ export default function Edit() {
     setGetErrors("");
 
     const formData = new FormData();
-    formData.append("hashed_id", editClient.hashed_id);
-    formData.append("code", editClient.code);
-    formData.append("name", editClient.name);
-    formData.append("address", editClient.address);
-    formData.append("email", editClient.email);
-    formData.append("phone", editClient.phone);
+    formData.append("hashed_id", editCustomer.hashed_id);
+    formData.append("code", editCustomer.code);
+    formData.append("name", editCustomer.name);
+    formData.append("address", editCustomer.address);
+    formData.append("email", editCustomer.email);
+    formData.append("phone", editCustomer.phone);
 
     try {
       setProcessing(true);
-      const response = await api.post(`/api/clients/${id}/edit`, formData, {
+      const response = await api.post(`/api/customers/${id}/edit`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "mulipart/form-data",
         },
       });
-      navigate("/dashboard/clients", {
+      navigate("/dashboard/customers", {
         state: { message: "Berhasil mengubah data pelanggan..!!" },
       });
     } catch (err) {
@@ -113,7 +110,7 @@ export default function Edit() {
         <form onSubmit={handleSubmit}>
           <HeaderEdit
             titleEdit="Data Pelanggan"
-            backUrl="/dashboard/clients"
+            backUrl="/dashboard/customers"
             getProcessing={processing}
           />
           <div className="flex-all-center mt-4">
@@ -127,7 +124,7 @@ export default function Edit() {
                   autoComplete="off"
                   ref={nameRef}
                   onChange={handleChange}
-                  defaultValue={editClient.name}
+                  defaultValue={editCustomer.name}
                   required
                 />
               </div>
@@ -150,7 +147,7 @@ export default function Edit() {
                   className="flex p-1 w-120"
                   rows={3}
                   onChange={handleChange}
-                  defaultValue={editClient.address}
+                  defaultValue={editCustomer.address}
                 />
               </div>
               {getErrors.address && (
@@ -174,7 +171,7 @@ export default function Edit() {
                   placeholder="Input Nomor Hp."
                   autoComplete="off"
                   onChange={handleChange}
-                  defaultValue={editClient.phone}
+                  defaultValue={editCustomer.phone}
                   required
                 />
               </div>
@@ -199,7 +196,7 @@ export default function Edit() {
                   placeholder="Input email"
                   autoComplete="off"
                   onChange={handleChange}
-                  defaultValue={editClient.email}
+                  defaultValue={editCustomer.email}
                 />
               </div>
               {getErrors.email && (

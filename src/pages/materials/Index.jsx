@@ -21,12 +21,17 @@ export default function Index() {
   const [materials, setMaterials] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [search, setSearch] = useState("");
 
+  const handleSearchChange = (event) => {
+    setSearch(event.target.value);
+  };
   // fetch data all material
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await api.get("/api/materials", {
+          params: { search },
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -39,7 +44,7 @@ export default function Index() {
       }
     };
     fetchData();
-  }, []);
+  }, [search]);
 
   if (loading) {
     return <LoadingData />;
@@ -57,6 +62,18 @@ export default function Index() {
           addTitle="Tambah Data Kain"
           addUrl="/dashboard/materials/create"
         />
+        <div className="flex items-center">
+          <div className="flex items-center mt-2">
+            <label className="flex w-20">Pencarian</label>
+            <input
+              type="text"
+              placeholder="search"
+              value={search}
+              onChange={handleSearchChange}
+              className="py-1 px-2"
+            />
+          </div>
+        </div>
         {deleteMessage && (
           <SuccessMessage message={deleteMessage} duration="3000" />
         )}

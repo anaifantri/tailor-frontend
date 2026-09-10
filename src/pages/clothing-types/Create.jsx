@@ -97,8 +97,8 @@ export default function Create() {
       <div className="w-160">
         <form onSubmit={handleSubmit}>
           <HeaderCreate
-            titleCreate="Data Pelanggan"
-            backUrl="/dashboard/clients"
+            titleCreate="Data Jenis Pakaian"
+            backUrl="/dashboard/clothing-types"
             getProcessing={processing}
           />
           <div className="flex-all-center mt-4">

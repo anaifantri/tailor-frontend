@@ -9,6 +9,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 
 import Svg from "@/Components/Svg";
+import CheckSvg from "@/assets/Svg/CheckSvg";
 import SpinSvg from "@/Assets/Svg/SpinSvg";
 import LogoRiori from "@/assets/Images/logo-riori-tailor-01.png";
 
@@ -77,10 +78,16 @@ function verifyEmail() {
                   )}
                   {message && (
                     <>
+                      <div className="flex w-full justify-center  text-teal-700">
+                        <Svg title="Back" c={"w-6 fill-current mx-1"}>
+                          <CheckSvg />
+                        </Svg>
+                        <span className="flex ml-1">SUCCESS!!!</span>
+                      </div>
                       <span
                         className={
                           message
-                            ? "flex-all-center m-auto w-full text-amber-500 text-sm items-center"
+                            ? "flex-all-center m-auto w-full  text-teal-700 text-sm items-center ml-2"
                             : "hidden"
                         }
                       >

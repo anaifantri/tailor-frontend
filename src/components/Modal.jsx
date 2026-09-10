@@ -28,7 +28,7 @@ export default function Modal({ title, isOpen, onClose, children }) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md transform overflow-hidden rounded-lg bg-white p-6 shadow-xl transition-all m-4"
+        className="transform overflow-hidden rounded-lg bg-white p-6 shadow-xl transition-all m-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b pb-3 mb-4">

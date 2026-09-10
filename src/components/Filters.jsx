@@ -64,6 +64,7 @@ export default function Filters({
         <label className="flex w-20">Pencarian</label>
         <input
           type="text"
+          placeholder="Search"
           value={search}
           onChange={searchAction}
           className="py-1 px-2"

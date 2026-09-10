@@ -8,6 +8,7 @@ import FormattedDateLong from "@/Utils/FormattedDateLong";
 
 import HeaderShow from "@/components/HeaderShow";
 import BtnPay from "@/components/BtnPay";
+import MeasurementModal from "@/components/Modal";
 import PaymentModal from "@/components/Modal";
 import ProgressModal from "@/components/Modal";
 import ShowProgressModal from "@/components/Modal";
@@ -24,6 +25,7 @@ import CloseSvg from "@/assets/Svg/CloseSvg";
 import ReloadSvg from "@/assets/Svg/ReloadSvg";
 import DeleteSvg from "@/assets/Svg/DeleteSvg";
 import BtnSave from "@/components/BtnSave";
+import ShowSvg from "@/assets/Svg/ShowSvg";
 
 export default function Show() {
   const today = new Intl.DateTimeFormat("en-CA").format(new Date());
@@ -36,20 +38,18 @@ export default function Show() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState(null);
   const [downPayment, setDownPayment] = useState(null);
-  const [fullPayment, setFullPayment] = useState(null);
+  const [totalPayment, setTotalPayment] = useState(0);
   const [balance, setBalance] = useState(null);
   const [updateProgress, setUpdateProgress] = useState(null);
   const [progressNotes, setProgressNotes] = useState(null);
   const [productionProgress, setProductionProgress] = useState(null);
   const [orderDetailId, setOrderDetailId] = useState(null);
-  const [tailorId, setTailorId] = useState(null);
   const [progressDate, setProgressDate] = useState(null);
   const [progressModalOpen, setProgressModalOpen] = useState(false);
   const [showProgressModalOpen, setShowProgressModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [savedStatus, setSavedStatus] = useState(true);
   const [showDetail, setShowDetail] = useState([]);
-  const [tailorOptions, setTailorOptions] = useState([]);
   const [payment, setPayment] = useState({
     user_id: user.hashed_id,
     order_id: null,
@@ -60,7 +60,42 @@ export default function Show() {
     notes: null,
   });
 
+  const [measurementHistory, setMeasurementHistory] = useState(null);
+  const [client, setClient] = useState(null);
+  const [clothingType, setClothingType] = useState(null);
+  const [measurementDetails, setMeasurementDetails] = useState([]);
+  const [showMeasurementModalOpen, setShowMeasurementModalOpen] =
+    useState(false);
+
   const progress = ["Antrian", "Potong", "Jahit", "Fitting", "Selesai"];
+
+  const handleShowMeasurement = (measurementHistoryId) => {
+    const fetchData = async () => {
+      try {
+        const response = await api.get(
+          "/api/measurement-histories/" + measurementHistoryId,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        setMeasurementHistory(response.data.measurement_history);
+        setMeasurementDetails(
+          JSON.parse(response.data.measurement_history.measurement_details),
+        );
+        setClient(response.data.measurement_history.client);
+        setClothingType(response.data.measurement_history.clothing_type);
+      } catch (error) {
+        setError(error);
+        console.log(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+    setShowMeasurementModalOpen(true);
+  };
 
   const handleBtnDetail = (index) => {
     if (showDetail.includes(index)) {
@@ -76,6 +111,19 @@ export default function Show() {
       ...prevPayment,
       [name]: value,
     }));
+    if (name == "amount_paid") {
+      if (value >= balance) {
+        setPayment((prevPayment) => ({
+          ...prevPayment,
+          ["payment_status"]: "full_payment",
+        }));
+      } else {
+        setPayment((prevPayment) => ({
+          ...prevPayment,
+          ["payment_status"]: "partial_payment",
+        }));
+      }
+    }
   };
 
   const handleProgressDateChange = (e) => {
@@ -88,42 +136,10 @@ export default function Show() {
     setProgressNotes(value);
   };
 
-  const handleSelectTailorChange = (selectedOption) => {
-    setTailorId(selectedOption.value);
-  };
-
   const handleProgressModal = (status, detailId) => {
     setProgressModalOpen(true);
     setUpdateProgress(status);
     setOrderDetailId(detailId);
-    setLoading(true);
-    const fetchData = async () => {
-      try {
-        const response = await api.get("/api/tailors", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const formattedTailorOptions = response.data.map((item) => ({
-          value: item.hashed_id,
-          label: item.name,
-        }));
-        setTailorOptions(formattedTailorOptions);
-      } catch (err) {
-        if (!err?.response) {
-          setError("No Server Response..!!");
-        } else if (err.response?.status === 401) {
-          setError("Unauthorized..!!");
-        } else {
-          setError(err.response.data.message);
-          console.log(err.response.data.message);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
   };
 
   const handleShowProgressModal = (progressId) => {
@@ -162,7 +178,6 @@ export default function Show() {
     setError("");
     const progressData = new FormData();
     progressData.append("order_detail_id", orderDetailId);
-    progressData.append("tailor_id", tailorId);
     progressData.append("progress_date", progressDate);
     progressData.append("status", updateProgress);
     progressData.append("notes", progressNotes);
@@ -208,19 +223,17 @@ export default function Show() {
           const getDownPayment = payments.find(
             (payment) => payment.payment_status === "down_payment",
           );
-          const getFullPayment = payments.find(
-            (payment) => payment.payment_status === "full_payment",
+          const getTotalPayment = payments.reduce(
+            (acc, curr) => acc + Number(curr.amount_paid),
+            0,
           );
           const downPaymentAmount = getDownPayment
-            ? getDownPayment.amount_paid
-            : 0;
-          const fullPaymentAmount = getFullPayment
-            ? getFullPayment.amount_paid
+            ? Number(getDownPayment.amount_paid)
             : 0;
           const balanceAmount =
-            response.data.order.total - downPaymentAmount - fullPaymentAmount;
+            Number(response.data.order.total) - getTotalPayment;
           setDownPayment(downPaymentAmount);
-          setFullPayment(fullPaymentAmount);
+          setTotalPayment(getTotalPayment - downPaymentAmount);
           setBalance(balanceAmount);
           setPayment((prevPayment) => ({
             ...prevPayment,
@@ -245,6 +258,7 @@ export default function Show() {
       setSavedStatus(false);
     }
   }, [savedStatus]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -390,11 +404,12 @@ export default function Show() {
             <thead>
               <tr className="h-10 bg-stone-200">
                 <th className="th-center text-xs w-10">No.</th>
-                <th className="th-center text-sm w-20">No. Kain</th>
+                <th className="th-center text-sm w-28">No. Kain</th>
                 <th className="th-center text-sm">Jenis</th>
+                <th className="th-center text-sm w-20">Ukuran</th>
                 <th className="th-center text-sm w-16">Qty</th>
-                <th className="th-center text-sm w-36">price</th>
-                <th className="th-center text-sm w-40">Subtotal</th>
+                <th className="th-center text-sm w-24">price</th>
+                <th className="th-center text-sm w-28">Subtotal</th>
               </tr>
             </thead>
             <tbody>
@@ -409,7 +424,7 @@ export default function Show() {
                     <td className="td-left">
                       <div className="flex w-full">
                         {isShow ? (
-                          <div className="w-120">
+                          <div className="w-full">
                             <div className="w-full border-b py-1">
                               <span>{item.clothing_type.type}</span>
                             </div>
@@ -491,7 +506,7 @@ export default function Show() {
                                       </div>
                                     )}
                                     {indexProgress != progress.length - 1 && (
-                                      <div className="border-b-2 border-stone-900 w-12 h-3"></div>
+                                      <div className="border-b-2 border-stone-900 w-10 h-3"></div>
                                     )}
                                   </div>
                                 );
@@ -499,13 +514,13 @@ export default function Show() {
                             </div>
                           </div>
                         ) : (
-                          <div className="w-120">
+                          <div className="w-full">
                             <span>{item.clothing_type.type}</span>
                           </div>
                         )}
 
                         <button
-                          className="flex justify-center items-center w-4 mx-auto hover:text-stone-900 cursor-pointer"
+                          className="flex justify-center items-center w-9 mx-auto hover:text-stone-900 cursor-pointer"
                           onClick={() => handleBtnDetail(index)}
                         >
                           <Svg
@@ -521,11 +536,28 @@ export default function Show() {
                         </button>
                       </div>
                     </td>
+                    <td className="td-center">
+                      <div className="w-full flex-all-center">
+                        <button
+                          onClick={() =>
+                            handleShowMeasurement(
+                              item.measurement_history.hashed_id,
+                            )
+                          }
+                          title="Lihat ukuran"
+                          className="flex-all-center p-1 m-1 rounded-md bg-teal-700 text-white hover:bg-teal-500 cursor-pointer"
+                        >
+                          <Svg title="Show" c={"w-5 fill-current"}>
+                            <ShowSvg />
+                          </Svg>
+                        </button>
+                      </div>
+                    </td>
                     <td className="td-center">{item.quantity}</td>
                     <td className="td-right">
                       <div className="flex w-full">
                         <label className="w-3">Rp.</label>
-                        <label className="w-28 ml-2 text-right">
+                        <label className="w-20 ml-2 text-right">
                           {Number(item.price).toLocaleString()}
                         </label>
                       </div>
@@ -533,7 +565,7 @@ export default function Show() {
                     <td className="td-right">
                       <div className="flex w-full">
                         <label className="w-3">Rp.</label>
-                        <label className="w-32 ml-2 text-right">
+                        <label className="w-24 ml-2 text-right">
                           {Number(item.price * item.quantity).toLocaleString()}
                         </label>
                       </div>
@@ -544,7 +576,7 @@ export default function Show() {
               <tr className="h-10">
                 <td
                   className="td-center align-top text-sm"
-                  colSpan={4}
+                  colSpan={5}
                   rowSpan={5}
                 >
                   <div>
@@ -575,7 +607,7 @@ export default function Show() {
                 <td className="td-right text-sm font-semibold">
                   <div className="flex w-full">
                     <label className="w-3">Rp.</label>
-                    <label className="w-32 ml-2 text-right">
+                    <label className="w-24 ml-2 text-right">
                       {Number(order.total).toLocaleString()}
                     </label>
                   </div>
@@ -586,37 +618,46 @@ export default function Show() {
                 <td className="td-right text-sm font-semibold">
                   <div className="flex w-full">
                     <label className="w-3">Rp.</label>
-                    <label className="w-32 ml-2 text-right">
+                    <label className="w-24 ml-2 text-right">
                       {Number(downPayment).toLocaleString()}
                     </label>
                   </div>
                 </td>
               </tr>
               <tr className="h-10">
-                <td className="td-right text-sm font-semibold">Pelunasan</td>
                 <td className="td-right text-sm font-semibold">
-                  {fullPayment ? (
-                    <div className="flex w-full">
-                      <label className="w-3">Rp.</label>
-                      <label className="w-32 ml-2 text-right">
-                        {Number(fullPayment).toLocaleString()}
-                      </label>
-                    </div>
-                  ) : (
-                    <div className="flex w-full justify-end">
-                      <BtnPay action={() => setPaymentModalOpen(true)} />
-                    </div>
-                  )}
+                  {balance <= 0 ? "Pelunasan" : "Pembayaran"}
                 </td>
-              </tr>
-              <tr className="h-10">
-                <td className="td-right text-sm font-semibold">Sisa</td>
                 <td className="td-right text-sm font-semibold">
                   <div className="flex w-full">
                     <label className="w-3">Rp.</label>
-                    <label className="w-32 ml-2 text-right">
-                      {Number(balance).toLocaleString()}
+                    <label className="w-24 ml-2 text-right">
+                      {Number(totalPayment).toLocaleString()}
                     </label>
+                  </div>
+                </td>
+              </tr>
+              <tr className="h-10">
+                <td className="td-right text-sm font-semibold">
+                  <div className="flex w-full justify-end">
+                    {balance > 0 && (
+                      <BtnPay action={() => setPaymentModalOpen(true)} />
+                    )}
+                    <span className="ml-2">Sisa</span>
+                  </div>
+                </td>
+                <td className="td-right text-sm font-semibold">
+                  <div className="flex w-full">
+                    {balance <= 0 ? (
+                      <div className="flex justify-center w-full">LUNAS</div>
+                    ) : (
+                      <div className="flex w-full">
+                        <label className="w-3">Rp.</label>
+                        <label className="w-full ml-2 text-right">
+                          {Number(balance).toLocaleString()}
+                        </label>
+                      </div>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -642,6 +683,9 @@ export default function Show() {
                     value={"Cash"}
                     onClick={handleChange}
                     type="radio"
+                    defaultChecked={
+                      payment.payment_method == "Cash" ? true : false
+                    }
                     className="flex ml-2"
                   />
                   <label className="flex ml-1">Cash</label>
@@ -650,6 +694,9 @@ export default function Show() {
                   <input
                     name="payment_method"
                     value={"Card"}
+                    defaultChecked={
+                      payment.payment_method == "Card" ? true : false
+                    }
                     onClick={handleChange}
                     type="radio"
                     className="flex ml-2"
@@ -662,6 +709,9 @@ export default function Show() {
                     <input
                       name="payment_method"
                       value={"Transfer-BCA"}
+                      defaultChecked={
+                        payment.payment_method == "Transfer-BCA" ? true : false
+                      }
                       onClick={handleChange}
                       type="radio"
                       className="flex ml-2"
@@ -670,6 +720,9 @@ export default function Show() {
                     <input
                       name="payment_method"
                       value={"Transfer-BNI"}
+                      defaultChecked={
+                        payment.payment_method == "Transfer-BNI" ? true : false
+                      }
                       onClick={handleChange}
                       type="radio"
                       className="flex ml-4"
@@ -678,6 +731,9 @@ export default function Show() {
                     <input
                       name="payment_method"
                       value={"Transfer-BRI"}
+                      defaultChecked={
+                        payment.payment_method == "Transfer-BRI" ? true : false
+                      }
                       onClick={handleChange}
                       type="radio"
                       className="flex ml-4"
@@ -703,9 +759,10 @@ export default function Show() {
               <label>:</label>
               <input
                 name="amount_paid"
-                defaultValue={Number(balance)}
+                placeholder="Input Nominal"
+                defaultValue={payment.amount_paid}
                 type="number"
-                className="ml-2 px-2 spinner-disabled"
+                className="ml-2 px-2 spinner-disabled w-48"
                 onChange={handleChange}
               />
             </div>
@@ -714,12 +771,14 @@ export default function Show() {
               <label>:</label>
               <textarea
                 name="notes"
+                defaultValue={payment.notes}
+                placeholder="Input keterangan"
                 onChange={handleChange}
                 className="ml-2 w-64 border rounded-lg px-2"
               ></textarea>
             </div>
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 mt-2">
             <button
               onClick={() => setPaymentModalOpen(false)}
               className="flex-all-center button-danger mx-1 cursor-pointer"
@@ -753,18 +812,6 @@ export default function Show() {
                 type="date"
                 className="ml-2"
                 onChange={handleProgressDateChange}
-              />
-            </div>
-            <div className="flex items-start mt-2">
-              <label className="w-32">Pilih Tukang</label>
-              <label>:</label>
-              <Select
-                className="w-60 ml-2 outline-none"
-                onChange={(selectedOption) =>
-                  handleSelectTailorChange(selectedOption)
-                }
-                options={tailorOptions}
-                required
               />
             </div>
             <div className="flex items-start mt-2">
@@ -846,6 +893,106 @@ export default function Show() {
           </button>
         </div>
       </ShowProgressModal>
+
+      <MeasurementModal
+        title={"Detail Ukuran"}
+        isOpen={showMeasurementModalOpen}
+        onClose={() => setShowMeasurementModalOpen(false)}
+      >
+        <div className="w-150">
+          <div className="flex-all-center mt-4">
+            <div>
+              <label className="w-44">INFORMASI PELANGGAN</label>
+              <div className="flex p-2 border rounded-xl w-full mt-1">
+                <div>
+                  <div className="flex items-center">
+                    <label className="w-44">Nama Pelanggan</label>
+                    <label>:</label>
+                    <label className="ml-2">{client ? client.name : "-"}</label>
+                  </div>
+                  <div className="flex items-center mt-2">
+                    <label className="w-44">Nomor Telepon</label>
+                    <label>:</label>
+                    <label className="ml-2">
+                      {client ? client.phone : "-"}
+                    </label>
+                  </div>
+                  <div className="flex mt-2">
+                    <label className="w-44">Alamat</label>
+                    <label>:</label>
+                    <label className="ml-2 w-96 h-10">
+                      {client ? client.address : "-"}
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <label className="flex w-44 mt-4">DETAIL PENGUKURAN</label>
+              <div className="flex p-2 border rounded-xl w-full mt-1">
+                <div>
+                  <div className="flex items-center">
+                    <label className="w-44">Jenis Pakaian</label>
+                    <label>:</label>
+                    <label className="ml-2">
+                      {clothingType && clothingType.type}
+                    </label>
+                  </div>
+                  <div className="flex items-center mt-2">
+                    <label className="w-44">Tanggal Ukur</label>
+                    <label>:</label>
+                    <label className="ml-2">
+                      {measurementHistory && measurementHistory.measured_at}
+                    </label>
+                  </div>
+                  <div className="flex items-center mt-2">
+                    <label className="w-44">Diukur Oleh</label>
+                    <label>:</label>
+                    <label className="ml-2">
+                      {measurementHistory && measurementHistory.measured_by}
+                    </label>
+                  </div>
+                  <div className="mt-4">
+                    <div className="flex items-center border-b p-1 w-72">
+                      <label className="w-44">Detail Ukuran</label>
+                    </div>
+                    {measurementDetails.map((measurement, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center border-b p-1 w-72"
+                      >
+                        <label className="w-6">{index + 1}. </label>
+                        <label className="w-44">{measurement.name}</label>
+                        <label>=</label>
+                        <label className="ml-2 w-6 text-right">
+                          {measurement.value}
+                        </label>
+                        <label className="flex w-6 ml-2">cm</label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <label className="flex w-32 mt-4">Catatan tambahan :</label>
+              <label className="flex mt-2 border rounded-md w-full min-h-16 px-2 py-1">
+                {measurementHistory && measurementHistory.notes}
+              </label>
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-end mt-2">
+          <button
+            onClick={() => {
+              setShowMeasurementModalOpen(false);
+            }}
+            className="flex-all-center button-danger mx-1 cursor-pointer"
+          >
+            <Svg title="Close" c={"w-5 fill-current mx-1"}>
+              <DeleteSvg />
+            </Svg>
+            <span className="mx-1">Close</span>
+          </button>
+        </div>
+      </MeasurementModal>
     </>
   );
 }

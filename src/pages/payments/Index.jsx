@@ -98,12 +98,12 @@ export default function Index() {
             <tr className="bg-stone-200 h-10">
               <th className="th-center text-sm w-10">No.</th>
               <th className="th-center text-sm w-24">No. Pesanan</th>
+              <th className="th-center text-sm w-24">Tgl. Pesan</th>
               <th className="th-center text-sm w-56">Nama Pelanggan</th>
-              <th className="th-center text-sm w-24">Tgl. Bayar</th>
-              <th className="th-center text-sm w-32">Nominal Bayar</th>
               <th className="th-center text-sm w-32">Jenis Pembayaran</th>
               <th className="th-center text-sm w-32">Metode Bayar</th>
-              <th className="th-center text-sm">Keterangan</th>
+              <th className="th-center text-sm w-24">Tgl. Bayar</th>
+              <th className="th-center text-sm w-32">Nominal Bayar</th>
               <th className="th-center text-sm w-32">Action</th>
             </tr>
           </thead>
@@ -115,32 +115,30 @@ export default function Index() {
                 <tr className="bg-white" key={index}>
                   <td className="td-center text-sm">{index + 1}</td>
                   <td className="td-center text-sm">{order.number}</td>
+                  <td className="td-center text-sm">
+                    {FormattedDateShort(order.order_date)}
+                  </td>
                   <td className="td-left text-sm">{client.name}</td>
+                  <td className="td-center text-sm">
+                    {payment && payment.payment_status == "down_payment"
+                      ? "DP"
+                      : payment && payment.payment_status == "full_payment"
+                        ? "Pelunasan"
+                        : "Bertahap"}
+                  </td>
+                  <td className="td-center text-sm">
+                    {payment.payment_method}
+                  </td>
                   <td className="td-center text-sm">
                     {FormattedDateShort(payment.payment_date)}
                   </td>
                   <td className="td-center text-sm">
                     <div className="flex w-full">
                       <label className="w-3">Rp.</label>
-                      <label className="w-24 ml-2 text-right">
+                      <label className="w-full ml-2 text-right">
                         {Number(payment.amount_paid).toLocaleString()}
                       </label>
                     </div>
-                  </td>
-                  <td className="td-center text-sm">
-                    {payment.payment_status == "down_payment"
-                      ? "DP"
-                      : "Pelunasan"}
-                  </td>
-                  <td className="td-center text-sm">
-                    {payment.payment_method}
-                  </td>
-                  <td className="td-left text-sm">
-                    {payment.notes != "null" &&
-                    payment.notes != null &&
-                    payment.notes != ""
-                      ? payment.notes
-                      : "-"}
                   </td>
                   <td className="td-center">
                     <TdAction

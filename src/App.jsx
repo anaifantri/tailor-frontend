@@ -21,10 +21,10 @@ import TailorCreate from "@/pages/tailors/Create";
 import TailorShow from "@/pages/tailors/Show";
 import TailorEdit from "@/pages/tailors/Edit";
 
-import Clients from "@/pages/clients/Index";
-import ClientCreate from "@/pages/clients/Create";
-import ClientShow from "@/pages/clients/Show";
-import ClientEdit from "@/pages/clients/Edit";
+import Customers from "@/pages/customers/Index";
+import CustomerCreate from "@/pages/customers/Create";
+import CustomerShow from "@/pages/customers/Show";
+import CustomerEdit from "@/pages/customers/Edit";
 
 import Materials from "@/pages/materials/Index";
 import MaterialCreate from "@/pages/materials/Create";
@@ -42,7 +42,13 @@ import ClothingTypeShow from "@/pages/clothing-types/Show";
 import ClothingTypeEdit from "@/pages/clothing-types/Edit";
 
 import Payments from "@/pages/payments/Index";
+import PaymentCreate from "@/pages/payments/Create";
 import PaymentShow from "@/pages/payments/Show";
+import PaymentEdit from "@/pages/payments/Edit";
+
+import MeasurementCreate from "@/pages/measurement-histories/Create";
+import MeasurementShow from "@/pages/measurement-histories/Show";
+import MeasurementEdit from "@/pages/measurement-histories/Edit";
 
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { GuestRoute } from "@/components/GuestRoute";
@@ -94,10 +100,10 @@ const router = createBrowserRouter([
           { path: "tailors/:id", element: <TailorShow /> },
           { path: "tailors/edit/:id", element: <TailorEdit /> },
 
-          { path: "clients", element: <Clients /> },
-          { path: "clients/create", element: <ClientCreate /> },
-          { path: "clients/:id", element: <ClientShow /> },
-          { path: "clients/edit/:id", element: <ClientEdit /> },
+          { path: "customers", element: <Customers /> },
+          { path: "customers/create", element: <CustomerCreate /> },
+          { path: "customers/:id", element: <CustomerShow /> },
+          { path: "customers/edit/:id", element: <CustomerEdit /> },
 
           { path: "materials", element: <Materials /> },
           { path: "materials/create", element: <MaterialCreate /> },
@@ -116,6 +122,18 @@ const router = createBrowserRouter([
 
           { path: "payments", element: <Payments /> },
           { path: "payments/:id", element: <PaymentShow /> },
+          { path: "payments/create", element: <PaymentCreate /> },
+          { path: "payments/edit/:id", element: <PaymentEdit /> },
+
+          {
+            path: "measurement-histories/create/:id",
+            element: <MeasurementCreate />,
+          },
+          { path: "measurement-histories/:id", element: <MeasurementShow /> },
+          {
+            path: "measurement-histories/edit/:id",
+            element: <MeasurementEdit />,
+          },
         ],
       },
     ],
