@@ -25,6 +25,8 @@ export default function Create() {
     code: "",
     name: "",
     unit: "pilih",
+    initial_stock: 0,
+    stock: 0,
     description: "",
     photo: null,
   });
@@ -51,7 +53,7 @@ export default function Create() {
     } else {
       setFormData((prevData) => ({
         ...prevData,
-        [name]: e.target.value,
+        [name]: value,
       }));
     }
   };
@@ -76,6 +78,8 @@ export default function Create() {
       dataMaterial.append("name", formData.name);
       dataMaterial.append("description", formData.description);
       dataMaterial.append("unit", formData.unit);
+      dataMaterial.append("initial_stock", formData.initial_stock);
+      dataMaterial.append("stock", formData.stock);
 
       if (formData.photo) {
         dataMaterial.append("photo", formData.photo);
@@ -88,7 +92,7 @@ export default function Create() {
             "Content-Type": "mulipart/form-data",
           },
         });
-        navigate("/dashboard/materials", {
+        navigate("/dashboard/settings/materials", {
           state: {
             message: "Penambahan data kain berhasil..!!",
           },
@@ -114,11 +118,11 @@ export default function Create() {
         <form onSubmit={handleSubmit}>
           <HeaderCreate
             titleCreate="Data Kain"
-            backUrl="/dashboard/materials"
+            backUrl="/dashboard/settings/materials"
             getProcessing={processing}
           />
           <div className="grid grid-cols-3 gap-2 mt-4">
-            <div className="flex-all-center col-span-1">
+            <div className="flex-all-center col-span-1 border border-gray-200 shadow-lg rounded-xl p-10">
               <div>
                 <div className="flex-all-center">
                   {photoPreview ? (
@@ -164,15 +168,15 @@ export default function Create() {
                 )}
               </div>
             </div>
-            <div className="flex p-2 border rounded-xl col-span-2">
+            <div className="flex border border-gray-200 shadow-lg rounded-xl col-span-2 p-4">
               <div>
                 <div className="flex items-center">
-                  <label className="w-36">Kode Kain</label>
+                  <label className="w-36">Nomor Kain</label>
                   <input
                     type="text"
                     name="code"
-                    className="flex p-2 h-8 w-120"
-                    placeholder="Input Kode Kain"
+                    className="flex p-2 px-2 py-1 w-120"
+                    placeholder="Masukkan nomor kain"
                     autoComplete="off"
                     onChange={handleChange}
                     required
@@ -191,12 +195,12 @@ export default function Create() {
                   </span>
                 )}
                 <div className="flex items-center mt-2">
-                  <label className="w-36">Nama</label>
+                  <label className="w-36">Nama Kain</label>
                   <input
                     type="text"
                     name="name"
-                    className="flex p-2 h-8 w-120"
-                    placeholder="Input Nama Kain"
+                    className="flex p-2 px-2 py-1 w-120"
+                    placeholder="Masukkan nama kain"
                     autoComplete="off"
                     ref={nameRef}
                     onChange={handleChange}
@@ -215,12 +219,87 @@ export default function Create() {
                     {getErrors.name}
                   </span>
                 )}
+                <div className="flex items-center mt-2">
+                  <label className="w-36">Satuan</label>
+                  <select
+                    className="px-2 py-1 w-40"
+                    name="unit"
+                    value={formData.unit}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="pilih">Pilih satuan</option>
+                    <option value="meter">Meter</option>
+                    <option value="roll">Roll</option>
+                    <option value="yard">Yard</option>
+                  </select>
+                </div>
+                {getErrors.unit && (
+                  <span
+                    ref={errorRef}
+                    className={
+                      getErrors
+                        ? "flex w-full text-red-500 text-xs items-center"
+                        : "hidden"
+                    }
+                  >
+                    {getErrors.unit}
+                  </span>
+                )}
+                <div className="flex items-center mt-2">
+                  <label className="w-36">Stok Awal</label>
+                  <input
+                    type="number"
+                    placeholder="0"
+                    min={0}
+                    name="initial_stock"
+                    className="flex px-2 py-1 w-20 text-right"
+                    autoComplete="off"
+                    onChange={handleChange}
+                  />
+                </div>
+                {getErrors.initial_stock && (
+                  <span
+                    ref={errorRef}
+                    className={
+                      getErrors
+                        ? "flex w-full text-red-500 text-xs items-center"
+                        : "hidden"
+                    }
+                  >
+                    {getErrors.initial_stock}
+                  </span>
+                )}
+                <div className="flex items-center mt-2">
+                  <label className="w-36">Stok Saat ini</label>
+                  <input
+                    type="number"
+                    placeholder="0"
+                    min={0}
+                    name="stock"
+                    className="flex px-2 py-1 w-20 text-right"
+                    autoComplete="off"
+                    onChange={handleChange}
+                  />
+                </div>
+                {getErrors.stock && (
+                  <span
+                    ref={errorRef}
+                    className={
+                      getErrors
+                        ? "flex w-full text-red-500 text-xs items-center"
+                        : "hidden"
+                    }
+                  >
+                    {getErrors.stock}
+                  </span>
+                )}
                 <div className="flex mt-2">
                   <label className="w-36">Deskripsi</label>
                   <textarea
                     name="description"
                     className="flex p-1 w-120"
-                    placeholder="Input Deskripsi Kain"
+                    placeholder="Masukkan deskripsi kain"
                     rows={3}
                     onChange={handleChange}
                   />
@@ -235,34 +314,6 @@ export default function Create() {
                     }
                   >
                     {getErrors.description}
-                  </span>
-                )}
-                <div className="flex items-center mt-2">
-                  <label className="w-36">Satuan</label>
-                  <select
-                    className="h-8"
-                    name="unit"
-                    value={formData.unit}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option value="pilih">Pilih satuan</option>
-                    <option value="Pcs">Pcs</option>
-                    <option value="Meter">Meter</option>
-                    <option value="Box">Box</option>
-                    <option value="Unit">Unit</option>
-                  </select>
-                </div>
-                {getErrors.unit && (
-                  <span
-                    ref={errorRef}
-                    className={
-                      getErrors
-                        ? "flex w-full text-red-500 text-xs items-center"
-                        : "hidden"
-                    }
-                  >
-                    {getErrors.unit}
                   </span>
                 )}
               </div>

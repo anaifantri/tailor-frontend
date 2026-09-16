@@ -17,11 +17,23 @@
   .flex-all-center {
     @apply flex items-center justify-center;
   }
+  .link {
+    @apply flex justify-center items-center w-full text-stone-50 relative hover:text-stone-300 text-base p-1;
+  }
+  .link-active {
+    @apply flex justify-center items-center rounded-lg bg-stone-700 w-full text-stone-50 relative hover:text-stone-300 text-base p-1;
+  }
   .nav-link {
-    @apply flex text-base justify-center items-center w-full text-stone-50 relative group-hover:text-stone-300 cursor-pointer;
+    @apply flex text-base justify-center items-center w-full text-stone-50 relative group-hover:text-stone-300 cursor-pointer p-1;
+  }
+  .nav-link-active {
+    @apply flex text-base justify-center items-center rounded-lg w-full bg-stone-700 text-stone-50 relative group-hover:text-stone-300 cursor-pointer p-1;
   }
   .li-nav-link {
-    @apply flex my-1 w-full text-stone-700 hover:text-stone-400 text-base;
+    @apply flex my-1 w-full text-stone-700 hover:text-stone-900 text-base p-1;
+  }
+  .li-nav-link-active {
+    @apply flex my-1 w-full text-stone-700 bg-stone-200 rounded-md hover:text-stone-900 text-base p-1;
   }
   .nav-svg {
     @apply w-4 fill-current;

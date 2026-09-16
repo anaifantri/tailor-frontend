@@ -15,6 +15,7 @@ import Users from "@/pages/users/Index";
 import UserCreate from "@/pages/users/Create";
 import UserShow from "@/pages/users/Show";
 import UserEdit from "@/pages/users/Edit";
+import ChangePassword from "@/pages/users/ChangePassword";
 
 import Tailors from "@/pages/tailors/Index";
 import TailorCreate from "@/pages/tailors/Create";
@@ -50,6 +51,8 @@ import MeasurementCreate from "@/pages/measurement-histories/Create";
 import MeasurementShow from "@/pages/measurement-histories/Show";
 import MeasurementEdit from "@/pages/measurement-histories/Edit";
 
+import NotFound from "@/components/NotFound";
+
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { GuestRoute } from "@/components/GuestRoute";
 
@@ -57,6 +60,10 @@ const router = createBrowserRouter([
   // 🌐 Public Routes (Anyone can see)
   {
     path: "/",
+    element: <Login />,
+  },
+  {
+    path: "/login",
     element: <Login />,
   },
   {
@@ -72,15 +79,17 @@ const router = createBrowserRouter([
     element: <ResendEmailVerification />,
   },
   {
-    path: "/email-verify/:id/:hash",
+    path: "/verify-email/:id/:hash",
     element: <VerifyEmail />,
   },
-  // 🔓 Guest Only Routes (Redirects to /dashboard if logged in)
   {
     element: <GuestRoute />,
     children: [{ path: "/", element: <Login /> }],
   },
-  // 🔒 Protected Routes (Redirects to /login if logged out)
+  {
+    path: "*",
+    element: <NotFound />,
+  },
   {
     element: <ProtectedRoute />,
     children: [
@@ -90,40 +99,53 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <Dashboard /> },
 
-          { path: "users", element: <Users /> },
-          { path: "users/create", element: <UserCreate /> },
-          { path: "users/:id", element: <UserShow /> },
-          { path: "users/edit/:id", element: <UserEdit /> },
+          { path: "settings/users", element: <Users /> },
+          { path: "settings/users/create", element: <UserCreate /> },
+          { path: "settings/users/:id", element: <UserShow /> },
+          { path: "settings/users/edit/:id", element: <UserEdit /> },
+          {
+            path: "settings/users/change-password",
+            element: <ChangePassword />,
+          },
 
-          { path: "tailors", element: <Tailors /> },
-          { path: "tailors/create", element: <TailorCreate /> },
-          { path: "tailors/:id", element: <TailorShow /> },
-          { path: "tailors/edit/:id", element: <TailorEdit /> },
+          { path: "tailors/tailors", element: <Tailors /> },
+          { path: "tailors/tailors/create", element: <TailorCreate /> },
+          { path: "tailors/tailors/:id", element: <TailorShow /> },
+          { path: "tailors/tailors/edit/:id", element: <TailorEdit /> },
 
           { path: "customers", element: <Customers /> },
           { path: "customers/create", element: <CustomerCreate /> },
           { path: "customers/:id", element: <CustomerShow /> },
           { path: "customers/edit/:id", element: <CustomerEdit /> },
 
-          { path: "materials", element: <Materials /> },
-          { path: "materials/create", element: <MaterialCreate /> },
-          { path: "materials/:id", element: <MaterialShow /> },
-          { path: "materials/edit/:id", element: <MaterialEdit /> },
+          { path: "settings/materials", element: <Materials /> },
+          { path: "settings/materials/create", element: <MaterialCreate /> },
+          { path: "settings/materials/:id", element: <MaterialShow /> },
+          { path: "settings/materials/edit/:id", element: <MaterialEdit /> },
 
-          { path: "orders", element: <Orders /> },
-          { path: "orders/create", element: <OrderCreate /> },
-          { path: "orders/:id", element: <OrderShow /> },
-          { path: "orders/edit/:id", element: <OrderEdit /> },
+          { path: "transactions/orders", element: <Orders /> },
+          { path: "transactions/orders/create", element: <OrderCreate /> },
+          { path: "transactions/orders/:id", element: <OrderShow /> },
+          { path: "transactions/orders/edit/:id", element: <OrderEdit /> },
 
-          { path: "clothing-types", element: <ClothingTypes /> },
-          { path: "clothing-types/create", element: <ClothingTypeCreate /> },
-          { path: "clothing-types/:id", element: <ClothingTypeShow /> },
-          { path: "clothing-types/edit/:id", element: <ClothingTypeEdit /> },
+          { path: "settings/clothing-types", element: <ClothingTypes /> },
+          {
+            path: "settings/clothing-types/create",
+            element: <ClothingTypeCreate />,
+          },
+          {
+            path: "settings/clothing-types/:id",
+            element: <ClothingTypeShow />,
+          },
+          {
+            path: "settings/clothing-types/edit/:id",
+            element: <ClothingTypeEdit />,
+          },
 
-          { path: "payments", element: <Payments /> },
-          { path: "payments/:id", element: <PaymentShow /> },
-          { path: "payments/create", element: <PaymentCreate /> },
-          { path: "payments/edit/:id", element: <PaymentEdit /> },
+          { path: "transactions/payments", element: <Payments /> },
+          { path: "transactions/payments/:id", element: <PaymentShow /> },
+          { path: "transactions/payments/create", element: <PaymentCreate /> },
+          { path: "transactions/payments/edit/:id", element: <PaymentEdit /> },
 
           {
             path: "measurement-histories/create/:id",

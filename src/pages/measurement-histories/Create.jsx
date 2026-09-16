@@ -16,7 +16,7 @@ export default function Create() {
   const [processing, setProcessing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [clothingTypeOptions, setClothingTypeOptions] = useState([]);
-  const [client, setclient] = useState(null);
+  const [customer, setCustomer] = useState(null);
   const [measurementDetails, setMeasurementDetails] = useState([
     { name: "", value: 0 },
   ]);
@@ -76,7 +76,7 @@ export default function Create() {
       Authorization: `Bearer ${token}`,
       "Content-Type": "mulipart/form-data",
     };
-    const requestClient = api.get("/api/clients/" + id, {
+    const requestCustomers = api.get("/api/customers/" + id, {
       headers,
     });
     const requestClothingTypes = api.get("/api/clothing-types", {
@@ -86,21 +86,20 @@ export default function Create() {
     const fetchMultipleData = async () => {
       try {
         setLoading(true);
-        const [responseClient, responseClothingTypes] = await Promise.all([
-          requestClient,
+        const [responseCustomers, responseClothingTypes] = await Promise.all([
+          requestCustomers,
           requestClothingTypes,
         ]);
 
-        const formattedClothingTypeOptions = responseClothingTypes.data.map(
-          (item) => ({
+        const formattedClothingTypeOptions =
+          responseClothingTypes.data.data.map((item) => ({
             value: item.hashed_id,
             label: item.type,
             measurement_details: item.measurement_details,
-          }),
-        );
+          }));
 
         setClothingTypeOptions(formattedClothingTypeOptions);
-        setclient(responseClient.data.client);
+        setCustomer(responseCustomers.data.customer);
       } catch (err) {
         if (!err?.response) {
           setError("No Server Response..!!");
@@ -133,11 +132,7 @@ export default function Create() {
     setGetErrors("");
 
     const measurementHistory = new FormData();
-    measurementHistory.append("client_id", client.hashed_id);
-    measurementHistory.append(
-      "tailor_id",
-      "eyJpdiI6IlIxb1QzNW5aS1NTVEVkeWV5dks5MGc9PSIsInZhbHVlIjoiZzBheGlIR1NMLzBuQUZTSmlvOEMrUT09IiwibWFjIjoiNjBjMTY3Y2M5YTAyMzU2MDNlYTRmNjhmNDAxMzllZmIyZmE3NmFmOTJlZjdlNzBjNDAwMTgwYWU0ZThkY2E0NSIsInRhZyI6IiJ9",
-    );
+    measurementHistory.append("customer_id", customer.hashed_id);
     measurementHistory.append("clothing_type_id", formData.clothing_type_id);
     measurementHistory.append("measured_by", formData.measured_by);
     measurementHistory.append("measured_at", formData.measured_at);
@@ -159,7 +154,7 @@ export default function Create() {
           },
         },
       );
-      navigate("/dashboard/clients/" + id, {
+      navigate("/dashboard/customers/" + id, {
         state: {
           message: "Penambahan data riwayat pengukuran berhasil..!!",
         },
@@ -189,38 +184,44 @@ export default function Create() {
         <form onSubmit={handleSubmit}>
           <HeaderCreate
             titleCreate="Data Pengukuran"
-            backUrl={"/dashboard/clients/" + id}
+            backUrl={"/dashboard/customers/" + id}
             getProcessing={processing}
           />
           <div className="flex-all-center mt-4">
             <div>
-              <label className="w-44">INFORMASI PELANGGAN</label>
-              <div className="flex p-2 border rounded-xl w-full mt-1">
+              <label className="w-44 ml-2 font-semibold">
+                INFORMASI PELANGGAN
+              </label>
+              <div className="flex p-4 border border-gray-200 shadow-lg rounded-xl w-full mt-1">
                 <div>
                   <div className="flex items-center">
                     <label className="w-44">Nama Pelanggan</label>
                     <label>:</label>
-                    <label className="ml-2">{client ? client.name : "-"}</label>
+                    <label className="ml-2">
+                      {customer ? customer.name : "-"}
+                    </label>
                   </div>
                   <div className="flex items-center mt-2">
                     <label className="w-44">Nomor Telepon</label>
                     <label>:</label>
                     <label className="ml-2">
-                      {client ? client.phone : "-"}
+                      {customer ? customer.phone : "-"}
                     </label>
                   </div>
                   <div className="flex mt-2">
                     <label className="w-44">Alamat</label>
                     <label>:</label>
                     <label className="ml-2 w-96 h-10">
-                      {client ? client.address : "-"}
+                      {customer ? customer.address : "-"}
                     </label>
                   </div>
                 </div>
               </div>
 
-              <label className="flex w-44 mt-4">DETAIL PENGUKURAN</label>
-              <div className="flex p-2 border rounded-xl w-full mt-1">
+              <label className="flex w-44 mt-4 ml-2 font-semibold">
+                DETAIL PENGUKURAN
+              </label>
+              <div className="flex p-4 border border-gray-200 shadow-lg rounded-xl w-full mt-1">
                 <div>
                   <div className="flex items-center">
                     <label className="w-44">Diukur Oleh</label>
@@ -230,9 +231,22 @@ export default function Create() {
                       onChange={handleChange}
                       type="text"
                       className="ml-2 px-2 w-72"
-                      placeholder="Input nama pengukur"
+                      placeholder="Masukkan nama pengukur"
+                      required
                     />
                   </div>
+                  {getErrors?.measured_by && (
+                    <span
+                      ref={errorRef}
+                      className={
+                        getErrors
+                          ? "flex w-full text-red-500 text-xs items-center"
+                          : "hidden"
+                      }
+                    >
+                      {getErrors?.measured_by}
+                    </span>
+                  )}
                   <div className="flex items-center mt-2">
                     <label className="w-44">Tanggal Ukur</label>
                     <label>:</label>
@@ -240,9 +254,24 @@ export default function Create() {
                       name="measured_at"
                       onChange={handleChange}
                       type="date"
+                      value={formData.measured_at}
                       className="ml-2 px-2"
+                      required
                     />
                   </div>
+
+                  {getErrors?.measured_at && (
+                    <span
+                      ref={errorRef}
+                      className={
+                        getErrors
+                          ? "flex w-full text-red-500 text-xs items-center"
+                          : "hidden"
+                      }
+                    >
+                      {getErrors?.measured_at}
+                    </span>
+                  )}
                   <div className="flex items-center mt-2">
                     <label className="w-44">Pilih Jenis Pakaian</label>
                     <label>:</label>
@@ -252,17 +281,30 @@ export default function Create() {
                         handleSelectTypeChange(selectedOption)
                       }
                       options={clothingTypeOptions}
+                      required
                     />
                   </div>
+                  {getErrors?.clothing_type_id && (
+                    <span
+                      ref={errorRef}
+                      className={
+                        getErrors
+                          ? "flex w-full text-red-500 text-xs items-center"
+                          : "hidden"
+                      }
+                    >
+                      {getErrors?.clothing_type_id}
+                    </span>
+                  )}
                   <div className="mt-4">
-                    <div className="flex items-center border-b p-1 w-72">
+                    <div className="flex items-center border-b p-1 w-96">
                       <label className="w-44">Bagian yang perlu di ukur</label>
                     </div>
                     {measurementsLength != 0 &&
                       measurementDetails.map((measurement, index) => (
                         <div
                           key={index}
-                          className="flex items-center border-b p-1 w-72"
+                          className="flex items-center border-b p-1 w-96"
                         >
                           <label className="w-6">{index + 1}. </label>
                           {index >= measurementsLength ? (
@@ -270,11 +312,11 @@ export default function Create() {
                               type="text"
                               name="name"
                               onChange={(e) => handleMeasurements(e, index)}
-                              className="w-36 px-1"
-                              placeholder="Input Tambahan"
+                              className="w-56 px-1"
+                              placeholder="Tambahan"
                             />
                           ) : (
-                            <label className="w-36">{measurement.name}</label>
+                            <label className="w-56">{measurement.name}</label>
                           )}
                           <input
                             type="number"
@@ -287,16 +329,43 @@ export default function Create() {
                         </div>
                       ))}
                   </div>
+                  {getErrors?.measurement_details && (
+                    <span
+                      ref={errorRef}
+                      className={
+                        getErrors
+                          ? "flex w-full text-red-500 text-xs items-center"
+                          : "hidden"
+                      }
+                    >
+                      {getErrors?.measurement_details}
+                    </span>
+                  )}
                 </div>
               </div>
 
-              <label className="flex w-32 mt-4">Catatan tambahan :</label>
+              <label className="flex w-32 mt-4 ml-2 font-semibold">
+                Keterangan :
+              </label>
               <textarea
                 name="notes"
                 rows={4}
                 onChange={handleChange}
                 className="w-full mt-1 border rounded-lg px-2"
+                required
               ></textarea>
+              {getErrors?.notes && (
+                <span
+                  ref={errorRef}
+                  className={
+                    getErrors
+                      ? "flex w-full text-red-500 text-xs items-center"
+                      : "hidden"
+                  }
+                >
+                  {getErrors?.notes}
+                </span>
+              )}
             </div>
           </div>
         </form>

@@ -39,7 +39,7 @@ export default function DashboardLayout() {
     <>
       <HeaderLayout />
       <main>
-        <div className="flex w-full min-h-screen justify-center p-2 text-sm bg-stone-50 z-0">
+        <div className="flex w-full min-h-screen justify-center px-10 py-4 text-sm bg-stone-50 z-0">
           {user && !user.email_verified_at ? (
             <div className="text-red-700 text-xs">
               <div className="flex-all-center">
@@ -70,15 +70,6 @@ export default function DashboardLayout() {
                 </span>
               </div>
               <div className="flex-all-center mt-4">
-                {/* <Link
-                  to={"/resend-email-verification"}
-                  className="flex-all-center mx-1 button-success cursor-pointer"
-                >
-                  <Svg title="Resend" c={"w-3 fill-current mx-1"}>
-                    <EmailSvg />
-                  </Svg>
-                  <span className="mx-1">Resend Email Verification</span>
-                </Link> */}
                 <form onSubmit={handleSubmit}>
                   <div className="flex-all-center">
                     <button

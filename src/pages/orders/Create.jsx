@@ -6,15 +6,26 @@ import Select from "react-select";
 import api from "@/apiService";
 import LoadingData from "@/Components/LoadingData";
 import FormattedDateLong from "@/Utils/FormattedDateLong";
+import FormattedDateShort from "@/Utils/FormattedDateShort";
 import MeasurementModal from "@/components/Modal";
+import CustomerModal from "@/components/Modal";
+import ShowMeasurementModal from "@/components/Modal";
+import PaymentModal from "@/components/Modal";
+import OrderNotes from "@/components/OrderNotes";
+import PaymentForm from "@/components/PaymentForm";
+import CustomerForm from "@/components/CustomerForm";
+import NewMeasurementHistory from "@/components/NewMeasurementHistory";
 
 import Svg from "@/components/Svg";
-import MenuSvg from "@/Assets/Svg/MenuSvg";
+import BtnPay from "@/components/BtnPay";
+import InputSvg from "@/Assets/Svg/InputSvg";
 import HeaderCreate from "@/components/HeaderCreate";
 import BlackLogo from "@/components/BlackLogo";
 import DeleteSvg from "@/Assets/Svg/DeleteSvg";
 import CheckSvg from "@/Assets/Svg/CheckSvg";
+import ReloadSvg from "@/Assets/Svg/ReloadSvg";
 import ArrowSvg from "@/assets/Svg/ArrowSvg";
+import AddSvg from "@/assets/Svg/AddSvg";
 
 export default function Create() {
   const navigate = useNavigate();
@@ -24,23 +35,31 @@ export default function Create() {
   const today = new Intl.DateTimeFormat("en-CA").format(new Date());
 
   const errorRef = useRef();
-  const clientRef = useRef(null);
+  const customerRef = useRef(null);
   const materialRef = useRef(null);
   const clothingTypeRef = useRef(null);
   const qtyRef = useRef(null);
   const priceRef = useRef(null);
   const fittingDateRef = useRef(null);
   const dueDateRef = useRef(null);
+  const amountPaidRef = useRef(null);
 
   const [subTotal, setSubTotal] = useState(0);
   const [downPayment, setDownPayment] = useState(0);
   const [balance, setBalance] = useState(0);
+  const [discount, setDiscount] = useState(0);
+
   const [showDetail, setShowDetail] = useState([]);
   const [measurementHistories, setMeasurementHistories] = useState(null);
   const [orderDetailIndex, setOrderDetailIndex] = useState(null);
+  const [measurements, setMeasurements] = useState(null);
+
+  const [measurementModalOpen, setMeasurementModalOpen] = useState(false);
   const [showMeasurementModalOpen, setShowMeasurementModalOpen] =
     useState(false);
-  const [measurementHistoryId, setMeasurementHistoryId] = useState(null);
+  const [customerModalOpen, setCustomerModalOpen] = useState(false);
+  const [showInputMeasurements, setShowInputMeasurements] = useState(false);
+  const [downPaymentModalOpen, setDownPaymentModalOpen] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -60,25 +79,46 @@ export default function Create() {
     },
   ]);
 
-  const [client, setClient] = useState(null);
-  const [clientOptions, setClientOptions] = useState([]);
+  const [newCustomer, setNewCustomer] = useState({
+    code: "",
+    name: "",
+    address: "",
+    email: "",
+    phone: "",
+  });
+
+  const [customer, setCustomer] = useState(null);
+  const [customerOptions, setCustomerOptions] = useState([]);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [clothingTypeOptions, setClothingTypeOptions] = useState([]);
+  const [clothingTypes, setClothingTypes] = useState([]);
   const [materialOptions, setMaterialOptions] = useState([]);
 
   const [orderDetails, setOrderDetails] = useState([]);
 
   const [formData, setFormData] = useState({
-    client_id: "",
+    customer_id: "",
+    number: "",
     order_date: today,
     fitting_date: "",
     due_date: "",
+    discount: 0,
     tax: 0,
     total: 0,
     amount_paid: 0,
     payment_method: "",
+    payment_notes: "",
     payment_date: today,
-    notes: "",
   });
+
+  const handleCustomerChange = (e) => {
+    console.log(e.target.value);
+    const { name, value } = e.target;
+    setNewCustomer((prevNewCustomer) => ({
+      ...prevNewCustomer,
+      [name]: value,
+    }));
+  };
 
   const handleBtnDetail = (index) => {
     if (showDetail.includes(index)) {
@@ -88,20 +128,29 @@ export default function Create() {
     }
   };
 
-  const handleMeasurementHistoryId = (measurementHistoryId, detailIndex) => {
-    setMeasurementHistoryId(measurementHistoryId);
+  const handleMeasurementHistory = (measurementDetails, detailIndex) => {
+    setMeasurements(measurementDetails);
     const updateOrderDetails = [...orderDetails];
-    updateOrderDetails[detailIndex].measurement_history_id =
-      measurementHistoryId;
+    updateOrderDetails[detailIndex].measurements = measurementDetails;
     setOrderDetails(updateOrderDetails);
   };
 
-  const handleSelectClientChange = (selectedOption) => {
+  const handleSelectCustomerChange = (selectedOption) => {
     setFormData((prevFormData) => ({
       ...prevFormData,
-      client_id: selectedOption.value,
+      customer_id: selectedOption.value,
     }));
-    setClient({
+    const newCustomerOption = {
+      value: selectedOption.value,
+      label: selectedOption.name,
+      hashed_id: selectedOption.value,
+      code: selectedOption.code,
+      name: selectedOption.name,
+      address: selectedOption.address,
+      phone: selectedOption.phone,
+      email: selectedOption.email,
+    };
+    setCustomer({
       hashed_id: selectedOption.value,
       code: selectedOption.code,
       name: selectedOption.name,
@@ -109,6 +158,7 @@ export default function Create() {
       phone: selectedOption.phone,
       email: selectedOption.email,
     });
+    setSelectedCustomer(newCustomerOption);
     if (fittingDateRef.current) {
       fittingDateRef.current.focus();
     }
@@ -116,21 +166,35 @@ export default function Create() {
 
   const handleBtnMeasurement = (
     clothingTypeId,
-    clientData,
+    customerData,
     orderDetailIndex,
   ) => {
-    if (clientData == null) {
+    if (customerData == null) {
       alert("Silahkan pilih pelanggan terlebih dahulu..!!");
     } else {
-      setOrderDetailIndex(orderDetailIndex);
-      setMeasurementHistoryId(
-        orderDetails[orderDetailIndex].measurement_history_id,
+      const clothingTypeindex = clothingTypes.findIndex(
+        (type) => type.hashed_id === clothingTypeId,
       );
-      const clientId = clientData.hashed_id;
+      const formattedMeasurements = clothingTypes[
+        clothingTypeindex
+      ].measurement_details.map((item) => ({
+        name: item.measurement,
+        value: 0,
+      }));
+
+      formattedMeasurements.push({ name: "", value: 0 });
+
+      if (orderDetails[orderDetailIndex].measurement_history_id) {
+        setMeasurements(orderDetails[orderDetailIndex].measurements);
+      } else {
+        setMeasurements(formattedMeasurements);
+      }
+      setOrderDetailIndex(orderDetailIndex);
+      const customerId = customerData.hashed_id;
       const fetchData = async () => {
         try {
-          const response = await api.get("/api/getbyclientandclothing", {
-            params: { clientId, clothingTypeId },
+          const response = await api.get("/api/getbycustomerandclothing", {
+            params: { customerId, clothingTypeId },
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -153,8 +217,13 @@ export default function Create() {
       };
 
       fetchData();
-      setShowMeasurementModalOpen(true);
+      setMeasurementModalOpen(true);
     }
+  };
+
+  const handleBtnShowMeasurement = (orderDetailIndex) => {
+    setOrderDetailIndex(orderDetailIndex);
+    setShowMeasurementModalOpen(true);
   };
 
   const handleSelectMaterialChange = (selectedOption, index) => {
@@ -181,7 +250,7 @@ export default function Create() {
     } else {
       updatedRows[rowIndex].value = selectedOption.value;
       updatedRows[rowIndex].material_number = rows[index].material_number;
-      updatedRows[rowIndex].clothing_type = selectedOption.type;
+      updatedRows[rowIndex].clothing_type = selectedOption.label;
       updatedRows[rowIndex].qty = rows[index].qty;
       updatedRows[rowIndex].price = rows[index].price;
       updatedRows[rowIndex].total = rows[index].total;
@@ -194,7 +263,7 @@ export default function Create() {
       const newOrderDetail = {
         clothing_type_id: selectedOption.value,
         material_id: null,
-        measurement_history_id: null,
+        measurements: null,
         qty: 0,
         price: 0,
         fabric_consumed_meter: 0,
@@ -217,7 +286,7 @@ export default function Create() {
       const newOrderDetail = {
         clothing_type_id: selectedOption.value,
         material_id: orderDetails[rowIndex].material_id,
-        measurement_history_id: orderDetails[rowIndex].measurement_history_id,
+        measurements: orderDetails[rowIndex].measurements,
         qty: orderDetails[rowIndex].qty,
         price: orderDetails[rowIndex].price,
         fabric_consumed_meter: 0,
@@ -244,6 +313,7 @@ export default function Create() {
       if (clothingTypeRef.current) {
         clothingTypeRef.current.focus();
       }
+    } else if (name == "amount_paid") {
     }
   };
 
@@ -287,12 +357,12 @@ export default function Create() {
     }));
   };
 
-  const handleDepositChange = (e) => {
-    setDownPayment(e.target.value);
-    setBalance(Number(subTotal) - Number(e.target.value));
+  const handleDiscountChange = (e) => {
+    setDiscount(e.target.value);
+    setBalance(Number(subTotal) - Number(downPayment) - Number(e.target.value));
     setFormData((prevFormData) => ({
       ...prevFormData,
-      amount_paid: e.target.value,
+      discount: e.target.value,
     }));
   };
 
@@ -316,8 +386,8 @@ export default function Create() {
   };
 
   useEffect(() => {
-    if (clientRef.current) {
-      clientRef.current.focus();
+    if (customerRef.current) {
+      customerRef.current.focus();
     }
   }, []);
 
@@ -334,7 +404,7 @@ export default function Create() {
       Authorization: `Bearer ${token}`,
       "Content-Type": "mulipart/form-data",
     };
-    const requestClients = api.get("/api/clients", {
+    const requestCustomers = api.get("/api/customers", {
       headers,
     });
     const requestMaterials = api.get("/api/materials", {
@@ -347,35 +417,39 @@ export default function Create() {
     const fetchMultipleData = async () => {
       try {
         setLoading(true);
-        const [responseClients, responseMaterials, responseClothingTypes] =
+        const [responseCustomers, responseMaterials, responseClothingTypes] =
           await Promise.all([
-            requestClients,
+            requestCustomers,
             requestMaterials,
             requestClothingTypes,
           ]);
 
-        const formattedClientOptions = responseClients.data.map((item) => ({
-          value: item.hashed_id,
-          label: item.name,
-          code: item.code,
-          name: item.name,
-          address: item.address,
-          phone: item.phone,
-          email: item.email,
-        }));
-
-        const formattedClothingTypeOptions = responseClothingTypes.data.map(
+        const formattedcustomerOptions = responseCustomers.data.data.map(
           (item) => ({
             value: item.hashed_id,
-            label: item.type,
+            label: item.name,
+            code: item.code,
+            name: item.name,
+            address: item.address,
+            phone: item.phone,
+            email: item.email,
           }),
         );
 
-        const formattedMaterialOptions = responseMaterials.data.map((item) => ({
-          value: item.hashed_id,
-          label: item.code + " | " + item.name,
-        }));
-        setClientOptions(formattedClientOptions);
+        const formattedClothingTypeOptions =
+          responseClothingTypes.data.data.map((item) => ({
+            value: item.hashed_id,
+            label: item.type,
+          }));
+
+        const formattedMaterialOptions = responseMaterials.data.data.map(
+          (item) => ({
+            value: item.hashed_id,
+            label: item.code + " | " + item.name,
+          }),
+        );
+        setClothingTypes(responseClothingTypes.data.data);
+        setCustomerOptions(formattedcustomerOptions);
         setClothingTypeOptions(formattedClothingTypeOptions);
         setMaterialOptions(formattedMaterialOptions);
       } catch (err) {
@@ -394,38 +468,103 @@ export default function Create() {
     fetchMultipleData();
   }, []);
 
+  const handleCustomerSubmit = async (e) => {
+    e.preventDefault();
+    setGetErrors("");
+
+    const dataCustomer = new FormData();
+    dataCustomer.append("code", newCustomer.code);
+    dataCustomer.append("name", newCustomer.name);
+    dataCustomer.append("email", newCustomer.email);
+    dataCustomer.append("phone", newCustomer.phone);
+    dataCustomer.append("address", newCustomer.address);
+
+    try {
+      setProcessing(true);
+      const response = await api.post("/api/customers", dataCustomer, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "mulipart/form-data",
+        },
+      });
+      const newCustomerOption = {
+        value: response.data.customer.hashed_id,
+        label: response.data.customer.name,
+        code: response.data.customer.code,
+        name: response.data.customer.name,
+        address: response.data.customer.address,
+        phone: response.data.customer.phone,
+        email: response.data.customer.email,
+      };
+      const newCustomer = {
+        hashed_id: response.data.customer.hashed_id,
+        code: response.data.customer.code,
+        name: response.data.customer.name,
+        address: response.data.customer.address,
+        phone: response.data.customer.phone,
+        email: response.data.customer.email,
+      };
+      setCustomerOptions((customerOptions) => [
+        newCustomerOption,
+        ...customerOptions,
+      ]);
+      setSelectedCustomer(newCustomerOption);
+      setCustomer(newCustomer);
+      alert(response.data.message);
+      setCustomerModalOpen(false);
+    } catch (err) {
+      if (!err?.response) {
+        setErrorMessage("No Server Response..!!");
+      } else if (err.response?.status === 401) {
+        setErrorMessage("Unauthorized..!!");
+      } else {
+        setGetErrors(err.response.data.errors);
+      }
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setGetErrors("");
+    console.log(formData);
+
     const order = new FormData();
     order.append("user_id", user.hashed_id);
-    order.append("client_id", formData.client_id);
+    order.append("number", formData.number);
+    order.append("customer_id", formData.customer_id);
     order.append("order_date", formData.order_date);
     order.append("fitting_date", formData.fitting_date);
     order.append("due_date", formData.due_date);
+    order.append("discount", formData.discount);
     order.append("tax", formData.tax);
     order.append("total", formData.total);
     order.append("amount_paid", formData.amount_paid);
     order.append("payment_method", formData.payment_method);
     order.append("payment_date", formData.payment_date);
-    order.append("notes", formData.notes);
     orderDetails.map((orderDetail, index) => {
       order.append(
         `order_details[${index}][clothing_type_id]`,
         orderDetail.clothing_type_id,
       );
       order.append(
-        `order_details[${index}][measurement_history_id]`,
-        orderDetail.measurement_history_id,
+        `order_details[${index}][measurements]`,
+        JSON.stringify(orderDetail.measurements),
       );
       order.append(
         `order_details[${index}][material_id]`,
         orderDetail.material_id,
       );
-      order.append(`order_details[${index}][qty]`, orderDetail.qty);
+      order.append(`order_details[${index}][quantity]`, orderDetail.qty);
       order.append(`order_details[${index}][price]`, orderDetail.price);
+      order.append(
+        `order_details[${index}][fabric_consumed_meter]`,
+        orderDetail.fabric_consumed_meter,
+      );
       order.append(`order_details[${index}][notes]`, orderDetail.notes);
     });
+    console.log(orderDetails);
 
     try {
       setProcessing(true);
@@ -435,7 +574,7 @@ export default function Create() {
           "Content-Type": "mulipart/form-data",
         },
       });
-      navigate("/dashboard/orders", {
+      navigate("/dashboard/transactions/orders", {
         state: {
           message: "Penambahan data pesanan berhasil..!!",
         },
@@ -460,7 +599,7 @@ export default function Create() {
 
   return (
     <>
-      <div className="w-300">
+      <div className="w-325">
         <form onSubmit={handleSubmit}>
           <HeaderCreate
             titleCreate="Data pesanan"
@@ -478,6 +617,30 @@ export default function Create() {
                     NOTA PESANAN
                   </span>
                 </div>
+                <div className="flex-all-center mt-4">
+                  <label className="w-24">NOMOR NOTA</label>
+                  <label>:</label>
+                  <input
+                    type="text"
+                    name="number"
+                    onChange={handleChange}
+                    className="ml-2 w-60 px-2 py-1 font-semibold text-lg text-center"
+                    placeholder="Masukkan nomor nota"
+                    required
+                  />
+                </div>
+                {getErrors?.number && (
+                  <span
+                    ref={errorRef}
+                    className={
+                      getErrors
+                        ? "flex w-full text-red-500 text-xs items-center"
+                        : "hidden"
+                    }
+                  >
+                    {getErrors?.number}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -487,34 +650,58 @@ export default function Create() {
                 <label className="w-40">Nama Pelanggan</label>
                 <label>:</label>
                 <Select
-                  className="w-60 ml-2 outline-none"
+                  className="w-60 ml-2 outline-none font-semibold"
+                  placeholder="Pilih nama pelanggan"
+                  value={selectedCustomer}
                   onChange={(selectedOption) =>
-                    handleSelectClientChange(selectedOption)
+                    handleSelectCustomerChange(selectedOption)
                   }
-                  options={clientOptions}
-                  ref={clientRef}
+                  options={customerOptions}
+                  ref={customerRef}
                   required
                 />
+                <button
+                  onClick={() => setCustomerModalOpen(true)}
+                  type="button"
+                  className="flex-all-center button-primary ml-4 cursor-pointer"
+                >
+                  <Svg title="Add" c={"w-6 fill-current"}>
+                    <AddSvg />
+                  </Svg>
+                  <span className="mx-1">Pelanggan Baru</span>
+                </button>
               </div>
+              {getErrors?.customer_id && (
+                <span
+                  ref={errorRef}
+                  className={
+                    getErrors
+                      ? "flex w-full text-red-500 text-xs items-center"
+                      : "hidden"
+                  }
+                >
+                  {getErrors?.customer_id}
+                </span>
+              )}
               <div className="flex items-start mt-2">
                 <label className="w-40">Alamat</label>
                 <label>:</label>
-                <label className="ml-2 font-semibold text-sm w-100 h-14">
-                  {client ? client.address : "-"}
+                <label className="ml-4 font-semibold  w-100 h-14">
+                  {customer ? customer.address : "-"}
                 </label>
               </div>
               <div className="flex items-center mt-2">
                 <label className="w-40">No. Handphone</label>
                 <label>:</label>
-                <label className="ml-2 font-semibold text-sm">
-                  {client ? client.phone : "-"}
+                <label className="ml-4 font-semibold ">
+                  {customer ? customer.phone : "-"}
                 </label>
               </div>
               <div className="flex items-center mt-2">
                 <label className="w-40">Email</label>
                 <label>:</label>
-                <label className="ml-2 font-semibold text-sm">
-                  {client ? client.email : "-"}
+                <label className="ml-4 font-semibold ">
+                  {customer ? customer.email : "-"}
                 </label>
               </div>
             </div>
@@ -522,10 +709,22 @@ export default function Create() {
               <div className="flex items-center">
                 <label className="w-28">Tgl. Pesan</label>
                 <label>:</label>
-                <label className="font-semibold ml-2 text-teal-900">
+                <label className="font-semibold ml-2">
                   {FormattedDateLong(today)}
                 </label>
               </div>
+              {getErrors?.order_date && (
+                <span
+                  ref={errorRef}
+                  className={
+                    getErrors
+                      ? "flex w-full text-red-500 text-xs items-center"
+                      : "hidden"
+                  }
+                >
+                  {getErrors?.order_date}
+                </span>
+              )}
               <div className="flex items-center mt-2">
                 <label className="w-28">Tgl. Fitting</label>
                 <label>:</label>
@@ -537,6 +736,18 @@ export default function Create() {
                   type="date"
                 />
               </div>
+              {getErrors?.fitting_date && (
+                <span
+                  ref={errorRef}
+                  className={
+                    getErrors
+                      ? "flex w-full text-red-500 text-xs items-center"
+                      : "hidden"
+                  }
+                >
+                  {getErrors?.fitting_date}
+                </span>
+              )}
               <div className="flex items-center mt-2">
                 <label className="w-28">Tgl. Selesai</label>
                 <label>:</label>
@@ -548,6 +759,18 @@ export default function Create() {
                   type="date"
                 />
               </div>
+              {getErrors?.due_date && (
+                <span
+                  ref={errorRef}
+                  className={
+                    getErrors
+                      ? "flex w-full text-red-500 text-xs items-center"
+                      : "hidden"
+                  }
+                >
+                  {getErrors?.due_date}
+                </span>
+              )}
             </div>
           </div>
           <div className="flex-all-center border-b-2 w-full mt-2"></div>
@@ -555,22 +778,24 @@ export default function Create() {
             <table className="table-auto w-full">
               <thead>
                 <tr className="h-10 bg-stone-200">
-                  <th className="th-center text-xs w-10">No.</th>
-                  <th className="th-center text-sm">Jenis Pesanan</th>
-                  <th className="th-center text-sm w-24">Ukuran</th>
-                  <th className="th-center text-sm w-72">No. Kain</th>
-                  <th className="th-center text-sm w-16">Qty</th>
-                  <th className="th-center text-sm w-36">Harga</th>
-                  <th className="th-center text-sm w-40">Total</th>
-                  <th className="th-center text-sm w-24">Action</th>
+                  <th className="th-center w-10">No.</th>
+                  <th className="th-center w-56">Jenis Pesanan</th>
+                  <th className="th-center w-36">Ukuran</th>
+                  <th className="th-center w-96">Nomor Kain | Jenis Kain</th>
+                  <th className="th-center w-16">Qty</th>
+                  <th className="th-center w-36">Harga</th>
+                  <th className="th-center w-40">Total</th>
+                  <th className="th-center w-24">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((row, index) => (
                   <tr key={index} className="bg-white">
                     <td className="td-center">{index + 1}</td>
-                    <td className="td-left">
+                    <td className="td-center">
                       <Select
+                        className="text-left"
+                        placeholder="Pilih jenis pesanan"
                         value={
                           row.value
                             ? clothingTypeOptions.find(
@@ -587,18 +812,16 @@ export default function Create() {
                       />
                     </td>
                     <td className="td-center">
-                      {row.value &&
-                      orderDetails[index].measurement_history_id ? (
+                      {row.value && orderDetails[index].measurements ? (
                         <div className="flex-all-center w-full">
                           <button
                             type="button"
                             className={
-                              "flex-all-center text-green-700 cursor-pointer"
+                              "flex-all-center button-primary cursor-pointer"
                             }
-                            onClick={() =>
-                              handleBtnMeasurement(row.value, client, index)
-                            }
+                            onClick={() => handleBtnShowMeasurement(index)}
                           >
+                            <span className="mx-1">Lihat Ukuran</span>
                             <Svg title="Menu" c={"w-5 fill-current mx-1"}>
                               <CheckSvg />
                             </Svg>
@@ -613,21 +836,23 @@ export default function Create() {
                                 "flex-all-center button-success cursor-pointer"
                               }
                               onClick={() =>
-                                handleBtnMeasurement(row.value, client, index)
+                                handleBtnMeasurement(row.value, customer, index)
                               }
                             >
-                              <span className="mx-1">Pilih</span>
+                              <span className="mx-1">Input Ukuran</span>
                               <Svg title="Menu" c={"w-5 fill-current mx-1"}>
-                                <MenuSvg />
+                                <InputSvg />
                               </Svg>
                             </button>
                           </div>
                         )
                       )}
                     </td>
-                    <td className="td-left">
+                    <td className="td-center">
                       {row.value && (
                         <Select
+                          className="text-left"
+                          placeholder="Pilih jenis kain"
                           onChange={(selectedOption) =>
                             handleSelectMaterialChange(selectedOption, index)
                           }
@@ -696,37 +921,11 @@ export default function Create() {
                   </tr>
                 ))}
                 <tr className="h-10">
-                  <td
-                    className="td-center align-top text-sm"
-                    colSpan={5}
-                    rowSpan={3}
-                  >
-                    <div>
-                      <span className="flex mt-2 font-semibold">Catatan :</span>
-                      <div className="flex">
-                        <span className="flex w-2">1.</span>
-                        <span className="flex text-left ml-2 w-150">
-                          Lebih dari 2 bulan barang tidak diambil, segala
-                          kehilangan / kerusakan dan lain-lain diluar tanggung
-                          jawab kami
-                        </span>
-                      </div>
-                      <div className="flex">
-                        <span className="flex w-2">2.</span>
-                        <span className="flex ml-2 w-150">
-                          Dengan nota tersebut barang bisa diterima
-                        </span>
-                      </div>
-                      <div className="flex">
-                        <span className="flex w-2">3.</span>
-                        <span className="flex ml-2 w-150">
-                          Kehilangan nota pengambilan bukan tanggung jawab kami
-                        </span>
-                      </div>
-                    </div>
+                  <td className="td-center align-top " colSpan={5} rowSpan={4}>
+                    <OrderNotes />
                   </td>
-                  <td className="td-right text-sm font-semibold">Total</td>
-                  <td className="td-right text-sm font-semibold">
+                  <td className="td-right  font-semibold">Total</td>
+                  <td className="td-right  font-semibold">
                     <div className="flex w-full">
                       <label className="w-3">Rp.</label>
                       <label className="w-32 ml-2 text-right">
@@ -737,23 +936,54 @@ export default function Create() {
                   <td className="td-center bg-slate-200"></td>
                 </tr>
                 <tr className="h-10">
-                  <td className="td-right text-sm font-semibold">Uang Muka</td>
-                  <td className="td-right text-sm font-semibold">
+                  <td className="td-right  font-semibold">Uang Muka</td>
+                  <td className="td-right  font-semibold">
+                    {subTotal > 0 && downPayment <= 0 ? (
+                      <div className="flex w-full justify-end">
+                        <BtnPay action={() => setDownPaymentModalOpen(true)} />
+                      </div>
+                    ) : (
+                      <div className="flex w-full">
+                        <label className="w-5 flex">Rp.</label>
+                        <input
+                          className="flex ml-2 px-1 w-full text-right spinner-disabled text-sm"
+                          type="number"
+                          readOnly
+                          disabled={subTotal <= 0}
+                          min={0}
+                          value={downPayment}
+                          onClick={() => {
+                            setDownPaymentModalOpen(true);
+                            if (amountPaidRef.current) {
+                              amountPaidRef.current.focus();
+                            }
+                          }}
+                        />
+                      </div>
+                    )}
+                  </td>
+                  <td className="td-center bg-slate-200"></td>
+                </tr>
+                <tr className="h-10">
+                  <td className="td-right  font-semibold">Diskon</td>
+                  <td className="td-right  font-semibold">
                     <div className="flex w-full">
                       <label className="w-5 flex">Rp.</label>
                       <input
-                        className="flex ml-2 px-1 w-full text-right spinner-disabled"
+                        className="flex ml-2 px-1 w-full text-right spinner-disabled text-sm"
                         type="number"
                         min={0}
-                        onChange={handleDepositChange}
+                        disabled={subTotal <= 0}
+                        defaultValue={discount}
+                        onChange={handleDiscountChange}
                       />
                     </div>
                   </td>
                   <td className="td-center bg-slate-200"></td>
                 </tr>
                 <tr className="h-10">
-                  <td className="td-right text-sm font-semibold">Sisa</td>
-                  <td className="td-right text-sm font-semibold">
+                  <td className="td-right  font-semibold">Sisa</td>
+                  <td className="td-right  font-semibold">
                     <div className="flex w-full">
                       <label className="w-3">Rp.</label>
                       <label className="w-32 ml-2 text-right">
@@ -766,148 +996,331 @@ export default function Create() {
               </tbody>
             </table>
           </div>
+          {getErrors?.order_details && (
+            <span
+              ref={errorRef}
+              className={
+                getErrors
+                  ? "flex w-full text-red-500 text-xs items-center"
+                  : "hidden"
+              }
+            >
+              {getErrors?.order_details}
+            </span>
+          )}
         </form>
       </div>
 
       <MeasurementModal
-        title={"Pilih Ukuran"}
+        title={"Silahkan Masukkan Ukuran Baru atau Pilih ukuran lama"}
+        isOpen={measurementModalOpen}
+        onClose={() => setMeasurementModalOpen(false)}
+      >
+        <div className="flex items-center">
+          <input
+            name="measurmentOptions"
+            value={"choose"}
+            type="radio"
+            defaultChecked="true"
+            onClick={() => setShowInputMeasurements(false)}
+          />
+          <span className="flex ml-2">Pilih ukuran lama</span>
+          <input
+            className="ml-4"
+            name="measurmentOptions"
+            value={"input"}
+            type="radio"
+            onClick={() => setShowInputMeasurements(true)}
+          />
+          <span className="flex ml-2">Masukkan ukuran baru</span>
+        </div>
+        {!showInputMeasurements ? (
+          <>
+            <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm mt-4">
+              <table className="table-auto w-full divide-y divide-gray-200 bg-white text-left  text-gray-500">
+                <thead className="bg-gray-100 font-semibold text-gray-700  text-sm">
+                  <tr>
+                    <th className="px-6 py-3 text-center">No.</th>
+                    <th className="px-6 py-3 text-center">Jenis Pakaian</th>
+                    <th className="px-6 py-3 text-center">Tanggal Ukur</th>
+                    <th className="px-6 py-3 text-center">Diukur Oleh</th>
+                    <th className="px-6 py-3">Detail Ukuran</th>
+                    <th className="px-6 py-3 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {measurementHistories &&
+                    measurementHistories.map((measurement, index) => {
+                      const isShow = showDetail.includes(index);
+                      const measurementDetails = JSON.parse(
+                        measurement.measurement_details,
+                      );
+                      return (
+                        <tr
+                          key={index}
+                          className="hover:bg-gray-50 transition-colors text-sm"
+                        >
+                          <td className="px-3 py-1 text-center">{index + 1}</td>
+                          <td className="px-3 py-1 text-center">
+                            {measurement.clothing_type.type}
+                          </td>
+                          <td className="px-3 py-1 text-center">
+                            {FormattedDateShort(measurement.measured_at)}
+                          </td>
+                          <td className="px-3 py-1 text-center">
+                            {measurement.measured_by}
+                          </td>
+                          <td className="px-3 py-1">
+                            <div className="flex w-full">
+                              {isShow ? (
+                                <div className="w-72">
+                                  <div className="w-full border-b py-1">
+                                    Detail Ukuran
+                                  </div>
+                                  <div className="mt-2">
+                                    {measurementDetails.map(
+                                      (itemDetail, indexDetail) => {
+                                        return (
+                                          itemDetail.name != "" && (
+                                            <div
+                                              key={indexDetail}
+                                              className="flex items-start"
+                                            >
+                                              <label className="w-6">
+                                                {indexDetail + 1}.{" "}
+                                              </label>
+                                              <label className="w-36">
+                                                {itemDetail.name}
+                                              </label>
+                                              <label>=</label>
+                                              <label className="ml-2">
+                                                {itemDetail.value}
+                                              </label>
+                                              <label className="flex w-6 ml-2">
+                                                cm
+                                              </label>
+                                            </div>
+                                          )
+                                        );
+                                      },
+                                    )}
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="w-72">
+                                  Tampilkan Detail Ukuran
+                                </div>
+                              )}
+
+                              <button
+                                type="button"
+                                className="flex justify-center items-center w-4 mx-auto hover:text-stone-900 cursor-pointer"
+                                onClick={() => handleBtnDetail(index)}
+                              >
+                                <Svg
+                                  title="Arrow"
+                                  c={
+                                    isShow
+                                      ? "nav-svg w-5 fill-current rotate-180"
+                                      : "nav-svg w-5 fill-current"
+                                  }
+                                >
+                                  <ArrowSvg />
+                                </Svg>
+                              </button>
+                            </div>
+                          </td>
+                          <td className="px-3 py-1 text-center">
+                            <div className="w-full flex-all-center p-1 my-1">
+                              <input
+                                name="measurement_history_id"
+                                type="radio"
+                                value={measurement.hashed_id}
+                                onClick={() =>
+                                  handleMeasurementHistory(
+                                    measurementDetails,
+                                    orderDetailIndex,
+                                  )
+                                }
+                              />
+                              <label className="ml-1">Pilih</label>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+              {!measurementHistories ||
+                (measurementHistories.length == 0 && (
+                  <div className="w-full flex-all-center text-red-700 p-2">
+                    Belum ada ukuran untuk pelanggan dan jenis pakaian yang
+                    dipilih...!! silahkan input data pengukuran terlebih dahulu.
+                  </div>
+                ))}
+            </div>
+            <div className="flex justify-end mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (measurements == null) {
+                    alert("Silahkan pilih ukuran terlebih dahulu..!!");
+                  } else {
+                    setMeasurementModalOpen(false);
+                  }
+                }}
+                className="flex-all-center button-success px-2 cursor-pointer"
+              >
+                <Svg title="Close" c={"w-5 fill-current"}>
+                  <CheckSvg />
+                </Svg>
+                <span className="ml-1">Submit</span>
+              </button>
+            </div>
+          </>
+        ) : (
+          <NewMeasurementHistory
+            measurements={measurements}
+            setOrderDetails={setOrderDetails}
+            orderDetails={orderDetails}
+            setMeasurements={setMeasurements}
+            customer={customer}
+            indexOrderDetail={orderDetailIndex}
+            clothingTypeId={orderDetails[orderDetailIndex]?.clothing_type_id}
+            clothingType={rows[orderDetailIndex]?.clothing_type}
+            today={today}
+            setMeasurementModalOpen={setMeasurementModalOpen}
+          ></NewMeasurementHistory>
+        )}
+      </MeasurementModal>
+
+      <ShowMeasurementModal
+        title={"Detail Ukuran"}
         isOpen={showMeasurementModalOpen}
         onClose={() => setShowMeasurementModalOpen(false)}
       >
-        <div>
-          <table className="table-auto mt-2 w-full">
-            <thead>
-              <tr className="h-10 bg-stone-200">
-                <th className="th-center w-10">No.</th>
-                <th className="th-center w-32">Jenis Pakaian</th>
-                <th className="th-center w-28">Tanggal Ukur</th>
-                <th className="th-center w-60">Diukur Oleh</th>
-                <th className="th-center w-72">Detail Ukuran</th>
-                <th className="th-center w-32">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {measurementHistories &&
-                measurementHistories.map((measurement, index) => {
-                  const isShow = showDetail.includes(index);
-                  const measurementDetails = JSON.parse(
-                    measurement.measurement_details,
-                  );
-                  return (
-                    <tr className="bg-white" key={index}>
-                      <td className="td-center">{index + 1}</td>
-                      <td className="td-center">
-                        {measurement.clothing_type.type}
-                      </td>
-                      <td className="td-center">{measurement.measured_at}</td>
-                      <td className="td-left"></td>
-                      <td className="td-left">
-                        <div className="flex w-full">
-                          {isShow ? (
-                            <div className="w-72">
-                              <div className="w-full border-b py-1">
-                                Detail Ukuran
-                              </div>
-                              <div className="mt-2">
-                                {measurementDetails.map(
-                                  (itemDetail, indexDetail) => (
-                                    <div
-                                      key={indexDetail}
-                                      className="flex items-start"
-                                    >
-                                      <label className="w-6">
-                                        {indexDetail + 1}.{" "}
-                                      </label>
-                                      <label className="w-36">
-                                        {itemDetail.name}
-                                      </label>
-                                      <label>=</label>
-                                      <label className="ml-2">
-                                        {itemDetail.value}
-                                      </label>
-                                      <label className="flex w-6 ml-2">
-                                        cm
-                                      </label>
-                                    </div>
-                                  ),
-                                )}
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="w-72">Tampilkan Detail Ukuran</div>
-                          )}
-
-                          <button
-                            type="button"
-                            className="flex justify-center items-center w-4 mx-auto hover:text-stone-900 cursor-pointer"
-                            onClick={() => handleBtnDetail(index)}
-                          >
-                            <Svg
-                              title="Arrow"
-                              c={
-                                isShow
-                                  ? "nav-svg w-5 fill-current rotate-180"
-                                  : "nav-svg w-5 fill-current"
-                              }
-                            >
-                              <ArrowSvg />
-                            </Svg>
-                          </button>
-                        </div>
-                      </td>
-                      <td className="td-center">
-                        <div className="w-full flex-all-center p-1 my-1">
-                          <input
-                            name="measurement_history_id"
-                            type="radio"
-                            value={measurement.hashed_id}
-                            defaultChecked={
-                              measurementHistoryId == measurement.hashed_id
-                                ? true
-                                : false
-                            }
-                            onClick={() =>
-                              handleMeasurementHistoryId(
-                                measurement.hashed_id,
-                                orderDetailIndex,
-                              )
-                            }
-                          />
-                          <label className="ml-1">Pilih</label>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-            </tbody>
-          </table>
-          {!measurementHistories ||
-            (measurementHistories.length == 0 && (
-              <div className="w-full flex-all-center text-red-700 p-2">
-                Belum ada ukuran untuk pelanggan dan jenis pakaian yang
-                dipilih...!! silahkan input data pengukuran terlebih dahulu.
+        {showMeasurementModalOpen && (
+          <div>
+            <div className="p-4 border border-gray-200 shadow-lg rounded-xl w-full mt-4">
+              <div className="flex items-center">
+                <label className="w-44">Nama Pelanggan</label>
+                <label>:</label>
+                <label className="ml-2">{customer?.name}</label>
               </div>
-            ))}
-        </div>
-        <div className="flex justify-end mt-2">
+              <div className="flex items-center mt-2">
+                <label className="w-44">Jenis Pakaian</label>
+                <label>:</label>
+                <label className="ml-2">
+                  {rows[orderDetailIndex]?.clothing_type}
+                </label>
+              </div>
+              <div className="mt-4">
+                <div className="flex items-center border-b p-1 w-96">
+                  <label className="w-44">Bagian yang di ukur</label>
+                </div>
+                {orderDetails[orderDetailIndex].measurements.map(
+                  (measurement, index) => {
+                    return (
+                      measurement.name != "" && (
+                        <div
+                          key={index}
+                          className="flex items-center border-b p-1 w-96"
+                        >
+                          <label className="w-6">{index + 1}. </label>
+                          <label className="w-56">{measurement.name}</label>
+                          <label className="ml-4">{measurement.value}</label>
+                          <label className="flex w-6 ml-2">cm</label>
+                        </div>
+                      )
+                    );
+                  },
+                )}
+              </div>
+            </div>
+            <div className="flex justify-end mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMeasurementModalOpen(false);
+                }}
+                className="flex-all-center button-danger px-2 cursor-pointer"
+              >
+                <Svg title="Close" c={"w-5 fill-current"}>
+                  <DeleteSvg />
+                </Svg>
+                <span className="ml-1">Close</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMeasurementModalOpen(true);
+                  setShowMeasurementModalOpen(false);
+                }}
+                className="flex-all-center button-success px-2 cursor-pointer ml-2"
+              >
+                <Svg title="Close" c={"w-5 fill-current"}>
+                  <ReloadSvg />
+                </Svg>
+                <span className="ml-1">Rubah Ukuran</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </ShowMeasurementModal>
+
+      <CustomerModal
+        title={"Tambah Customer Baru"}
+        isOpen={customerModalOpen}
+        onClose={() => setCustomerModalOpen(false)}
+      >
+        <CustomerForm
+          actionForm={handleCustomerSubmit}
+          actionChange={handleCustomerChange}
+          getErrors={getErrors}
+          processing={processing}
+        />
+      </CustomerModal>
+
+      <PaymentModal
+        title={"Input Pembayaran"}
+        isOpen={downPaymentModalOpen}
+        onClose={() => setDownPaymentModalOpen(false)}
+      >
+        <PaymentForm data={formData} action={handleChange} />
+        <div className="flex justify-end gap-2 mt-2">
+          <button
+            onClick={() => {
+              setDownPaymentModalOpen(false);
+              setFormData((prevData) => ({
+                ...prevData,
+                ["amount_paid"]: 0,
+                ["payment_method"]: "",
+                ["payment_notes"]: "",
+              }));
+            }}
+            className="flex-all-center button-danger mx-1 cursor-pointer"
+          >
+            <Svg title="Cancel" c={"w-5 fill-current mx-1"}>
+              <DeleteSvg />
+            </Svg>
+            <span className="mx-1">Cancel</span>
+          </button>
           <button
             type="button"
             onClick={() => {
-              if (measurementHistoryId == null) {
-                alert("Silahkan pilih ukuran terlebih dahulu..!!");
-              } else {
-                setShowMeasurementModalOpen(false);
-              }
+              setDownPaymentModalOpen(false);
+              setDownPayment(formData.amount_paid);
+              setBalance(Number(subTotal) - Number(formData.amount_paid));
             }}
-            className="flex-all-center button-success mx-1 cursor-pointer"
+            className="flex-all-center button-success px-2 cursor-pointer"
           >
-            <Svg title="Close" c={"w-5 fill-current mx-1"}>
+            <Svg title="Close" c={"w-5 fill-current"}>
               <CheckSvg />
             </Svg>
-            <span className="mx-1">Submit</span>
+            <span className="ml-1">Submit</span>
           </button>
         </div>
-      </MeasurementModal>
+      </PaymentModal>
     </>
   );
 }

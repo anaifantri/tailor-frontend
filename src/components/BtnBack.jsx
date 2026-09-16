@@ -8,7 +8,7 @@ export default function BtnBack({ backUrl }) {
       <Svg title="Back" c={"w-5 fill-current mx-1"}>
         <BackSvg />
       </Svg>
-      <span className="mx-1">Back</span>
+      <span className="mx-1">Kembali</span>
     </Link>
   );
 }

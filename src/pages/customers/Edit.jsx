@@ -106,112 +106,104 @@ export default function Edit() {
 
   return (
     <>
-      <div className="w-250">
+      <div className="w-160">
         <form onSubmit={handleSubmit}>
           <HeaderEdit
             titleEdit="Data Pelanggan"
             backUrl="/dashboard/customers"
             getProcessing={processing}
           />
-          <div className="flex-all-center mt-4">
-            <div className="border rounded-xl p-4">
-              <div className="flex items-center">
-                <label className="w-36">Nama</label>
-                <input
-                  type="text"
-                  name="name"
-                  className="flex p-2 h-8 w-120"
-                  autoComplete="off"
-                  ref={nameRef}
-                  onChange={handleChange}
-                  defaultValue={editCustomer.name}
-                  required
-                />
-              </div>
-              {getErrors.name && (
-                <span
-                  ref={errorRef}
-                  className={
-                    errorMessage
-                      ? "flex w-full text-red-500 text-xs items-center"
-                      : "hidden"
-                  }
-                >
-                  {getErrors.name}
-                </span>
-              )}
-              <div className="flex mt-2">
-                <label className="w-36">Alamat</label>
-                <textarea
-                  name="address"
-                  className="flex p-1 w-120"
-                  rows={3}
-                  onChange={handleChange}
-                  defaultValue={editCustomer.address}
-                />
-              </div>
-              {getErrors.address && (
-                <span
-                  ref={errorRef}
-                  className={
-                    errorMessage
-                      ? "flex w-full text-red-500 text-xs items-center"
-                      : "hidden"
-                  }
-                >
-                  {getErrors.address}
-                </span>
-              )}
-              <div className="flex items-center mt-2">
-                <label className="w-36">Nomor Hp.</label>
-                <input
-                  type="text"
-                  name="phone"
-                  className="flex p-2 h-8 w-120"
-                  placeholder="Input Nomor Hp."
-                  autoComplete="off"
-                  onChange={handleChange}
-                  defaultValue={editCustomer.phone}
-                  required
-                />
-              </div>
-              {getErrors.phone && (
-                <span
-                  ref={errorRef}
-                  className={
-                    errorMessage
-                      ? "flex w-full text-red-500 text-xs items-center"
-                      : "hidden"
-                  }
-                >
-                  {getErrors.phone}
-                </span>
-              )}
-              <div className="flex items-center mt-2">
-                <label className="w-36">Email</label>
-                <input
-                  type="text"
-                  name="email"
-                  className="flex p-2 h-8 w-120"
-                  placeholder="Input email"
-                  autoComplete="off"
-                  onChange={handleChange}
-                  defaultValue={editCustomer.email}
-                />
-              </div>
-              {getErrors.email && (
-                <span
-                  ref={errorRef}
-                  className={
-                    errorMessage
-                      ? "flex w-full text-red-500 text-xs items-center"
-                      : "hidden"
-                  }
-                >
-                  {getErrors.email}
-                </span>
-              )}
-            </div>
+          <div className="border border-slate-200 shadow-xl rounded-xl p-4 mt-4">
+            <label>Nama Pelanggan</label>
+            <input
+              type="text"
+              name="name"
+              placeholder="Masukkan nama pelanggan"
+              className="flex p-2 h-8 w-full mt-1"
+              autoComplete="off"
+              ref={nameRef}
+              onChange={handleChange}
+              defaultValue={editCustomer.name}
+              required
+            />
+            {getErrors.name && (
+              <span
+                ref={errorRef}
+                className={
+                  errorMessage
+                    ? "flex w-full text-red-500 text-xs items-center"
+                    : "hidden"
+                }
+              >
+                {getErrors.name}
+              </span>
+            )}
+            <label className="flex mt-4">Alamat</label>
+            <textarea
+              name="address"
+              className="flex p-1 w-120 mt-1"
+              placeholder="Masukkan alamat"
+              rows={3}
+              onChange={handleChange}
+              defaultValue={editCustomer.address}
+            />
+            {getErrors.address && (
+              <span
+                ref={errorRef}
+                className={
+                  errorMessage
+                    ? "flex w-full text-red-500 text-xs items-center"
+                    : "hidden"
+                }
+              >
+                {getErrors.address}
+              </span>
+            )}
+            <label className="flex mt-4">Nomor Hp.</label>
+            <input
+              type="text"
+              name="phone"
+              className="flex p-2 h-8 w-full mt-1"
+              placeholder="Masukkan Nomor Hp."
+              autoComplete="off"
+              onChange={handleChange}
+              defaultValue={editCustomer.phone}
+              required
+            />
+            {getErrors.phone && (
+              <span
+                ref={errorRef}
+                className={
+                  errorMessage
+                    ? "flex w-full text-red-500 text-xs items-center"
+                    : "hidden"
+                }
+              >
+                {getErrors.phone}
+              </span>
+            )}
+            <label className="flex mt-4">Email</label>
+            <input
+              type="text"
+              name="email"
+              className="flex p-2 h-8 w-full mt-1"
+              placeholder="Masukkan alamat email"
+              autoComplete="off"
+              onChange={handleChange}
+              defaultValue={editCustomer.email}
+            />
+            {getErrors.email && (
+              <span
+                ref={errorRef}
+                className={
+                  errorMessage
+                    ? "flex w-full text-red-500 text-xs items-center"
+                    : "hidden"
+                }
+              >
+                {getErrors.email}
+              </span>
+            )}
           </div>
         </form>
       </div>

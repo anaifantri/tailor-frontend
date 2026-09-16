@@ -2,13 +2,12 @@ import React, { useState, useEffect } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/apiService";
-import Select from "react-select";
 
 import FormattedDateLong from "@/Utils/FormattedDateLong";
 
 import HeaderShow from "@/components/HeaderShow";
 import BtnPay from "@/components/BtnPay";
-import MeasurementModal from "@/components/Modal";
+import ShowMeasurementModal from "@/components/Modal";
 import PaymentModal from "@/components/Modal";
 import ProgressModal from "@/components/Modal";
 import ShowProgressModal from "@/components/Modal";
@@ -61,39 +60,49 @@ export default function Show() {
   });
 
   const [measurementHistory, setMeasurementHistory] = useState(null);
-  const [client, setClient] = useState(null);
+  const [customer, setCustomer] = useState(null);
   const [clothingType, setClothingType] = useState(null);
   const [measurementDetails, setMeasurementDetails] = useState([]);
+  const [measurements, setMeasurements] = useState([]);
   const [showMeasurementModalOpen, setShowMeasurementModalOpen] =
     useState(false);
 
-  const progress = ["Antrian", "Potong", "Jahit", "Fitting", "Selesai"];
+  const progress = [
+    "Antrian",
+    "Potong",
+    "Jahit",
+    "Fitting",
+    "Selesai",
+    "Pengambilan",
+  ];
 
-  const handleShowMeasurement = (measurementHistoryId) => {
-    const fetchData = async () => {
-      try {
-        const response = await api.get(
-          "/api/measurement-histories/" + measurementHistoryId,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-        setMeasurementHistory(response.data.measurement_history);
-        setMeasurementDetails(
-          JSON.parse(response.data.measurement_history.measurement_details),
-        );
-        setClient(response.data.measurement_history.client);
-        setClothingType(response.data.measurement_history.clothing_type);
-      } catch (error) {
-        setError(error);
-        console.log(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+  const handleShowMeasurements = (clothingType, measurements) => {
+    setClothingType(clothingType);
+    setMeasurements(JSON.parse(measurements));
+    // const fetchData = async () => {
+    //   try {
+    //     const response = await api.get(
+    //       "/api/measurement-histories/" + measurementHistoryId,
+    //       {
+    //         headers: {
+    //           Authorization: `Bearer ${token}`,
+    //         },
+    //       },
+    //     );
+    //     setMeasurementHistory(response.data.measurement_history);
+    //     setMeasurementDetails(
+    //       JSON.parse(response.data.measurement_history.measurement_details),
+    //     );
+    //     setCustomer(response.data.measurement_history.customer);
+    //     setClothingType(response.data.measurement_history.clothing_type);
+    //   } catch (error) {
+    //     setError(error);
+    //     console.log(error);
+    //   } finally {
+    //     setLoading(false);
+    //   }
+    // };
+    // fetchData();
     setShowMeasurementModalOpen(true);
   };
 
@@ -219,6 +228,7 @@ export default function Show() {
             },
           });
           setOrder(response.data.order);
+          setCustomer(response.data.order.customer);
           const payments = response.data.order.payments;
           const getDownPayment = payments.find(
             (payment) => payment.payment_status === "down_payment",
@@ -316,10 +326,11 @@ export default function Show() {
 
   return (
     <>
-      <div className="w-250">
+      <div className="w-280">
         <HeaderShow
           titleShow="Data Pesanan"
-          url="/orders"
+          url="/transactions/orders"
+          deleteUrl="/orders"
           getId={order.hashed_id}
           token={token}
         />
@@ -349,28 +360,28 @@ export default function Show() {
               <label className="w-40">Nama Pelanggan</label>
               <label>:</label>
               <label className="ml-2 font-semibold text-sm">
-                {order.client.name}
+                {order.customer.name}
               </label>
             </div>
             <div className="flex items-start mt-2">
               <label className="w-40">Alamat</label>
               <label>:</label>
               <label className="ml-2 font-semibold text-sm w-100 h-14">
-                {order.client.address}
+                {order.customer.address}
               </label>
             </div>
             <div className="flex items-center mt-2">
               <label className="w-40">No. Handphone</label>
               <label>:</label>
               <label className="ml-2 font-semibold text-sm">
-                {order.client.phone}
+                {order.customer.phone}
               </label>
             </div>
             <div className="flex items-center mt-2">
               <label className="w-40">Email</label>
               <label>:</label>
               <label className="ml-2 font-semibold text-sm">
-                {order.client.email}
+                {order.customer.email}
               </label>
             </div>
           </div>
@@ -409,7 +420,7 @@ export default function Show() {
                 <th className="th-center text-sm w-20">Ukuran</th>
                 <th className="th-center text-sm w-16">Qty</th>
                 <th className="th-center text-sm w-24">price</th>
-                <th className="th-center text-sm w-28">Subtotal</th>
+                <th className="th-center text-sm w-24">Subtotal</th>
               </tr>
             </thead>
             <tbody>
@@ -540,8 +551,9 @@ export default function Show() {
                       <div className="w-full flex-all-center">
                         <button
                           onClick={() =>
-                            handleShowMeasurement(
-                              item.measurement_history.hashed_id,
+                            handleShowMeasurements(
+                              item.clothing_type.type,
+                              item.measurements,
                             )
                           }
                           title="Lihat ukuran"
@@ -557,7 +569,7 @@ export default function Show() {
                     <td className="td-right">
                       <div className="flex w-full">
                         <label className="w-3">Rp.</label>
-                        <label className="w-20 ml-2 text-right">
+                        <label className="w-full ml-2 text-right">
                           {Number(item.price).toLocaleString()}
                         </label>
                       </div>
@@ -565,7 +577,7 @@ export default function Show() {
                     <td className="td-right">
                       <div className="flex w-full">
                         <label className="w-3">Rp.</label>
-                        <label className="w-24 ml-2 text-right">
+                        <label className="w-full ml-2 text-right">
                           {Number(item.price * item.quantity).toLocaleString()}
                         </label>
                       </div>
@@ -607,7 +619,7 @@ export default function Show() {
                 <td className="td-right text-sm font-semibold">
                   <div className="flex w-full">
                     <label className="w-3">Rp.</label>
-                    <label className="w-24 ml-2 text-right">
+                    <label className="w-full ml-2 text-right">
                       {Number(order.total).toLocaleString()}
                     </label>
                   </div>
@@ -618,7 +630,7 @@ export default function Show() {
                 <td className="td-right text-sm font-semibold">
                   <div className="flex w-full">
                     <label className="w-3">Rp.</label>
-                    <label className="w-24 ml-2 text-right">
+                    <label className="w-full ml-2 text-right">
                       {Number(downPayment).toLocaleString()}
                     </label>
                   </div>
@@ -631,7 +643,7 @@ export default function Show() {
                 <td className="td-right text-sm font-semibold">
                   <div className="flex w-full">
                     <label className="w-3">Rp.</label>
-                    <label className="w-24 ml-2 text-right">
+                    <label className="w-full ml-2 text-right">
                       {Number(totalPayment).toLocaleString()}
                     </label>
                   </div>
@@ -640,9 +652,9 @@ export default function Show() {
               <tr className="h-10">
                 <td className="td-right text-sm font-semibold">
                   <div className="flex w-full justify-end">
-                    {balance > 0 && (
+                    {/* {balance > 0 && (
                       <BtnPay action={() => setPaymentModalOpen(true)} />
-                    )}
+                    )} */}
                     <span className="ml-2">Sisa</span>
                   </div>
                 </td>
@@ -894,105 +906,64 @@ export default function Show() {
         </div>
       </ShowProgressModal>
 
-      <MeasurementModal
+      <ShowMeasurementModal
         title={"Detail Ukuran"}
         isOpen={showMeasurementModalOpen}
         onClose={() => setShowMeasurementModalOpen(false)}
       >
-        <div className="w-150">
-          <div className="flex-all-center mt-4">
-            <div>
-              <label className="w-44">INFORMASI PELANGGAN</label>
-              <div className="flex p-2 border rounded-xl w-full mt-1">
-                <div>
-                  <div className="flex items-center">
-                    <label className="w-44">Nama Pelanggan</label>
-                    <label>:</label>
-                    <label className="ml-2">{client ? client.name : "-"}</label>
-                  </div>
-                  <div className="flex items-center mt-2">
-                    <label className="w-44">Nomor Telepon</label>
-                    <label>:</label>
-                    <label className="ml-2">
-                      {client ? client.phone : "-"}
-                    </label>
-                  </div>
-                  <div className="flex mt-2">
-                    <label className="w-44">Alamat</label>
-                    <label>:</label>
-                    <label className="ml-2 w-96 h-10">
-                      {client ? client.address : "-"}
-                    </label>
-                  </div>
-                </div>
+        {showMeasurementModalOpen && (
+          <div>
+            <div className="p-4 border border-gray-200 shadow-lg rounded-xl w-full mt-4">
+              <div className="flex items-center">
+                <label className="w-44">Nama Pelanggan</label>
+                <label>:</label>
+                <label className="ml-2">{customer?.name}</label>
               </div>
-
-              <label className="flex w-44 mt-4">DETAIL PENGUKURAN</label>
-              <div className="flex p-2 border rounded-xl w-full mt-1">
-                <div>
-                  <div className="flex items-center">
-                    <label className="w-44">Jenis Pakaian</label>
-                    <label>:</label>
-                    <label className="ml-2">
-                      {clothingType && clothingType.type}
-                    </label>
-                  </div>
-                  <div className="flex items-center mt-2">
-                    <label className="w-44">Tanggal Ukur</label>
-                    <label>:</label>
-                    <label className="ml-2">
-                      {measurementHistory && measurementHistory.measured_at}
-                    </label>
-                  </div>
-                  <div className="flex items-center mt-2">
-                    <label className="w-44">Diukur Oleh</label>
-                    <label>:</label>
-                    <label className="ml-2">
-                      {measurementHistory && measurementHistory.measured_by}
-                    </label>
-                  </div>
-                  <div className="mt-4">
-                    <div className="flex items-center border-b p-1 w-72">
-                      <label className="w-44">Detail Ukuran</label>
-                    </div>
-                    {measurementDetails.map((measurement, index) => (
+              <div className="flex items-center mt-2">
+                <label className="w-44">Jenis Pakaian</label>
+                <label>:</label>
+                <label className="ml-2">{clothingType}</label>
+              </div>
+              <div className="mt-4">
+                <div className="flex items-center border-b p-1 w-96">
+                  <label className="w-44">Bagian yang di ukur</label>
+                </div>
+                {measurements?.map((measurement, index) => {
+                  return (
+                    measurement.name != "" && (
                       <div
                         key={index}
-                        className="flex items-center border-b p-1 w-72"
+                        className="flex items-center border-b p-1 w-96"
                       >
                         <label className="w-6">{index + 1}. </label>
-                        <label className="w-44">{measurement.name}</label>
-                        <label>=</label>
-                        <label className="ml-2 w-6 text-right">
-                          {measurement.value}
-                        </label>
+                        <label className="w-56">{measurement.name}</label>
+                        <label className="ml-4">{measurement.value}</label>
                         <label className="flex w-6 ml-2">cm</label>
                       </div>
-                    ))}
-                  </div>
-                </div>
+                    )
+                  );
+                })}
               </div>
-              <label className="flex w-32 mt-4">Catatan tambahan :</label>
-              <label className="flex mt-2 border rounded-md w-full min-h-16 px-2 py-1">
-                {measurementHistory && measurementHistory.notes}
-              </label>
+            </div>
+            <div className="flex justify-end mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setClothingType("");
+                  setMeasurements([]);
+                  setShowMeasurementModalOpen(false);
+                }}
+                className="flex-all-center button-danger px-2 cursor-pointer"
+              >
+                <Svg title="Close" c={"w-5 fill-current"}>
+                  <DeleteSvg />
+                </Svg>
+                <span className="ml-1">Close</span>
+              </button>
             </div>
           </div>
-        </div>
-        <div className="flex justify-end mt-2">
-          <button
-            onClick={() => {
-              setShowMeasurementModalOpen(false);
-            }}
-            className="flex-all-center button-danger mx-1 cursor-pointer"
-          >
-            <Svg title="Close" c={"w-5 fill-current mx-1"}>
-              <DeleteSvg />
-            </Svg>
-            <span className="mx-1">Close</span>
-          </button>
-        </div>
-      </MeasurementModal>
+        )}
+      </ShowMeasurementModal>
     </>
   );
 }

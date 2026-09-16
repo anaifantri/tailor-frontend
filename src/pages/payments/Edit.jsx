@@ -146,7 +146,7 @@ export default function Create() {
         <div className="w-250">
           <HeaderEdit
             titleEdit="Data Pembayaran"
-            backUrl="/dashboard/payments"
+            backUrl="/dashboard/transactions/payments"
             getProcessing={processing}
           />
           <div className="grid grid-cols-2 gap-4 mt-4">

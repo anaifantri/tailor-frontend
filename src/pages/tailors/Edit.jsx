@@ -21,6 +21,21 @@ export default function Edit() {
   const [getErrors, setGetErrors] = useState({});
   const [errorMessage, setErrorMessage] = useState("");
 
+  const specialties = [
+    "Jas",
+    "Blazer",
+    "Blouse",
+    "Dress",
+    "Safari",
+    "PDH",
+    "PDL",
+    "PSH",
+    "PSR",
+    "Celana",
+    "Rok",
+    "Lainnya",
+  ];
+
   const [editTailor, setEditTailor] = useState({
     hashed_id: "",
     code: "",
@@ -145,26 +160,38 @@ export default function Edit() {
         <form onSubmit={handleSubmit}>
           <HeaderEdit
             titleEdit="Data Tukang Jahit"
-            backUrl="/dashboard/tailors"
+            backUrl="/dashboard/tailors/tailors"
             getProcessing={processing}
           />
           <div className="grid grid-cols-3 gap-2 mt-4">
-            <div className="flex-all-center col-span-1">
+            <div className="flex-all-center col-span-1 border border-gray-200 shadow-lg rounded-xl p-10">
               <div>
                 <div className="flex-all-center">
                   {photoPreview ? (
                     <img
                       src={photoPreview}
                       alt=""
-                      className="flex w-56 h-56 rounded-full mx-2"
+                      className="flex w-full mx-2"
                     />
                   ) : (
-                    <Svg title="Profile" c={"w-56 h-56 fill-current mx-2"}>
+                    <Svg title="Profile" c={"w-full fill-current mx-2"}>
                       <ProfileSvg />
                     </Svg>
                   )}
                 </div>
-                <div className="flex-all-center">
+                {getErrors.photo && (
+                  <span
+                    ref={errorRef}
+                    className={
+                      errorMessage
+                        ? "flex w-full text-red-500 text-xs items-center mt-2"
+                        : "hidden"
+                    }
+                  >
+                    {getErrors.photo}
+                  </span>
+                )}
+                <div className="flex-all-center mt-4">
                   <input
                     type="file"
                     name="photo"
@@ -181,7 +208,25 @@ export default function Edit() {
                     Ganti Foto
                   </button>
                 </div>
-                {getErrors.photo && (
+              </div>
+            </div>
+            <div className="flex border border-gray-200 shadow-lg rounded-xl col-span-2 p-4">
+              <div>
+                <div className="flex items-center">
+                  <label className="w-36">Nama</label>
+                  <input
+                    type="text"
+                    name="name"
+                    className="flex p-2 h-8 w-120"
+                    placeholder="Input Nama Lengkap"
+                    autoComplete="off"
+                    ref={nameRef}
+                    onChange={handleChange}
+                    defaultValue={editTailor.name}
+                    required
+                  />
+                </div>
+                {getErrors.name && (
                   <span
                     ref={errorRef}
                     className={
@@ -190,210 +235,144 @@ export default function Edit() {
                         : "hidden"
                     }
                   >
-                    {getErrors.photo}
+                    {getErrors.name}
+                  </span>
+                )}
+                <div className="flex mt-2">
+                  <label className="w-36">Alamat</label>
+                  <textarea
+                    name="address"
+                    className="flex p-1 w-120"
+                    rows={3}
+                    onChange={handleChange}
+                    defaultValue={editTailor.address}
+                  />
+                </div>
+                {getErrors.address && (
+                  <span
+                    ref={errorRef}
+                    className={
+                      errorMessage
+                        ? "flex w-full text-red-500 text-xs items-center"
+                        : "hidden"
+                    }
+                  >
+                    {getErrors.address}
+                  </span>
+                )}
+                <div className="flex items-center mt-2">
+                  <label className="w-36">Nomor Hp.</label>
+                  <input
+                    type="text"
+                    name="phone"
+                    className="flex p-2 h-8 w-120"
+                    placeholder="Input Nomor Hp."
+                    autoComplete="off"
+                    onChange={handleChange}
+                    defaultValue={editTailor.phone}
+                    required
+                  />
+                </div>
+                {getErrors.phone && (
+                  <span
+                    ref={errorRef}
+                    className={
+                      errorMessage
+                        ? "flex w-full text-red-500 text-xs items-center"
+                        : "hidden"
+                    }
+                  >
+                    {getErrors.phone}
+                  </span>
+                )}
+                <div className="flex items-center mt-2">
+                  <label className="w-36">Email</label>
+                  <input
+                    type="text"
+                    name="email"
+                    className="flex p-2 h-8 w-120"
+                    placeholder="Input email"
+                    autoComplete="off"
+                    onChange={handleChange}
+                    defaultValue={editTailor.email}
+                    required
+                  />
+                </div>
+                {getErrors.email && (
+                  <span
+                    ref={errorRef}
+                    className={
+                      errorMessage
+                        ? "flex w-full text-red-500 text-xs items-center"
+                        : "hidden"
+                    }
+                  >
+                    {getErrors.email}
+                  </span>
+                )}
+                <div className="flex items-center mt-2">
+                  <label className="w-36">Status</label>
+                  <input
+                    type="radio"
+                    name="is_active"
+                    value={1}
+                    checked={editTailor.is_active == 1}
+                    onChange={handleChange}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <label className="ml-2">Aktif</label>
+                  <input
+                    type="radio"
+                    name="is_active"
+                    value={0}
+                    checked={editTailor.is_active == 0}
+                    onChange={handleChange}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 ml-4"
+                  />
+                  <label className="ml-2">Non Aktif</label>
+                </div>
+                {getErrors.is_active && (
+                  <span
+                    ref={errorRef}
+                    className={
+                      errorMessage
+                        ? "flex w-full text-red-500 text-xs items-center"
+                        : "hidden"
+                    }
+                  >
+                    {getErrors.is_active}
+                  </span>
+                )}
+                <div className="flex mt-2">
+                  <label className="w-36">Keahlian</label>
+                  <div className="grid grid-cols-3 gap-4">
+                    {specialties.map((item, index) => (
+                      <div className="flex mt-2" key={index}>
+                        <input
+                          type="checkbox"
+                          value={item}
+                          checked={specialty.includes(item)}
+                          onChange={handleCbChange}
+                          className="w-5 h-5 rounded-md border-gray-300 text-indigo-600 accent-indigo-600 focus:ring-indigo-500"
+                        />
+                        <label className="ml-2">{item}</label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {getErrors.specialty && (
+                  <span
+                    ref={errorRef}
+                    className={
+                      errorMessage
+                        ? "flex w-full text-red-500 text-xs items-center"
+                        : "hidden"
+                    }
+                  >
+                    {getErrors.specialty}
                   </span>
                 )}
               </div>
-            </div>
-            <div className="col-span-2 border rounded-xl p-4">
-              <div className="flex items-center">
-                <label className="w-36">Nama</label>
-                <input
-                  type="text"
-                  name="name"
-                  className="flex p-2 h-8 w-120"
-                  placeholder="Input Nama Lengkap"
-                  autoComplete="off"
-                  ref={nameRef}
-                  onChange={handleChange}
-                  defaultValue={editTailor.name}
-                  required
-                />
-              </div>
-              {getErrors.name && (
-                <span
-                  ref={errorRef}
-                  className={
-                    errorMessage
-                      ? "flex w-full text-red-500 text-xs items-center"
-                      : "hidden"
-                  }
-                >
-                  {getErrors.name}
-                </span>
-              )}
-              <div className="flex mt-2">
-                <label className="w-36">Alamat</label>
-                <textarea
-                  name="address"
-                  className="flex p-1 w-120"
-                  rows={3}
-                  onChange={handleChange}
-                  defaultValue={editTailor.address}
-                />
-              </div>
-              {getErrors.address && (
-                <span
-                  ref={errorRef}
-                  className={
-                    errorMessage
-                      ? "flex w-full text-red-500 text-xs items-center"
-                      : "hidden"
-                  }
-                >
-                  {getErrors.address}
-                </span>
-              )}
-              <div className="flex items-center mt-2">
-                <label className="w-36">Nomor Hp.</label>
-                <input
-                  type="text"
-                  name="phone"
-                  className="flex p-2 h-8 w-120"
-                  placeholder="Input Nomor Hp."
-                  autoComplete="off"
-                  onChange={handleChange}
-                  defaultValue={editTailor.phone}
-                  required
-                />
-              </div>
-              {getErrors.phone && (
-                <span
-                  ref={errorRef}
-                  className={
-                    errorMessage
-                      ? "flex w-full text-red-500 text-xs items-center"
-                      : "hidden"
-                  }
-                >
-                  {getErrors.phone}
-                </span>
-              )}
-              <div className="flex items-center mt-2">
-                <label className="w-36">Email</label>
-                <input
-                  type="text"
-                  name="email"
-                  className="flex p-2 h-8 w-120"
-                  placeholder="Input email"
-                  autoComplete="off"
-                  onChange={handleChange}
-                  defaultValue={editTailor.email}
-                  required
-                />
-              </div>
-              {getErrors.email && (
-                <span
-                  ref={errorRef}
-                  className={
-                    errorMessage
-                      ? "flex w-full text-red-500 text-xs items-center"
-                      : "hidden"
-                  }
-                >
-                  {getErrors.email}
-                </span>
-              )}
-              <div className="flex items-center mt-2">
-                <label className="w-36">Status</label>
-                <input
-                  type="radio"
-                  name="is_active"
-                  value={1}
-                  checked={editTailor.is_active == 1}
-                  onChange={handleChange}
-                  className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                />
-                <label className="ml-2">Aktif</label>
-                <input
-                  type="radio"
-                  name="is_active"
-                  value={0}
-                  checked={editTailor.is_active == 0}
-                  onChange={handleChange}
-                  className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 ml-4"
-                />
-                <label className="ml-2">Non Aktif</label>
-              </div>
-              {getErrors.is_active && (
-                <span
-                  ref={errorRef}
-                  className={
-                    errorMessage
-                      ? "flex w-full text-red-500 text-xs items-center"
-                      : "hidden"
-                  }
-                >
-                  {getErrors.is_active}
-                </span>
-              )}
-              <div className="flex mt-2">
-                <label className="w-36">Keahlian</label>
-                <div>
-                  <div className="flex mt-2">
-                    <input
-                      type="checkbox"
-                      value={"Ukur"}
-                      checked={specialty.includes("Ukur")}
-                      onChange={handleCbChange}
-                      className="w-5 h-5 rounded-md border-gray-300 text-indigo-600 accent-indigo-600 focus:ring-indigo-500"
-                    />
-                    <label className="ml-2">Ukur</label>
-                  </div>
-                  <div className="flex mt-2">
-                    <input
-                      type="checkbox"
-                      value={"Potong"}
-                      checked={specialty.includes("Potong")}
-                      onChange={handleCbChange}
-                      className="w-5 h-5 rounded-md border-gray-300 text-indigo-600 accent-indigo-600 focus:ring-indigo-500"
-                    />
-                    <label className="ml-2">Potong</label>
-                  </div>
-                  <div className="flex mt-2">
-                    <input
-                      type="checkbox"
-                      value={"Jahit"}
-                      checked={specialty.includes("Jahit")}
-                      onChange={handleCbChange}
-                      className="w-5 h-5 rounded-md border-gray-300 text-indigo-600 accent-indigo-600 focus:ring-indigo-500"
-                    />
-                    <label className="ml-2">Jahit</label>
-                  </div>
-                  <div className="flex mt-2">
-                    <input
-                      type="checkbox"
-                      value={"Finishing & Payet"}
-                      checked={specialty.includes("Finishing & Payet")}
-                      onChange={handleCbChange}
-                      className="w-5 h-5 rounded-md border-gray-300 text-indigo-600 accent-indigo-600 focus:ring-indigo-500"
-                    />
-                    <label className="ml-2">Finishing & Payet</label>
-                  </div>
-                  <div className="flex mt-2">
-                    <input
-                      type="checkbox"
-                      value={"Lainnya"}
-                      checked={specialty.includes("Lainnya")}
-                      onChange={handleCbChange}
-                      className="w-5 h-5 rounded-md border-gray-300 text-indigo-600 accent-indigo-600 focus:ring-indigo-500"
-                    />
-                    <label className="ml-2">Lainnya</label>
-                  </div>
-                </div>
-              </div>
-              {getErrors.specialty && (
-                <span
-                  ref={errorRef}
-                  className={
-                    errorMessage
-                      ? "flex w-full text-red-500 text-xs items-center"
-                      : "hidden"
-                  }
-                >
-                  {getErrors.specialty}
-                </span>
-              )}
             </div>
           </div>
         </form>

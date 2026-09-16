@@ -9,7 +9,7 @@ export default function NavLink({ title, c, children, navSvg }) {
           {navSvg}
         </Svg>
       </UlNavLink>
-      <div className="hidden group-hover:block absolute top-4 pt-5">
+      <div className="hidden group-hover:block absolute top-7 pt-5">
         <div className="w-max border-t-2 border-t-stone-900 rounded-b-lg border border-stone-700 bg-stone-50 px-2">
           {children}
         </div>

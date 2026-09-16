@@ -76,7 +76,7 @@ export default function Index() {
 
   return (
     <>
-      <div className="w-300">
+      <div className="w-full">
         <HeaderIndex
           title="Daftar Pelanggan"
           addTitle="Tambah Pelanggan"
@@ -117,41 +117,46 @@ export default function Index() {
         )}
         {message && <SuccessMessage message={message} duration="3000" />}
         {failed && <FailedMessage message={failed} duration="3000" />}
-        <table className="table-auto mt-2 w-full">
-          <thead>
-            <tr className="h-10 bg-stone-200">
-              <th className="th-center w-10">No.</th>
-              <th className="th-center w-24">Kode</th>
-              <th className="th-center w-44">Nama</th>
-              <th className="th-center">Alamat</th>
-              <th className="th-center w-56">Email</th>
-              <th className="th-center w-36">No. Hp.</th>
-              <th className="th-center w-32">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {customers.map((customer, index) => (
-              <tr className="bg-white" key={index}>
-                <td className="td-center">{getRowNumber(index)}</td>
-                <td className="td-center">{customer.code}</td>
-                <td className="td-center">{customer.name}</td>
-                <td className="td-left">{customer.address}</td>
-                <td className="td-center">{customer.email}</td>
-                <td className="td-center">{customer.phone}</td>
-                <td className="td-center">
-                  <TdAction
-                    showUrl={`/dashboard/customers/${customer.hashed_id}`}
-                    editUrl={`/dashboard/customers/edit/${customer.hashed_id}`}
-                    deleteUrl="/api/customers/delete/"
-                    deleteId={customer.hashed_id}
-                    getToken={token}
-                    returnUrl="/dashboard/customers"
-                  />
-                </td>
+
+        <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm mt-4">
+          <table className="table-auto w-full divide-y divide-gray-200 bg-white text-left text-sm text-gray-500">
+            <thead className="bg-gray-100 text-xs uppercase font-semibold text-gray-700">
+              <tr>
+                <th className="p-3 text-center">No.</th>
+                <th className="p-3 text-center">Kode</th>
+                <th className="p-3">Nama</th>
+                <th className="p-3">Alamat</th>
+                <th className="p-3">Email</th>
+                <th className="p-3 text-center">No. Hp.</th>
+                <th className="p-3 text-center">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {customers.map((customer, index) => (
+                <tr key={index} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-3 py-1 text-center">
+                    {getRowNumber(index)}
+                  </td>
+                  <td className="px-3 py-1 text-center">{customer.code}</td>
+                  <td className="px-3 py-1">{customer.name}</td>
+                  <td className="px-3 py-1">{customer.address}</td>
+                  <td className="px-3 py-1">{customer.email}</td>
+                  <td className="px-3 py-1 text-center">{customer.phone}</td>
+                  <td className="px-3 py-1 text-center">
+                    <TdAction
+                      showUrl={`/dashboard/customers/${customer.hashed_id}`}
+                      editUrl={`/dashboard/customers/edit/${customer.hashed_id}`}
+                      deleteUrl="/api/customers/delete/"
+                      deleteId={customer.hashed_id}
+                      getToken={token}
+                      returnUrl="/dashboard/customers"
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         <Pagination
           currentPage={currentPage}

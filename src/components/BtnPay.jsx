@@ -4,6 +4,7 @@ import PaySvg from "@/Assets/Svg/PaySvg";
 export default function BtnPay({ action }) {
   return (
     <button
+      type="button"
       className={"flex-all-center button-success cursor-pointer"}
       onClick={action}
     >

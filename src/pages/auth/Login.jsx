@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import Svg from "@/components/Svg";
 import SpinSvg from "@/assets/Svg/SpinSvg";
 import LogoRiori from "@/assets/Images/logo-riori-tailor-01.png";
+import SuccessMessage from "@/components/SuccessMessage";
 
 function Login() {
   const { user, login, logout } = useAuth();
+  const location = useLocation();
+  const message = location.state?.message;
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -73,6 +76,7 @@ function Login() {
                   Sign In
                 </h2>
               </div>
+              {message && <SuccessMessage message={message} duration="3000" />}
               {errorMessage && (
                 <span
                   className={
@@ -132,9 +136,9 @@ function Login() {
                     )}
                     <Link
                       to="/forgot-password"
-                      className="mt-2 flex-all-center w-full text-stone-800 text-sm"
+                      className="mt-2 flex-all-center w-full text-teal-500 hover:text-teal-800 text-sm"
                     >
-                      Forgot password?
+                      Lupa password?
                     </Link>
                     <button
                       type="submit"

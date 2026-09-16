@@ -9,6 +9,7 @@ import TdAction from "@/components/TdAction";
 import SuccessMessage from "@/components/SuccessMessage";
 import FailedMessage from "@/components/FailedMessage";
 import LoadingData from "@/components/LoadingData";
+import Pagination from "@/components/Pagination";
 
 export default function Index() {
   const [searchParams] = useSearchParams();
@@ -23,20 +24,32 @@ export default function Index() {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+
   const handleSearchChange = (event) => {
     setSearch(event.target.value);
   };
-  // fetch data all tailor
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await api.get("/api/tailors", {
-          params: { search },
+          params: {
+            page: currentPage,
+            per_page: perPage,
+            search,
+          },
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        setTailors(response.data);
+        setTailors(response.data.data);
+        setCurrentPage(response.data.current_page);
+        setTotalPages(response.data.last_page);
+        setTotalItems(response.data.total);
       } catch (error) {
         setError(error);
         console.log(error);
@@ -45,7 +58,14 @@ export default function Index() {
       }
     };
     fetchData();
-  }, [search]);
+  }, [currentPage, perPage, search]);
+
+  const handlePerPageChange = (e) => {
+    setPerPage(Number(e.target.value));
+    setCurrentPage(1);
+  };
+
+  const getRowNumber = (index) => (currentPage - 1) * perPage + index + 1;
 
   if (loading) {
     return <LoadingData />;
@@ -57,21 +77,36 @@ export default function Index() {
 
   return (
     <>
-      <div className="w-300">
+      <div className="w-full p-4">
         <HeaderIndex
           title="Daftar Tukang Jahit"
           addTitle="Tambah Tukang Jahit"
-          addUrl="/dashboard/tailors/create"
+          addUrl="/dashboard/tailors/tailors/create"
         />
         <div className="flex items-center">
-          <div className="flex items-center mt-2">
+          <div className="flex items-center border border-gray-200 shadow-sm rounded-md py-1 px-2 mt-2">
+            <span className="text-sm text-gray-600">Tampilkan</span>
+            <select
+              value={perPage}
+              onChange={handlePerPageChange}
+              className="w-14 px-2 ml-2"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span className="text-sm text-gray-600 ml-1">data</span>
+          </div>
+          <div className="flex items-center border border-gray-200 shadow-sm rounded-md py-1 px-2 mt-2 ml-6">
             <label className="flex w-20">Pencarian</label>
             <input
               type="text"
               placeholder="search"
               value={search}
               onChange={handleSearchChange}
-              className="py-1 px-2"
+              className="px-2"
             />
           </div>
         </div>
@@ -83,45 +118,57 @@ export default function Index() {
         )}
         {message && <SuccessMessage message={message} duration="3000" />}
         {failed && <FailedMessage message={failed} duration="3000" />}
-        <table className="table-auto mt-2 w-full">
-          <thead>
-            <tr className="h-10 bg-stone-200">
-              <th className="th-center w-10">No.</th>
-              <th className="th-center w-20">Kode</th>
-              <th className="th-center w-40">Nama</th>
-              <th className="th-center">Alamat</th>
-              <th className="th-center w-60">Email</th>
-              <th className="th-center w-28">No. Hp.</th>
-              <th className="th-center w-20">Status</th>
-              <th className="th-center w-32">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tailors.map((tailor, index) => (
-              <tr className="bg-white" key={index}>
-                <td className="td-center">{index + 1}</td>
-                <td className="td-center">{tailor.code}</td>
-                <td className="td-center">{tailor.name}</td>
-                <td className="td-left">{tailor.address}</td>
-                <td className="td-center">{tailor.email}</td>
-                <td className="td-center">{tailor.phone}</td>
-                <td className="td-center">
-                  {tailor.is_active ? "Aktif" : "Non Aktif"}
-                </td>
-                <td className="td-center">
-                  <TdAction
-                    showUrl={`/dashboard/tailors/${tailor.hashed_id}`}
-                    editUrl={`/dashboard/tailors/edit/${tailor.hashed_id}`}
-                    deleteUrl="/api/tailors/delete/"
-                    deleteId={tailor.hashed_id}
-                    getToken={token}
-                    returnUrl="/dashboard/tailors"
-                  />
-                </td>
+        <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm mt-4">
+          <table className="table-auto w-full divide-y divide-gray-200 bg-white text-left text-sm text-gray-500">
+            <thead className="bg-gray-50 text-xs uppercase font-semibold text-gray-700">
+              <tr>
+                <th className="px-4 py-2 text-center">No.</th>
+                <th className="px-4 py-2 text-center">Kode</th>
+                <th className="px-4 py-2">Nama</th>
+                <th className="px-4 py-2">Alamat</th>
+                <th className="px-4 py-2">Email</th>
+                <th className="px-4 py-2 text-center">No. Hp.</th>
+                <th className="px-4 py-2 text-center">Status</th>
+                <th className="px-4 py-2 text-center">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {tailors.map((tailor, index) => (
+                <tr key={index} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-4 py-1 text-center">
+                    {getRowNumber(index)}
+                  </td>
+                  <td className="px-4 py-1 text-center">{tailor.code}</td>
+                  <td className="px-4 py-1">{tailor.name}</td>
+                  <td className="px-4 py-1">{tailor.address}</td>
+                  <td className="px-4 py-1">{tailor.email}</td>
+                  <td className="px-4 py-1">{tailor.phone}</td>
+                  <td className="px-4 py-1 text-center">
+                    {tailor.is_active ? "Aktif" : "Non Aktif"}
+                  </td>
+                  <td className="px-4 py-1 text-center">
+                    <TdAction
+                      showUrl={`/dashboard/tailors/tailors/${tailor.hashed_id}`}
+                      editUrl={`/dashboard/tailors/tailors/edit/${tailor.hashed_id}`}
+                      deleteUrl="/api/tailors/delete/"
+                      deleteId={tailor.hashed_id}
+                      getToken={token}
+                      returnUrl="/dashboard/tailors/tailors"
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          onPageChange={(page) => setCurrentPage(page)}
+          loading={loading}
+        />
       </div>
     </>
   );

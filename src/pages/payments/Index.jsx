@@ -20,7 +20,7 @@ export default function Index() {
   const { token } = useAuth();
   const message = location.state?.message;
   const failed = location.state?.failed;
-  const [payments, setPayments] = useState(null);
+  const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const currentMonthIndex = new Date().getMonth();
@@ -50,6 +50,7 @@ export default function Index() {
             Authorization: `Bearer ${token}`,
           },
         });
+        console.log(response.data);
         setPayments(response.data);
       } catch (error) {
         setError(error);
@@ -75,7 +76,7 @@ export default function Index() {
         <HeaderIndex
           title="Daftar Pembayaran"
           addTitle="Tambah Pembayaran"
-          addUrl="/dashboard/payments/create"
+          addUrl="/dashboard/transactions/payments/create"
         />
         <Filters
           monthAction={handleMonthChange}
@@ -93,68 +94,74 @@ export default function Index() {
         )}
         {message && <SuccessMessage message={message} duration="3000" />}
         {failed && <FailedMessage message={failed} duration="3000" />}
-        <table className="table-auto mt-2 w-full">
-          <thead>
-            <tr className="bg-stone-200 h-10">
-              <th className="th-center text-sm w-10">No.</th>
-              <th className="th-center text-sm w-24">No. Pesanan</th>
-              <th className="th-center text-sm w-24">Tgl. Pesan</th>
-              <th className="th-center text-sm w-56">Nama Pelanggan</th>
-              <th className="th-center text-sm w-32">Jenis Pembayaran</th>
-              <th className="th-center text-sm w-32">Metode Bayar</th>
-              <th className="th-center text-sm w-24">Tgl. Bayar</th>
-              <th className="th-center text-sm w-32">Nominal Bayar</th>
-              <th className="th-center text-sm w-32">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {payments.map((payment, index) => {
-              const order = payment.order;
-              const client = order.client;
-              return (
-                <tr className="bg-white" key={index}>
-                  <td className="td-center text-sm">{index + 1}</td>
-                  <td className="td-center text-sm">{order.number}</td>
-                  <td className="td-center text-sm">
-                    {FormattedDateShort(order.order_date)}
-                  </td>
-                  <td className="td-left text-sm">{client.name}</td>
-                  <td className="td-center text-sm">
-                    {payment && payment.payment_status == "down_payment"
-                      ? "DP"
-                      : payment && payment.payment_status == "full_payment"
-                        ? "Pelunasan"
-                        : "Bertahap"}
-                  </td>
-                  <td className="td-center text-sm">
-                    {payment.payment_method}
-                  </td>
-                  <td className="td-center text-sm">
-                    {FormattedDateShort(payment.payment_date)}
-                  </td>
-                  <td className="td-center text-sm">
-                    <div className="flex w-full">
-                      <label className="w-3">Rp.</label>
-                      <label className="w-full ml-2 text-right">
-                        {Number(payment.amount_paid).toLocaleString()}
-                      </label>
-                    </div>
-                  </td>
-                  <td className="td-center">
-                    <TdAction
-                      showUrl={`/dashboard/payments/${payment.hashed_id}`}
-                      editUrl={`/dashboard/payments/edit/${payment.hashed_id}`}
-                      deleteUrl="/api/payments/delete/"
-                      deleteId={payment.hashed_id}
-                      getToken={token}
-                      returnUrl="/dashboard/payments"
-                    />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+
+        <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm mt-4">
+          <table className="table-auto w-full divide-y divide-gray-200 bg-white text-left text-sm text-gray-500">
+            <thead className="bg-gray-50 text-xs uppercase font-semibold text-gray-700">
+              <tr>
+                <th className="px-4 py-2 text-center">No.</th>
+                <th className="px-4 py-2 text-center">No. Pesanan</th>
+                <th className="px-4 py-2 text-center">Tgl. Pesan</th>
+                <th className="px-4 py-2 text-center">Nama Pelanggan</th>
+                <th className="px-4 py-2 text-center">Jenis Pembayaran</th>
+                <th className="px-4 py-2 text-center">Metode Bayar</th>
+                <th className="px-4 py-2 text-center">Tgl. Bayar</th>
+                <th className="px-4 py-2 text-center">Nominal Bayar</th>
+                <th className="px-4 py-2 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {payments.map((payment, index) => {
+                const order = payment.order;
+                const customer = order.customer;
+                return (
+                  <tr
+                    key={index}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-4 py-1 text-center">{index + 1}</td>
+                    <td className="px-4 py-1 text-center">{order.number}</td>
+                    <td className="px-4 py-1 text-center">
+                      {FormattedDateShort(order.order_date)}
+                    </td>
+                    <td className="px-4 py-1 text-center">{customer.name}</td>
+                    <td className="px-4 py-1 text-center">
+                      {payment && payment.payment_status == "down_payment"
+                        ? "DP"
+                        : payment && payment.payment_status == "full_payment"
+                          ? "Pelunasan"
+                          : "Bertahap"}
+                    </td>
+                    <td className="px-4 py-1 text-center">
+                      {payment.payment_method}
+                    </td>
+                    <td className="px-4 py-1 text-center">
+                      {FormattedDateShort(payment.payment_date)}
+                    </td>
+                    <td className="px-4 py-1 text-center">
+                      <div className="flex w-full">
+                        <label className="w-3">Rp.</label>
+                        <label className="w-full ml-2 text-right">
+                          {Number(payment.amount_paid).toLocaleString()}
+                        </label>
+                      </div>
+                    </td>
+                    <td className="px-4 py-1 text-center">
+                      <TdAction
+                        showUrl={`/dashboard/transactions/payments/${payment.hashed_id}`}
+                        editUrl={`/dashboard/transactions/payments/edit/${payment.hashed_id}`}
+                        deleteUrl="/api/payments/delete/"
+                        deleteId={payment.hashed_id}
+                        getToken={token}
+                        returnUrl="/dashboard/transactions/payments"
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </>
   );

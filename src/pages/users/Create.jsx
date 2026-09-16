@@ -109,7 +109,7 @@ export default function Create() {
             "Content-Type": "mulipart/form-data",
           },
         });
-        navigate("/dashboard/users", {
+        navigate("/dashboard/settings/users", {
           state: {
             message: "Penambahan user baru berhasil..!!",
           },
@@ -139,7 +139,7 @@ export default function Create() {
         <form onSubmit={handleSubmit}>
           <HeaderCreate
             titleCreate="Data Pengguna"
-            backUrl="/dashboard/users"
+            backUrl="/dashboard/settings/users"
             getProcessing={processing}
           />
           <div className="grid grid-cols-3 gap-2 mt-4 w-full">
@@ -202,7 +202,6 @@ export default function Create() {
                 autoComplete="off"
                 ref={nameRef}
                 onChange={handleChange}
-                // value={formData.name}
                 required
               />
               {getErrors.name && (

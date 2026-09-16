@@ -8,7 +8,7 @@ export default function BtnCancel({ backUrl }) {
       <Svg title="Back" c={"w-5 fill-current mx-1"}>
         <DeleteSvg />
       </Svg>
-      <span className="mx-1">Cancel</span>
+      <span className="mx-1">Batal</span>
     </Link>
   );
 }

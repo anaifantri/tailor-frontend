@@ -29,12 +29,12 @@ export default function RightNav() {
         )}
         <nav className="nav-link group">
           <UlNavLink title={user.name} c="nav-link group"></UlNavLink>
-          <div className="hidden group-hover:block absolute top-4 pt-5">
+          <div className="hidden group-hover:block absolute top-7 pt-5">
             <div className="w-max border-t-2 border-t-stone-900 rounded-b-lg border border-stone-700 bg-stone-50 px-2">
               <LiNavLink
                 title="Ganti Password"
                 c="li-nav-link"
-                url={`/reset-password?token=${token}&email=${user.email}`}
+                url={`/dashboard/users/change-password`}
               >
                 <Svg title="Arrow" c={"nav-svg w-5 fill-current"}>
                   <ProfileSvg />

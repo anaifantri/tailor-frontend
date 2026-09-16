@@ -6,9 +6,9 @@ import AddSvg from "@/assets/Svg/AddSvg";
 export default function HeaderIndex({ title, addTitle, addUrl }) {
   const navigate = useNavigate();
   return (
-    <div className="flex border-b w-full">
-      <label className="flex font-semibold p-1 text-lg w-96">{title}</label>
-      <div className="flex justify-end items-center w-full">
+    <div className="grid grid-cols-2 gap-1 w-full border border-gray-200 shadow-lg rounded-lg p-2">
+      <div className="flex w-full font-semibold text-lg">{title}</div>
+      <div className="flex justify-end">
         <Link to={addUrl} className="flex-all-center button-primary">
           <Svg title="Add" c={"w-6 fill-current"}>
             <AddSvg />

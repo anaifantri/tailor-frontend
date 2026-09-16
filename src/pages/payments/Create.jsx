@@ -133,11 +133,14 @@ export default function Create() {
           },
         });
         console.log(response.data);
-        navigate("/dashboard/payments/" + response.data.payment.hashed_id, {
-          state: {
-            message: response.data.message,
+        navigate(
+          "/dashboard/transaction/payments/" + response.data.payment.hashed_id,
+          {
+            state: {
+              message: response.data.message,
+            },
           },
-        });
+        );
       } catch (err) {
         if (!err?.response) {
           setErrorMessage("No Server Response..!!");
@@ -210,8 +213,8 @@ export default function Create() {
                     {FormattedDateShort(order.order_date)}
                   </td>
                   <td className="td-center text-xs">{order.number}</td>
-                  <td className="td-left">{order.client.name}</td>
-                  <td className="td-center">{order.client.phone}</td>
+                  <td className="td-left">{order.customer.name}</td>
+                  <td className="td-center">{order.customer.phone}</td>
                   <td className="td-left p-1">
                     <div className="flex w-full">
                       {isShow ? (

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import NavLink from "@/components/NavLink";
 import LiNavLink from "@/components/LiNavLink";
 import Svg from "@/components/Svg";
@@ -11,11 +11,13 @@ import OrderSvg from "@/assets/Svg/OrderSvg";
 import EmployeeSvg from "@/assets/Svg/EmployeeSvg";
 
 export default function NavBar() {
+  const location = useLocation();
+  const currentPath = location.pathname;
   return (
     <div className="flex-all-center mx-2 col-span-11 px-16">
       <div className="grid grid-cols-5 gap-2 w-full">
         <Link
-          className="flex justify-center items-center w-full text-stone-50 relative hover:text-stone-300 text-base"
+          className={currentPath === "/dashboard" ? "link-active" : "link"}
           to={"/dashboard"}
         >
           <Svg title="Request" c={"nav-svg"}>
@@ -23,11 +25,23 @@ export default function NavBar() {
           </Svg>
           <span className="text-base ml-2">Dashboard</span>
         </Link>
-        <NavLink title="Transaksi" c="nav-link group" navSvg={<OrderSvg />}>
+        <NavLink
+          title="Transaksi"
+          c={
+            currentPath.startsWith("/dashboard/transactions")
+              ? "nav-link-active group"
+              : "nav-link group"
+          }
+          navSvg={<OrderSvg />}
+        >
           <LiNavLink
             title="Daftar Pesanan"
-            c="li-nav-link"
-            url="/dashboard/orders"
+            c={
+              currentPath.startsWith("/dashboard/transactions/orders")
+                ? "li-nav-link-active"
+                : "li-nav-link"
+            }
+            url="/dashboard/transactions/orders"
           >
             <Svg title="Arrow" c={"nav-svg w-5 fill-current rotate-270"}>
               <ArrowSvg />
@@ -35,8 +49,12 @@ export default function NavBar() {
           </LiNavLink>
           <LiNavLink
             title="Pembayaran Pesanan"
-            c="li-nav-link"
-            url="/dashboard/payments"
+            c={
+              currentPath.startsWith("/dashboard/transactions/payments")
+                ? "li-nav-link-active"
+                : "li-nav-link"
+            }
+            url="/dashboard/transactions/payments"
           >
             <Svg title="Arrow" c={"nav-svg w-5 fill-current rotate-270"}>
               <ArrowSvg />
@@ -49,7 +67,11 @@ export default function NavBar() {
           </LiNavLink>
         </NavLink>
         <Link
-          className="flex justify-center items-center w-full text-stone-50 relative hover:text-stone-300 text-base"
+          className={
+            currentPath.startsWith("/dashboard/customers")
+              ? "link-active"
+              : "link"
+          }
           to={"/dashboard/customers"}
         >
           <Svg title="Request" c={"nav-svg"}>
@@ -59,13 +81,21 @@ export default function NavBar() {
         </Link>
         <NavLink
           title="Data Tukang"
-          c="nav-link group"
+          c={
+            currentPath.startsWith("/dashboard/tailors")
+              ? "nav-link-active group"
+              : "nav-link group"
+          }
           navSvg={<EmployeeSvg />}
         >
           <LiNavLink
             title="Daftar Nama Tukang"
-            c="li-nav-link"
-            url="/dashboard/tailors"
+            c={
+              currentPath.startsWith("/dashboard/tailors/tailors")
+                ? "li-nav-link-active"
+                : "li-nav-link"
+            }
+            url="/dashboard/tailors/tailors"
           >
             <Svg title="Arrow" c={"nav-svg w-5 fill-current rotate-270"}>
               <ArrowSvg />
@@ -82,11 +112,23 @@ export default function NavBar() {
             </Svg>
           </LiNavLink>
         </NavLink>
-        <NavLink title="Pengaturan" c="nav-link group" navSvg={<SettingSvg />}>
+        <NavLink
+          title="Pengaturan"
+          c={
+            currentPath.startsWith("/dashboard/settings")
+              ? "nav-link-active group"
+              : "nav-link group"
+          }
+          navSvg={<SettingSvg />}
+        >
           <LiNavLink
             title="Data Pengguna"
-            c="li-nav-link"
-            url="/dashboard/users"
+            c={
+              currentPath.startsWith("/dashboard/settings/users")
+                ? "li-nav-link-active"
+                : "li-nav-link"
+            }
+            url="/dashboard/settings/users"
           >
             <Svg title="Arrow" c={"nav-svg w-5 fill-current rotate-270"}>
               <ArrowSvg />
@@ -94,8 +136,12 @@ export default function NavBar() {
           </LiNavLink>
           <LiNavLink
             title="Data Kain"
-            c="li-nav-link"
-            url="/dashboard/materials"
+            c={
+              currentPath.startsWith("/dashboard/settings/materials")
+                ? "li-nav-link-active"
+                : "li-nav-link"
+            }
+            url="/dashboard/settings/materials"
           >
             <Svg title="Arrow" c={"nav-svg w-5 fill-current rotate-270"}>
               <ArrowSvg />
@@ -103,8 +149,12 @@ export default function NavBar() {
           </LiNavLink>
           <LiNavLink
             title="Jenis Pakaian"
-            c="li-nav-link"
-            url="/dashboard/clothing-types"
+            c={
+              currentPath.startsWith("/dashboard/settings/clothing-types")
+                ? "li-nav-link-active"
+                : "li-nav-link"
+            }
+            url="/dashboard/settings/clothing-types"
           >
             <Svg title="Arrow" c={"nav-svg w-5 fill-current rotate-270"}>
               <ArrowSvg />

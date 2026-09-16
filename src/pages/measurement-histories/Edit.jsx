@@ -16,8 +16,8 @@ export default function Create() {
   const [loading, setLoading] = useState(true);
   const [clothingTypeOptions, setClothingTypeOptions] = useState([]);
   const [clothingType, setClothingType] = useState(null);
-  const [client, setClient] = useState(null);
-  const [clientId, setClientId] = useState(null);
+  const [customer, setCustomer] = useState(null);
+  const [customerId, setCustomerId] = useState(null);
   const [measurementDetails, setMeasurementDetails] = useState([
     { name: "", value: 0 },
   ]);
@@ -86,13 +86,12 @@ export default function Create() {
         const [responseMeasurementHistory, responseClothingTypes] =
           await Promise.all([requestMeasurementHistory, requestClothingTypes]);
 
-        const formattedClothingTypeOptions = responseClothingTypes.data.map(
-          (item) => ({
+        const formattedClothingTypeOptions =
+          responseClothingTypes.data.data.map((item) => ({
             value: item.hashed_id,
             label: item.type,
             measurement_details: item.measurement_details,
-          }),
-        );
+          }));
         setClothingTypeOptions(formattedClothingTypeOptions);
         setMeasurementHistory(
           responseMeasurementHistory.data.measurement_history,
@@ -103,9 +102,12 @@ export default function Create() {
               .measurement_details,
           ),
         );
-        setClient(responseMeasurementHistory.data.measurement_history.client);
-        setClientId(
-          responseMeasurementHistory.data.measurement_history.client.hashed_id,
+        setCustomer(
+          responseMeasurementHistory.data.measurement_history.customer,
+        );
+        setCustomerId(
+          responseMeasurementHistory.data.measurement_history.customer
+            .hashed_id,
         );
         setClothingType(
           responseMeasurementHistory.data.measurement_history.clothing_type,
@@ -148,8 +150,10 @@ export default function Create() {
     setGetErrors("");
 
     const measurementHistoryData = new FormData();
-    measurementHistoryData.append("client_id", measurementHistory.client_id);
-    measurementHistoryData.append("tailor_id", measurementHistory.tailor_id);
+    measurementHistoryData.append(
+      "customer_id",
+      measurementHistory.customer_id,
+    );
     measurementHistoryData.append(
       "clothing_type_id",
       measurementHistory.clothing_type_id,
@@ -180,7 +184,7 @@ export default function Create() {
           },
         },
       );
-      navigate("/dashboard/clients/" + clientId, {
+      navigate("/dashboard/customers/" + customerId, {
         state: {
           message: "Edit data riwayat pengukuran berhasil..!!",
         },
@@ -209,38 +213,42 @@ export default function Create() {
         <form onSubmit={handleSubmit}>
           <HeaderEdit
             titleEdit="Data Pengukuran"
-            backUrl={"/dashboard/clients/" + clientId}
+            backUrl={"/dashboard/customers/" + customerId}
             getProcessing={processing}
           />
-          <div className="flex-all-center mt-4">
+          <div className="flex-all-center mt-6 p-2">
             <div>
-              <label className="w-44">INFORMASI PELANGGAN</label>
-              <div className="flex p-2 border rounded-xl w-full mt-1">
+              <label className="font-semibold ml-2">INFORMASI PELANGGAN</label>
+              <div className="flex p-4 border border-gray-200 shadow-lg rounded-xl w-full mt-1">
                 <div>
                   <div className="flex items-center">
                     <label className="w-44">Nama Pelanggan</label>
                     <label>:</label>
-                    <label className="ml-2">{client ? client.name : "-"}</label>
+                    <label className="ml-2">
+                      {customer ? customer.name : "-"}
+                    </label>
                   </div>
                   <div className="flex items-center mt-2">
                     <label className="w-44">Nomor Telepon</label>
                     <label>:</label>
                     <label className="ml-2">
-                      {client ? client.phone : "-"}
+                      {customer ? customer.phone : "-"}
                     </label>
                   </div>
                   <div className="flex mt-2">
                     <label className="w-44">Alamat</label>
                     <label>:</label>
                     <label className="ml-2 w-96 h-10">
-                      {client ? client.address : "-"}
+                      {customer ? customer.address : "-"}
                     </label>
                   </div>
                 </div>
               </div>
 
-              <label className="flex w-44 mt-4">DETAIL PENGUKURAN</label>
-              <div className="flex p-2 border rounded-xl w-full mt-1">
+              <label className="flex font-semibold ml-2 mt-4">
+                DETAIL PENGUKURAN
+              </label>
+              <div className="flex p-4 border border-gray-200 shadow-lg rounded-xl w-full mt-1">
                 <div>
                   <div className="flex items-center">
                     <label className="w-44">Diukur Oleh</label>
@@ -294,7 +302,7 @@ export default function Create() {
                           className="flex items-center border-b p-1 w-72"
                         >
                           <label className="w-6">{index + 1}. </label>
-                          {index >= measurementsLength ? (
+                          {index >= measurementsLength - 1 ? (
                             <input
                               type="text"
                               name="name"
@@ -319,13 +327,15 @@ export default function Create() {
                 </div>
               </div>
 
-              <label className="flex w-32 mt-4">Catatan tambahan :</label>
+              <label className="flex font-semibold ml-2 mt-4">
+                Keterangan :
+              </label>
               <textarea
                 name="notes"
                 defaultValue={measurementHistory.notes}
                 rows={4}
                 onChange={handleChange}
-                className="w-full mt-1 border rounded-lg px-2"
+                className="w-full mt-1 border border-gray-200 shadow-md  rounded-lg px-2"
               ></textarea>
             </div>
           </div>

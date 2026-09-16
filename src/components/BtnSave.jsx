@@ -22,7 +22,7 @@ export default function BtnSave({ p }) {
           <SaveSvg />
         </Svg>
       )}
-      <span className="mx-1">{p ? "Saving..." : "Save"}</span>
+      <span className="mx-1">{p ? "Menyimpan data..." : "Simpan"}</span>
     </button>
   );
 }

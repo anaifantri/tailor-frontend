@@ -32,7 +32,7 @@ export default function Index() {
   const handleSearchChange = (event) => {
     setSearch(event.target.value);
   };
-  // fetch data all user
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -81,7 +81,7 @@ export default function Index() {
         <HeaderIndex
           title="Daftar Pengguna"
           addTitle="Tambah Pengguna"
-          addUrl="/dashboard/users/create"
+          addUrl="/dashboard/settings/users/create"
         />
         <div className="flex items-center">
           <div className="flex items-center border border-gray-200 shadow-sm rounded-md py-1 px-2 mt-2">
@@ -116,39 +116,44 @@ export default function Index() {
         )}
         {message && <SuccessMessage message={message} duration="3000" />}
         {failed && <FailedMessage message={failed} duration="3000" />}
-        <table className="table-auto w-full mt-2">
-          <thead>
-            <tr className="h-10 bg-stone-200">
-              <th className="th-center w-10">No.</th>
-              <th className="th-center">Nama</th>
-              <th className="th-center w-36">Username</th>
-              <th className="th-center">Email</th>
-              <th className="th-center w-44">No. Hp.</th>
-              <th className="th-center w-32">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user, index) => (
-              <tr className="bg-white" key={index}>
-                <td className="td-center">{getRowNumber(index)}</td>
-                <td className="td-center">{user.name}</td>
-                <td className="td-center">{user.username}</td>
-                <td className="td-center">{user.email}</td>
-                <td className="td-center">{user.phone}</td>
-                <td className="td-center">
-                  <TdAction
-                    showUrl={`/dashboard/users/${user.hashed_id}`}
-                    editUrl={`/dashboard/users/edit/${user.hashed_id}`}
-                    deleteUrl="/api/users/destroy/"
-                    deleteId={user.hashed_id}
-                    getToken={token}
-                    returnUrl="/dashboard/users"
-                  />
-                </td>
+
+        <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm mt-4">
+          <table className="table-auto w-full divide-y divide-gray-200 bg-white text-left text-sm text-gray-500">
+            <thead className="bg-gray-100 text-xs uppercase font-semibold text-gray-700">
+              <tr>
+                <th className="p-3 text-center">No.</th>
+                <th className="p-3">Nama</th>
+                <th className="p-3 text-center">Username</th>
+                <th className="p-3">Email</th>
+                <th className="p-3 text-center">No. Hp.</th>
+                <th className="p-3 text-center">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {users.map((user, index) => (
+                <tr key={index} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-3 py-1 text-center">
+                    {getRowNumber(index)}
+                  </td>
+                  <td className="px-3 py-1">{user.name}</td>
+                  <td className="px-3 py-1 text-center">{user.username}</td>
+                  <td className="px-3 py-1">{user.email}</td>
+                  <td className="px-3 py-1 text-center">{user.phone}</td>
+                  <td className="px-3 py-1 text-center">
+                    <TdAction
+                      showUrl={`/dashboard/settings/users/${user.hashed_id}`}
+                      editUrl={`/dashboard/settings/users/edit/${user.hashed_id}`}
+                      deleteUrl="/api/users/destroy/"
+                      deleteId={user.hashed_id}
+                      getToken={token}
+                      returnUrl="/dashboard/settings/users"
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         <Pagination
           currentPage={currentPage}

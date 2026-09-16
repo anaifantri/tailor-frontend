@@ -90,7 +90,6 @@ export default function Show() {
     const updatedMeasurements = measurements.filter(
       (_, indexArray) => indexArray !== indexToRemove,
     );
-    console.log(updatedMeasurements);
     setMeasurements(updatedMeasurements);
   };
 
@@ -121,7 +120,7 @@ export default function Show() {
           },
         },
       );
-      navigate("/dashboard/clothing-types", {
+      navigate("/dashboard/setting/clothing-types", {
         state: { message: "Berhasil mengubah data jenis pakaian..!!" },
       });
     } catch (err) {
@@ -153,115 +152,123 @@ export default function Show() {
         <form onSubmit={handleSubmit}>
           <HeaderEdit
             titleEdit="Data Jenis Pakaian"
-            backUrl="/dashboard/clothing-types"
+            backUrl="/dashboard/settings/clothing-types"
             getProcessing={processing}
           />
-          <div className="flex-all-center mt-4">
-            <div className="flex p-2 border rounded-xl">
-              <div>
-                <div className="flex items-center">
-                  <label className="w-44">Kode</label>
-                  <input
-                    type="text"
-                    name="code"
-                    defaultValue={clothingType.code}
-                    className="flex p-2 h-8 w-100"
-                    placeholder="Input Kode"
-                    autoComplete="off"
-                    ref={codeRef}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                {getErrors.code && (
-                  <span
-                    ref={errorRef}
-                    className={
-                      getErrors
-                        ? "flex w-full text-red-500 text-xs items-center"
-                        : "hidden"
-                    }
-                  >
-                    {getErrors.code}
-                  </span>
-                )}
-                <div className="flex items-center mt-2">
-                  <label className="w-44">Jenis Pakaian</label>
-                  <input
-                    type="text"
-                    name="type"
-                    defaultValue={clothingType.type}
-                    className="flex p-2 h-8 w-100"
-                    placeholder="Input jenis pakaian"
-                    autoComplete="off"
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                {getErrors.type && (
-                  <span
-                    ref={errorRef}
-                    className={
-                      getErrors
-                        ? "flex w-full text-red-500 text-xs items-center"
-                        : "hidden"
-                    }
-                  >
-                    {getErrors.type}
-                  </span>
-                )}
-                <div className="flex items-center mt-2">
-                  <label className="w-44">Harga</label>
-                  <input
-                    type="number"
-                    name="base_price"
-                    defaultValue={Number(clothingType.base_price)}
-                    className="flex p-2 h-8 w-100 spinner-disabled"
-                    autoComplete="off"
-                    placeholder="Input harga"
-                    onChange={handleChange}
-                  />
-                </div>
-                {getErrors.base_price && (
-                  <span
-                    ref={errorRef}
-                    className={
-                      getErrors
-                        ? "flex w-full text-red-500 text-xs items-center"
-                        : "hidden"
-                    }
-                  >
-                    {getErrors.base_price}
-                  </span>
-                )}
-                <div className="mt-4">
-                  <label className="w-44">Bagian yang perlu di ukur : </label>
-                  {measurements.map((measurement, index) => (
-                    <div key={index} className="flex items-center mt-2">
-                      <label className="w-6">{index + 1}. </label>
-                      <input
-                        type="text"
-                        defaultValue={measurement ? measurement : ""}
-                        placeholder="Input bagian yang perlu di ukur"
-                        className="flex p-2 h-8 w-72"
-                        onChange={(event) => handleMeasurements(event, index)}
-                      />
-                      {measurement !== "" && (
-                        <button
-                          type="button"
-                          onClick={() => removeMeasurement(index)}
-                          className="flex-all-center p-1 m-1 rounded-md text-white bg-red-700 hover:bg-red-500 cursor-pointer"
-                        >
-                          <Svg title="Delete" c={"w-5 fill-current"}>
-                            <DeleteSvg />
-                          </Svg>
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
+          <div className="border border-gray-200 shadow-lg rounded-xl px-6 py-4 mt-4">
+            <div className="flex items-center">
+              <label className="w-44">Kode</label>
+              <input
+                type="text"
+                name="code"
+                defaultValue={clothingType.code}
+                className="flex p-2 h-8 w-100"
+                placeholder="Masukkan Kode"
+                autoComplete="off"
+                ref={codeRef}
+                onChange={handleChange}
+                required
+              />
             </div>
+            {getErrors.code && (
+              <span
+                ref={errorRef}
+                className={
+                  getErrors
+                    ? "flex w-full text-red-500 text-xs items-center"
+                    : "hidden"
+                }
+              >
+                {getErrors.code}
+              </span>
+            )}
+            <div className="flex items-center mt-2">
+              <label className="w-44">Jenis Pakaian</label>
+              <input
+                type="text"
+                name="type"
+                defaultValue={clothingType.type}
+                className="flex p-2 h-8 w-100"
+                placeholder="Masukkan jenis pakaian"
+                autoComplete="off"
+                onChange={handleChange}
+                required
+              />
+            </div>
+            {getErrors.type && (
+              <span
+                ref={errorRef}
+                className={
+                  getErrors
+                    ? "flex w-full text-red-500 text-xs items-center"
+                    : "hidden"
+                }
+              >
+                {getErrors.type}
+              </span>
+            )}
+            <div className="flex items-center mt-2">
+              <label className="w-44">Harga</label>
+              <input
+                type="number"
+                name="base_price"
+                defaultValue={Number(clothingType.base_price)}
+                className="flex p-2 h-8 w-100 spinner-disabled"
+                autoComplete="off"
+                placeholder="Masukkan harga"
+                onChange={handleChange}
+              />
+            </div>
+            {getErrors.base_price && (
+              <span
+                ref={errorRef}
+                className={
+                  getErrors
+                    ? "flex w-full text-red-500 text-xs items-center"
+                    : "hidden"
+                }
+              >
+                {getErrors.base_price}
+              </span>
+            )}
+            <div className="mt-4">
+              <label className="w-44">Bagian yang perlu di ukur : </label>
+              {measurements.map((measurement, index) => (
+                <div key={index} className="flex items-center mt-2">
+                  <label className="w-6">{index + 1}. </label>
+                  <input
+                    type="text"
+                    value={measurement ? measurement : ""}
+                    placeholder="Masukkan bagian yang perlu di ukur"
+                    className="flex p-2 h-8 w-100"
+                    onChange={(event) => handleMeasurements(event, index)}
+                  />
+                  {measurement !== "" && (
+                    <button
+                      type="button"
+                      onClick={() => removeMeasurement(index)}
+                      className="flex-all-center p-1 m-1 rounded-md text-white bg-red-700 hover:bg-red-500 cursor-pointer"
+                    >
+                      <Svg title="Delete" c={"w-5 fill-current"}>
+                        <DeleteSvg />
+                      </Svg>
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            {getErrors.measurements && (
+              <span
+                ref={errorRef}
+                className={
+                  getErrors
+                    ? "flex w-full text-red-500 text-xs items-center"
+                    : "hidden"
+                }
+              >
+                {getErrors.measurements}
+              </span>
+            )}
           </div>
         </form>
       </div>

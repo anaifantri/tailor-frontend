@@ -150,7 +150,7 @@ export default function Edit() {
             });
           }
         } else {
-          navigate("/dashboard/users", {
+          navigate("/dashboard/settings/users", {
             state: { message: "Berhasil mengubah data user..!!" },
           });
         }
@@ -196,7 +196,7 @@ export default function Edit() {
         <form onSubmit={handleSubmit}>
           <HeaderEdit
             titleEdit="Data Pengguna"
-            backUrl="/dashboard/users"
+            backUrl="/dashboard/settings/users"
             getProcessing={processing}
           />
           <div className="grid grid-cols-3 gap-2 mt-4 w-full">

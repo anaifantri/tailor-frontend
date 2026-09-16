@@ -35,7 +35,7 @@ function ForgotPassword() {
   return (
     <>
       <div className="flex-all-center w-full h-screen top-0 bg-stone-50">
-        <div className="flex-all-center bg-stone-900 w-150 h-100 border-stone-100 rounded-4xl drop-shadow-xl">
+        <div className="flex-all-center bg-stone-900 w-150 border-stone-100 rounded-4xl drop-shadow-xl p-6">
           <div className="flex-all-center">
             <div>
               <div className="flex-all-center w-full">
@@ -50,7 +50,7 @@ function ForgotPassword() {
                 <span
                   className={
                     message
-                      ? "flex-all-center m-auto w-full text-red-700 text-sm items-center"
+                      ? "flex-all-center m-auto w-full text-teal-400 text-sm items-center mt-4"
                       : "hidden"
                   }
                 >
@@ -58,7 +58,7 @@ function ForgotPassword() {
                 </span>
               )}
               <form onSubmit={handleSubmit}>
-                <div className="flex-all-center mt-6">
+                <div className="flex-all-center mt-4">
                   <div>
                     <label className="text-amber-500">Email Address</label>
                     <input
@@ -73,9 +73,10 @@ function ForgotPassword() {
                     />
                     <button
                       type="submit"
+                      disabled={processing}
                       className={
                         processing
-                          ? "flex justify-center items-center w-48 m-auto font-semibold tracking-widest mt-6 drop-shadow-xl rounded-2xl p-2 button-disabled cursor-pointer"
+                          ? "flex justify-center items-center w-48 m-auto font-semibold tracking-widest mt-6 drop-shadow-xl rounded-2xl p-2 button-disabled"
                           : "flex justify-center items-center w-48 m-auto font-semibold tracking-widest mt-6 drop-shadow-xl rounded-2xl p-2 button-primary cursor-pointer"
                       }
                     >

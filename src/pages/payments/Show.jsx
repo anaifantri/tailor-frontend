@@ -61,7 +61,8 @@ export default function Show() {
       <div>
         <HeaderShow
           titleShow="Pembayaran"
-          url="/payments"
+          url="/transactions/payments"
+          deleteUrl="/payments"
           getId={payment.hashed_id}
           token={token}
         />

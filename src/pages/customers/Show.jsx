@@ -3,6 +3,7 @@ import { useLocation, useParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/apiService";
 
+import FormattedDateShort from "@/utils/FormattedDateShort";
 import HeaderShow from "@/components/HeaderShow";
 import TdAction from "@/components/TdAction";
 import HeaderIndex from "@/components/HeaderIndex";
@@ -128,19 +129,19 @@ export default function Show() {
                   customer.hashed_id
                 }
               />
-              <div className="flex-all-center w-full">
-                <table className="table-auto mt-2 w-full">
-                  <thead>
-                    <tr className="h-10 bg-stone-200">
-                      <th className="th-center w-10">No.</th>
-                      <th className="th-center w-32">Jenis Pakaian</th>
-                      <th className="th-center w-28">Tanggal Ukur</th>
-                      <th className="th-center w-60">Diukur Oleh</th>
-                      <th className="th-center">Detail Ukuran</th>
-                      <th className="th-center w-32">Action</th>
+              <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm mt-4">
+                <table className="table-auto w-full divide-y divide-gray-200 bg-white text-left text-sm text-gray-500">
+                  <thead className="bg-gray-50 text-xs uppercase font-semibold text-gray-700">
+                    <tr>
+                      <th className="px-4 py-2 text-center">No.</th>
+                      <th className="px-4 py-2 text-center">Jenis Pakaian</th>
+                      <th className="px-4 py-2 text-center">Tanggal Ukur</th>
+                      <th className="px-4 py-2">Diukur Oleh</th>
+                      <th className="px-4 py-2">Detail Ukuran</th>
+                      <th className="px-4 py-2 text-center w-32">Action</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-gray-200">
                     {customer &&
                       customer.measurement_histories.map(
                         (measurement, index) => {
@@ -149,16 +150,23 @@ export default function Show() {
                             measurement.measurement_details,
                           );
                           return (
-                            <tr className="bg-white" key={index}>
-                              <td className="td-center">{index + 1}</td>
-                              <td className="td-center">
+                            <tr
+                              key={index}
+                              className="hover:bg-gray-50 transition-colors"
+                            >
+                              <td className="px-4 py-1 text-center">
+                                {index + 1}
+                              </td>
+                              <td className="px-4 py-1 text-center">
                                 {measurement.clothing_type.type}
                               </td>
-                              <td className="td-center">
-                                {measurement.measured_at}
+                              <td className="px-4 py-1 text-center">
+                                {FormattedDateShort(measurement.measured_at)}
                               </td>
-                              <td className="td-left"></td>
-                              <td className="td-left">
+                              <td className="px-4 py-1">
+                                {measurement.measured_by}
+                              </td>
+                              <td className="px-4 py-1">
                                 <div className="flex w-full">
                                   {isShow ? (
                                     <div className="w-120">
@@ -167,26 +175,30 @@ export default function Show() {
                                       </div>
                                       <div className="mt-2">
                                         {measurementDetails.map(
-                                          (itemDetail, indexDetail) => (
-                                            <div
-                                              key={indexDetail}
-                                              className="flex items-start"
-                                            >
-                                              <label className="w-6">
-                                                {indexDetail + 1}.{" "}
-                                              </label>
-                                              <label className="w-36">
-                                                {itemDetail.name}
-                                              </label>
-                                              <label>=</label>
-                                              <label className="ml-2">
-                                                {itemDetail.value}
-                                              </label>
-                                              <label className="flex w-6 ml-2">
-                                                cm
-                                              </label>
-                                            </div>
-                                          ),
+                                          (itemDetail, indexDetail) => {
+                                            return (
+                                              itemDetail.name != "" && (
+                                                <div
+                                                  key={indexDetail}
+                                                  className="flex items-start"
+                                                >
+                                                  <label className="w-6">
+                                                    {indexDetail + 1}.{" "}
+                                                  </label>
+                                                  <label className="w-36">
+                                                    {itemDetail.name}
+                                                  </label>
+                                                  <label>=</label>
+                                                  <label className="ml-2">
+                                                    {itemDetail.value}
+                                                  </label>
+                                                  <label className="flex w-6 ml-2">
+                                                    cm
+                                                  </label>
+                                                </div>
+                                              )
+                                            );
+                                          },
                                         )}
                                       </div>
                                     </div>
@@ -213,7 +225,7 @@ export default function Show() {
                                   </button>
                                 </div>
                               </td>
-                              <td className="td-center">
+                              <td className="px-4 py-1 text-center">
                                 <TdAction
                                   showUrl={`/dashboard/measurement-histories/${measurement.hashed_id}`}
                                   editUrl={`/dashboard/measurement-histories/edit/${measurement.hashed_id}`}

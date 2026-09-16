@@ -26,6 +26,8 @@ export default function Edit() {
     name: "",
     description: "",
     unit: "",
+    initial_stock: 0,
+    stock: 0,
   });
 
   const [processing, setProcessing] = useState(false);
@@ -43,7 +45,6 @@ export default function Edit() {
     } else if (e.target.name == "unit") {
       const selectedIndex = e.target.selectedIndex;
       const unit = e.target.options[selectedIndex].value;
-      console.log(e.target.options[selectedIndex].value);
       setEditMaterial({ ...editMaterial, [e.target.name]: unit });
     } else {
       setEditMaterial({ ...editMaterial, [e.target.name]: e.target.value });
@@ -102,6 +103,8 @@ export default function Edit() {
       formData.append("name", editMaterial.name);
       formData.append("description", editMaterial.description);
       formData.append("unit", editMaterial.unit);
+      formData.append("initial_stock", editMaterial.initial_stock);
+      formData.append("stock", editMaterial.stock);
       if (photo) {
         formData.append("photo", photo);
       }
@@ -113,7 +116,7 @@ export default function Edit() {
             "Content-Type": "mulipart/form-data",
           },
         });
-        navigate("/dashboard/materials", {
+        navigate("/dashboard/settings/materials", {
           state: { message: "Berhasil mengubah data kain..!!" },
         });
       } catch (err) {
@@ -138,21 +141,17 @@ export default function Edit() {
         <form onSubmit={handleSubmit}>
           <HeaderEdit
             titleEdit="Data Kain"
-            backUrl="/dashboard/materials"
+            backUrl="/dashboard/settings/materials"
             getProcessing={processing}
           />
           <div className="grid grid-cols-3 gap-2 mt-4">
-            <div className="flex-all-center col-span-1">
+            <div className="flex-all-center col-span-1 border border-gray-200 shadow-lg rounded-xl p-10">
               <div>
                 <div className="flex-all-center">
                   {photoPreview ? (
-                    <img
-                      src={photoPreview}
-                      alt=""
-                      className="flex w-56 h-56 mx-2"
-                    />
+                    <img src={photoPreview} alt="" className="flex w-full" />
                   ) : (
-                    <Svg title="Profile" c={"w-56 h-56 fill-current mx-2"}>
+                    <Svg title="Profile" c={"w-full fill-current"}>
                       <ImageSvg />
                     </Svg>
                   )}
@@ -171,7 +170,7 @@ export default function Edit() {
                     className="flex-all-center bg-amber-500 text-white rounded-lg px-4 py-1 hover:bg-amber-700 mt-2 cursor-pointer"
                     onClick={handlePhotoClick}
                   >
-                    Ganti Foto
+                    Ganti Foto Kain
                   </button>
                 </div>
                 {getErrors.photo && (
@@ -188,108 +187,159 @@ export default function Edit() {
                 )}
               </div>
             </div>
-            <div className="col-span-2 border rounded-xl p-4">
-              <div className="flex items-center">
-                <label className="w-36">Kode Kain</label>
-                <input
-                  type="text"
-                  name="code"
-                  className="flex p-2 h-8 w-120"
-                  placeholder="Input Kode Kain"
-                  autoComplete="off"
-                  ref={nameRef}
-                  onChange={handleChange}
-                  defaultValue={editMaterial.code}
-                  required
-                />
+            <div className="flex border border-gray-200 shadow-lg rounded-xl col-span-2 p-4">
+              <div>
+                <div className="flex items-center">
+                  <label className="w-36">Nomor Kain</label>
+                  <input
+                    type="text"
+                    name="code"
+                    className="flex p-2 py-1 w-120"
+                    placeholder="Masukkan nomor kain"
+                    autoComplete="off"
+                    ref={nameRef}
+                    onChange={handleChange}
+                    defaultValue={editMaterial.code}
+                    required
+                  />
+                </div>
+                {getErrors.code && (
+                  <span
+                    ref={errorRef}
+                    className={
+                      errorMessage
+                        ? "flex w-full text-red-500 text-xs items-center"
+                        : "hidden"
+                    }
+                  >
+                    {getErrors.code}
+                  </span>
+                )}
+                <div className="flex items-center">
+                  <label className="w-36">Nama Kain</label>
+                  <input
+                    type="text"
+                    name="name"
+                    className="flex p-2 py-1 w-120"
+                    placeholder="Masukkan nama kain"
+                    autoComplete="off"
+                    ref={nameRef}
+                    onChange={handleChange}
+                    defaultValue={editMaterial.name}
+                    required
+                  />
+                </div>
+                {getErrors.name && (
+                  <span
+                    ref={errorRef}
+                    className={
+                      errorMessage
+                        ? "flex w-full text-red-500 text-xs items-center"
+                        : "hidden"
+                    }
+                  >
+                    {getErrors.name}
+                  </span>
+                )}
+                <div className="flex items-center mt-2">
+                  <label className="w-36">PilihSatuan</label>
+                  <select
+                    className="py-1 w-36"
+                    name="unit"
+                    value={editMaterial.unit}
+                    onChange={handleChange}
+                  >
+                    <option value="pilih">Pilih</option>
+                    <option value="meter">Meter</option>
+                    <option value="roll">Roll</option>
+                    <option value="yard">Yard</option>
+                  </select>
+                </div>
+                {getErrors.unit && (
+                  <span
+                    ref={errorRef}
+                    className={
+                      getErrors
+                        ? "flex w-full text-red-500 text-xs items-center"
+                        : "hidden"
+                    }
+                  >
+                    {getErrors.unit}
+                  </span>
+                )}
+                <div className="flex items-center mt-2">
+                  <label className="w-36">Stok Awal</label>
+                  <input
+                    type="number"
+                    placeholder="0"
+                    min={0}
+                    name="initial_stock"
+                    value={editMaterial.initial_stock}
+                    className="flex px-2 py-1 w-20 text-right"
+                    autoComplete="off"
+                    onChange={handleChange}
+                  />
+                </div>
+                {getErrors.initial_stock && (
+                  <span
+                    ref={errorRef}
+                    className={
+                      getErrors
+                        ? "flex w-full text-red-500 text-xs items-center"
+                        : "hidden"
+                    }
+                  >
+                    {getErrors.initial_stock}
+                  </span>
+                )}
+                <div className="flex items-center mt-2">
+                  <label className="w-36">Stok Saat ini</label>
+                  <input
+                    type="number"
+                    placeholder="0"
+                    min={0}
+                    value={editMaterial.stock}
+                    name="stock"
+                    className="flex px-2 py-1 w-20 text-right"
+                    autoComplete="off"
+                    onChange={handleChange}
+                  />
+                </div>
+                {getErrors.stock && (
+                  <span
+                    ref={errorRef}
+                    className={
+                      getErrors
+                        ? "flex w-full text-red-500 text-xs items-center"
+                        : "hidden"
+                    }
+                  >
+                    {getErrors.stock}
+                  </span>
+                )}
+                <div className="flex mt-2">
+                  <label className="w-36">Deskripsi</label>
+                  <textarea
+                    name="description"
+                    className="flex px-2 py-1 w-120"
+                    rows={3}
+                    onChange={handleChange}
+                    defaultValue={editMaterial.description}
+                  />
+                </div>
+                {getErrors.description && (
+                  <span
+                    ref={errorRef}
+                    className={
+                      errorMessage
+                        ? "flex w-full text-red-500 text-xs items-center"
+                        : "hidden"
+                    }
+                  >
+                    {getErrors.description}
+                  </span>
+                )}
               </div>
-              {getErrors.code && (
-                <span
-                  ref={errorRef}
-                  className={
-                    errorMessage
-                      ? "flex w-full text-red-500 text-xs items-center"
-                      : "hidden"
-                  }
-                >
-                  {getErrors.code}
-                </span>
-              )}
-              <div className="flex items-center">
-                <label className="w-36">Nama Kain</label>
-                <input
-                  type="text"
-                  name="name"
-                  className="flex p-2 h-8 w-120"
-                  placeholder="Input Nama Lengkap"
-                  autoComplete="off"
-                  ref={nameRef}
-                  onChange={handleChange}
-                  defaultValue={editMaterial.name}
-                  required
-                />
-              </div>
-              {getErrors.name && (
-                <span
-                  ref={errorRef}
-                  className={
-                    errorMessage
-                      ? "flex w-full text-red-500 text-xs items-center"
-                      : "hidden"
-                  }
-                >
-                  {getErrors.name}
-                </span>
-              )}
-              <div className="flex mt-2">
-                <label className="w-36">Deskripsi</label>
-                <textarea
-                  name="description"
-                  className="flex px-2 py-1 w-120"
-                  rows={3}
-                  onChange={handleChange}
-                  defaultValue={editMaterial.description}
-                />
-              </div>
-              {getErrors.description && (
-                <span
-                  ref={errorRef}
-                  className={
-                    errorMessage
-                      ? "flex w-full text-red-500 text-xs items-center"
-                      : "hidden"
-                  }
-                >
-                  {getErrors.description}
-                </span>
-              )}
-              <div className="flex items-center mt-2">
-                <label className="w-36">Satuan</label>
-                <select
-                  className="h-8 w-36"
-                  name="unit"
-                  value={editMaterial.unit}
-                  onChange={handleChange}
-                >
-                  <option value="pilih">Pilih satuan</option>
-                  <option value="Pcs">Pcs</option>
-                  <option value="Meter">Meter</option>
-                  <option value="Box">Box</option>
-                  <option value="Unit">Unit</option>
-                </select>
-              </div>
-              {getErrors.unit && (
-                <span
-                  ref={errorRef}
-                  className={
-                    getErrors
-                      ? "flex w-full text-red-500 text-xs items-center"
-                      : "hidden"
-                  }
-                >
-                  {getErrors.unit}
-                </span>
-              )}
             </div>
           </div>
         </form>

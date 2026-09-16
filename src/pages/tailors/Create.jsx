@@ -22,6 +22,21 @@ export default function Create() {
   const [getErrors, setGetErrors] = useState({});
   const [photoPreview, setPhotoPreview] = useState("");
 
+  const specialties = [
+    "Jas",
+    "Blazer",
+    "Blouse",
+    "Dress",
+    "Safari",
+    "PDH",
+    "PDL",
+    "PSH",
+    "PSR",
+    "Celana",
+    "Rok",
+    "Lainnya",
+  ];
+
   const [formData, setFormData] = useState({
     code: "",
     name: "",
@@ -122,22 +137,26 @@ export default function Create() {
         <form onSubmit={handleSubmit}>
           <HeaderCreate
             titleCreate="Data Tukang Jahit"
-            backUrl="/dashboard/tailors"
+            backUrl="/dashboard/tailors/tailors"
             getProcessing={processing}
           />
           <div className="grid grid-cols-3 gap-2 mt-4">
-            <div className="flex-all-center col-span-1">
+            <div className="flex-all-center col-span-1 border border-gray-200 shadow-lg rounded-xl p-10">
               <div>
                 <div className="flex-all-center">
                   {photoPreview ? (
-                    <img src={photoPreview} alt="" className="flex w-36 mx-2" />
+                    <img
+                      src={photoPreview}
+                      alt=""
+                      className="flex w-full mx-2"
+                    />
                   ) : (
-                    <Svg title="Profile" c={"w-36 fill-current mx-2"}>
+                    <Svg title="Profile" c={"w-full fill-current mx-2"}>
                       <ProfileSvg />
                     </Svg>
                   )}
                 </div>
-                <div className="flex-all-center">
+                <div className="flex-all-center mt-4">
                   <input
                     type="file"
                     name="photo"
@@ -168,7 +187,7 @@ export default function Create() {
                 )}
               </div>
             </div>
-            <div className="flex p-2 border rounded-xl col-span-2">
+            <div className="flex border border-gray-200 shadow-lg rounded-xl col-span-2 p-4">
               <div>
                 <div className="flex items-center">
                   <label className="w-36">Nama</label>
@@ -203,7 +222,6 @@ export default function Create() {
                     placeholder="Input Alamat"
                     rows={3}
                     onChange={handleChange}
-                    // defaultValue={editTailor.address}
                   />
                 </div>
                 {getErrors.address && (
@@ -228,7 +246,6 @@ export default function Create() {
                     autoComplete="off"
                     onChange={handleChange}
                     required
-                    // value={formData.phone}
                   />
                 </div>
                 {getErrors.phone && (
@@ -252,8 +269,6 @@ export default function Create() {
                     placeholder="Input email"
                     autoComplete="off"
                     onChange={handleChange}
-                    required
-                    // value={formData.email}
                   />
                 </div>
                 {getErrors.email && (
@@ -302,57 +317,19 @@ export default function Create() {
                 )}
                 <div className="flex mt-2">
                   <label className="w-36">Keahlian</label>
-                  <div>
-                    <div className="flex mt-2">
-                      <input
-                        type="checkbox"
-                        value={"Ukur"}
-                        checked={specialty.includes("Ukur")}
-                        onChange={handleCbChange}
-                        className="w-5 h-5 rounded-md border-gray-300 text-indigo-600 accent-indigo-600 focus:ring-indigo-500"
-                      />
-                      <label className="ml-2">Ukur</label>
-                    </div>
-                    <div className="flex mt-2">
-                      <input
-                        type="checkbox"
-                        value={"Potong"}
-                        checked={specialty.includes("Potong")}
-                        onChange={handleCbChange}
-                        className="w-5 h-5 rounded-md border-gray-300 text-indigo-600 accent-indigo-600 focus:ring-indigo-500"
-                      />
-                      <label className="ml-2">Potong</label>
-                    </div>
-                    <div className="flex mt-2">
-                      <input
-                        type="checkbox"
-                        value={"Jahit"}
-                        checked={specialty.includes("Jahit")}
-                        onChange={handleCbChange}
-                        className="w-5 h-5 rounded-md border-gray-300 text-indigo-600 accent-indigo-600 focus:ring-indigo-500"
-                      />
-                      <label className="ml-2">Jahit</label>
-                    </div>
-                    <div className="flex mt-2">
-                      <input
-                        type="checkbox"
-                        value={"Finishing & Payet"}
-                        checked={specialty.includes("Finishing & Payet")}
-                        onChange={handleCbChange}
-                        className="w-5 h-5 rounded-md border-gray-300 text-indigo-600 accent-indigo-600 focus:ring-indigo-500"
-                      />
-                      <label className="ml-2">Finishing & Payet</label>
-                    </div>
-                    <div className="flex mt-2">
-                      <input
-                        type="checkbox"
-                        value={"Lainnya"}
-                        checked={specialty.includes("Lainnya")}
-                        onChange={handleCbChange}
-                        className="w-5 h-5 rounded-md border-gray-300 text-indigo-600 accent-indigo-600 focus:ring-indigo-500"
-                      />
-                      <label className="ml-2">Lainnya</label>
-                    </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    {specialties.map((item, index) => (
+                      <div className="flex mt-2" key={index}>
+                        <input
+                          type="checkbox"
+                          value={item}
+                          checked={specialty.includes(item)}
+                          onChange={handleCbChange}
+                          className="w-5 h-5 rounded-md border-gray-300 text-indigo-600 accent-indigo-600 focus:ring-indigo-500"
+                        />
+                        <label className="ml-2">{item}</label>
+                      </div>
+                    ))}
                   </div>
                 </div>
                 {getErrors.specialty && (

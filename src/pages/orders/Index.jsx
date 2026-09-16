@@ -6,6 +6,7 @@ import api from "@/apiService";
 
 import HeaderIndex from "@/components/HeaderIndex";
 import MeasurementModal from "@/components/Modal";
+import Pagination from "@/components/Pagination";
 import TdAction from "@/components/TdAction";
 import Filters from "@/components/Filters";
 import SuccessMessage from "@/components/SuccessMessage";
@@ -26,7 +27,7 @@ export default function Index() {
   const failed = location.state?.failed;
   const [orders, setOrders] = useState(null);
   const [measurementHistory, setMeasurementHistory] = useState(null);
-  const [client, setClient] = useState(null);
+  const [customer, setCustomer] = useState(null);
   const [clothingType, setClothingType] = useState(null);
   const [measurementDetails, setMeasurementDetails] = useState([]);
   const [showMeasurementModalOpen, setShowMeasurementModalOpen] =
@@ -41,32 +42,13 @@ export default function Index() {
   const [month, setMonth] = useState(currentMonthIndex + 1);
   const [year, setYear] = useState(currentYear);
 
-  const handleShowMeasurement = (measurementHistoryId) => {
-    const fetchData = async () => {
-      try {
-        const response = await api.get(
-          "/api/measurement-histories/" + measurementHistoryId,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-        setMeasurementHistory(response.data.measurement_history);
-        setMeasurementDetails(
-          JSON.parse(response.data.measurement_history.measurement_details),
-        );
-        setClient(response.data.measurement_history.client);
-        setClothingType(response.data.measurement_history.clothing_type);
-      } catch (error) {
-        setError(error);
-        console.log(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-    setShowMeasurementModalOpen(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+
+  const handleShowMeasurement = (measurements) => {
+    console.log(measurements);
   };
 
   const handleSearchChange = (event) => {
@@ -85,12 +67,21 @@ export default function Index() {
     const fetchData = async () => {
       try {
         const response = await api.get("/api/orders", {
-          params: { month, year, search },
+          params: {
+            page: currentPage,
+            per_page: perPage,
+            month,
+            year,
+            search,
+          },
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        setOrders(response.data);
+        setOrders(response.data.data);
+        setCurrentPage(response.data.current_page);
+        setTotalPages(response.data.last_page);
+        setTotalItems(response.data.total);
       } catch (error) {
         setError(error);
         console.log(error);
@@ -99,7 +90,7 @@ export default function Index() {
       }
     };
     fetchData();
-  }, [month, year, search]);
+  }, [currentPage, perPage, month, year, search]);
 
   const handleBtnDetail = (index) => {
     if (showDetail.includes(index)) {
@@ -108,6 +99,13 @@ export default function Index() {
       setShowDetail([...showDetail, index]);
     }
   };
+
+  const handlePerPageChange = (e) => {
+    setPerPage(Number(e.target.value));
+    setCurrentPage(1);
+  };
+
+  const getRowNumber = (index) => (currentPage - 1) * perPage + index + 1;
 
   if (loading) {
     return <LoadingData />;
@@ -119,12 +117,40 @@ export default function Index() {
 
   return (
     <>
-      <div className="w-400">
+      <div className="w-full">
         <HeaderIndex
           title="Daftar Pesanan"
           addTitle="Tambah Pesanan"
-          addUrl="/dashboard/orders/create"
+          addUrl="/dashboard/transactions/orders/create"
         />
+        <div className="flex items-center">
+          <div className="flex items-center border border-gray-200 shadow-sm rounded-md py-1 px-2 mt-2">
+            <span className="text-sm text-gray-600">Tampilkan</span>
+            <select
+              value={perPage}
+              onChange={handlePerPageChange}
+              className="w-14 px-2 ml-2"
+            >
+              <option value={1}>1</option>
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span className="text-sm text-gray-600 ml-1">data</span>
+          </div>
+          <div className="flex items-center border border-gray-200 shadow-sm rounded-md py-1 px-2 mt-2 ml-6">
+            <label className="flex w-20">Pencarian</label>
+            <input
+              type="text"
+              placeholder="search"
+              value={search}
+              onChange={handleSearchChange}
+              className="px-2"
+            />
+          </div>
+        </div>
         <Filters
           monthAction={handleMonthChange}
           yearAction={handleYearChange}
@@ -141,199 +167,231 @@ export default function Index() {
         )}
         {message && <SuccessMessage message={message} duration="3000" />}
         {failed && <FailedMessage message={failed} duration="3000" />}
-        <table className="table-auto mt-4 w-full">
-          <thead>
-            <tr className="bg-stone-200">
-              <th className="th-center text-xs w-10" rowSpan={2}>
-                No.
-              </th>
-              <th className="th-center text-xs w-24" rowSpan={2}>
-                No. Pesanan
-              </th>
-              <th className="th-center text-xs w-20" rowSpan={2}>
-                Tgl. Pesan
-              </th>
-              <th className="th-center text-xs w-20" rowSpan={2}>
-                Tgl. Fitting
-              </th>
-              <th className="th-center text-xs w-56" rowSpan={2}>
-                Nama Pelanggan
-              </th>
-              <th className="th-center text-xs" rowSpan={2}>
-                Detail Pesanan
-              </th>
-              <th className="th-center text-xs" colSpan={3}>
-                Data Pembayaran
-              </th>
-              <th className="th-center text-xs w-32" rowSpan={2}>
-                Action
-              </th>
-            </tr>
-            <tr className="bg-stone-200">
-              <th className="th-center text-xs w-24">Total Harga</th>
-              <th className="th-center text-xs w-24">Pembayaran</th>
-              <th className="th-center text-xs w-24">Kekurangan</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((order, index) => {
-              const totalPayment = order.payments.reduce(
-                (total, payment) => Number(total) + Number(payment.amount_paid),
-                0,
-              );
-              const isShow = showDetail.includes(index);
 
-              return (
-                <tr className="bg-white" key={index}>
-                  <td className="td-center text-xs">{index + 1}</td>
-                  <td className="td-center text-xs">{order.number}</td>
-                  <td className="td-center text-xs">{order.order_date}</td>
-                  <td className="td-center text-xs">{order.fitting_date}</td>
-                  <td className="td-left">{order.client.name}</td>
-                  <td className="td-left p-1">
-                    {isShow ? (
-                      <div className="flex w-full">
-                        <table key={index}>
-                          <thead>
-                            <tr className="h-6 bg-stone-200">
-                              <th className="th-center text-xs w-54">Jenis</th>
-                              <th className="th-center text-xs w-20">Ukuran</th>
-                              <th className="th-center text-xs w-12">Qty</th>
-                              <th className="th-center text-xs w-20">price</th>
-                              <th className="th-center text-xs w-24">
-                                Subtotal
-                              </th>
-                              <th className="th-center text-xs w-20">
-                                Progress
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {order.order_details.map((item, index) => (
-                              <tr key={index}>
-                                <td className="td-center">
-                                  {item.clothing_type.type}
-                                </td>
-                                <td className="td-center">
-                                  <div className="w-full flex-all-center">
-                                    <button
-                                      onClick={() =>
-                                        handleShowMeasurement(
-                                          item.measurement_history.hashed_id,
-                                        )
-                                      }
-                                      title="Lihat ukuran"
-                                      className="flex-all-center p-1 m-1 rounded-md bg-teal-700 text-white hover:bg-teal-500 cursor-pointer"
-                                    >
-                                      <Svg title="Show" c={"w-5 fill-current"}>
-                                        <ShowSvg />
-                                      </Svg>
-                                    </button>
-                                  </div>
-                                </td>
-                                <td className="td-center">{item.quantity}</td>
-                                <td className="td-right">
-                                  {Number(item.price).toLocaleString()}
-                                </td>
-                                <td className="td-right">
-                                  {Number(
-                                    item.price * item.quantity,
-                                  ).toLocaleString()}
-                                </td>
-                                <td className="td-center">
-                                  {item.production_progress[
-                                    item.production_progress.length - 1
-                                  ].status == "queued"
-                                    ? "antrian"
-                                    : "-"}
-                                </td>
+        <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm mt-4">
+          <table className="table-auto w-full divide-y divide-gray-200 bg-white text-left text-sm text-gray-500">
+            <thead className="bg-gray-100 text-xs uppercase font-semibold text-gray-700">
+              <tr>
+                <th className="py-3 px-2 text-center">No.</th>
+                <th className="py-3 px-2 text-center">No. Pesanan</th>
+                <th className="py-3 px-2 text-center">Tgl. Pesan</th>
+                <th className="py-3 px-2 text-center">Tgl. Fitting</th>
+                <th className="py-3 px-2 text-center">Nama Pelanggan</th>
+                <th className="py-3 px-2 text-center">Detail Pesanan</th>
+                <th className="py-3 px-2 text-center">Total Harga</th>
+                <th className="py-3 px-2 text-center4">Pembayaran</th>
+                <th className="py-3 px-2 text-center4">Diskon</th>
+                <th className="py-3 px-2 text-center">Kekurangan</th>
+                <th className="py-3 px-2 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {orders.map((order, index) => {
+                const totalPayment = order.payments.reduce(
+                  (total, payment) =>
+                    Number(total) + Number(payment.amount_paid),
+                  0,
+                );
+                const isShow = showDetail.includes(index);
+
+                return (
+                  <tr
+                    key={index}
+                    className="hover:bg-gray-50 transition-colors text-xs"
+                  >
+                    <td className="px-3 py-1 text-center ">
+                      {getRowNumber(index)}
+                    </td>
+                    <td className="px-3 py-1 text-center text-xs">
+                      {order.number}
+                    </td>
+                    <td className="px-3 py-1 text-center text-xs">
+                      {order.order_date}
+                    </td>
+                    <td className="px-3 py-1 text-center text-xs">
+                      {order.fitting_date}
+                    </td>
+                    <td className="px-3 py-1 text-center">
+                      {order.customer.name}
+                    </td>
+                    <td className="px-3 py-1 text-center p-1">
+                      {isShow ? (
+                        <div className="flex w-full">
+                          <table key={index}>
+                            <thead>
+                              <tr className="h-6 bg-stone-200">
+                                <th className="py-3 px-2 text-center text-xs w-54">
+                                  Jenis
+                                </th>
+                                <th className="py-3 px-2 text-center text-xs w-20">
+                                  Ukuran
+                                </th>
+                                <th className="py-3 px-2 text-center text-xs w-12">
+                                  Qty
+                                </th>
+                                <th className="py-3 px-2 text-center text-xs w-20">
+                                  price
+                                </th>
+                                <th className="py-3 px-2 text-center text-xs w-24">
+                                  Subtotal
+                                </th>
+                                <th className="py-3 px-2 text-center text-xs w-20">
+                                  Progress
+                                </th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                            </thead>
+                            <tbody>
+                              {order.order_details.map((item, index) => (
+                                <tr key={index}>
+                                  <td className="px-3 py-1 text-center">
+                                    {item.clothing_type.type}
+                                  </td>
+                                  <td className="px-3 py-1 text-center">
+                                    <div className="w-full flex-all-center">
+                                      <button
+                                        onClick={() =>
+                                          handleShowMeasurement(
+                                            item.measurements,
+                                          )
+                                        }
+                                        title="Lihat ukuran"
+                                        className="flex-all-center p-1 m-1 rounded-md bg-teal-700 text-white hover:bg-teal-500 cursor-pointer"
+                                      >
+                                        <Svg
+                                          title="Show"
+                                          c={"w-5 fill-current"}
+                                        >
+                                          <ShowSvg />
+                                        </Svg>
+                                      </button>
+                                    </div>
+                                  </td>
+                                  <td className="px-3 py-1 text-center">
+                                    {item.quantity}
+                                  </td>
+                                  <td className="px-3 py-1">
+                                    {Number(item.price).toLocaleString()}
+                                  </td>
+                                  <td className="px-3 py-1">
+                                    {Number(
+                                      item.price * item.quantity,
+                                    ).toLocaleString()}
+                                  </td>
+                                  <td className="px-3 py-1 text-center">
+                                    {item.production_progress
+                                      ? item.production_progress[
+                                          item.production_progress.length - 1
+                                        ].status
+                                      : "-"}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
 
-                        <button
-                          className="flex justify-center items-center w-9 mx-auto hover:text-teal-700 cursor-pointer"
-                          onClick={() => handleBtnDetail(index)}
-                        >
-                          <Svg
-                            title="Arrow"
-                            c={
-                              isShow
-                                ? "nav-svg w-5 fill-current rotate-180"
-                                : "nav-svg w-5 fill-current"
-                            }
+                          <button
+                            className="flex justify-center items-center w-9 mx-auto hover:text-teal-700 cursor-pointer"
+                            onClick={() => handleBtnDetail(index)}
                           >
-                            <ArrowSvg />
-                          </Svg>
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex w-full">
-                        <label className="ml-1 w-full">
-                          Tampilkan Detail Pesanan
-                        </label>
-                        <button
-                          className="flex justify-center items-center w-9 mx-auto hover:text-teal-700 cursor-pointer"
-                          onClick={() => handleBtnDetail(index)}
-                        >
-                          <Svg
-                            title="Arrow"
-                            c={
-                              isShow
-                                ? "nav-svg w-5 fill-current rotate-180"
-                                : "nav-svg w-5 fill-current"
-                            }
+                            <Svg
+                              title="Arrow"
+                              c={
+                                isShow
+                                  ? "nav-svg w-5 fill-current rotate-180"
+                                  : "nav-svg w-5 fill-current"
+                              }
+                            >
+                              <ArrowSvg />
+                            </Svg>
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex w-full">
+                          <label className="ml-1 w-full">
+                            Tampilkan Detail Pesanan
+                          </label>
+                          <button
+                            className="flex justify-center items-center w-9 mx-auto hover:text-teal-700 cursor-pointer"
+                            onClick={() => handleBtnDetail(index)}
                           >
-                            <ArrowSvg />
-                          </Svg>
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                  <td className="td-right text-xs">
-                    <div className="flex w-full">
-                      <label className="w-3">Rp.</label>
-                      <label className="w-16 ml-2 text-right">
-                        {Number(order.total).toLocaleString()}
-                      </label>
-                    </div>
-                  </td>
-                  <td className="td-right text-xs">
-                    <div className="flex w-full">
-                      <label className="w-3">Rp.</label>
-                      <label className="w-16 ml-2 text-right">
-                        {totalPayment.toLocaleString()}
-                      </label>
-                    </div>
-                  </td>
-                  <td className="td-right text-xs">
-                    {order.total - totalPayment <= 0 ? (
-                      <div className="flex justify-center w-full">LUNAS</div>
-                    ) : (
+                            <Svg
+                              title="Arrow"
+                              c={
+                                isShow
+                                  ? "nav-svg w-5 fill-current rotate-180"
+                                  : "nav-svg w-5 fill-current"
+                              }
+                            >
+                              <ArrowSvg />
+                            </Svg>
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-3 py-1 text-xs">
                       <div className="flex w-full">
                         <label className="w-3">Rp.</label>
                         <label className="w-16 ml-2 text-right">
-                          {(order.total - totalPayment).toLocaleString()}
+                          {Number(order.total).toLocaleString()}
                         </label>
                       </div>
-                    )}
-                  </td>
-                  <td className="td-center">
-                    <TdAction
-                      showUrl={`/dashboard/orders/${order.hashed_id}`}
-                      editUrl={`/dashboard/orders/edit/${order.hashed_id}`}
-                      deleteUrl="/api/orders/delete/"
-                      deleteId={order.hashed_id}
-                      getToken={token}
-                      returnUrl="/dashboard/orders"
-                    />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    </td>
+                    <td className="px-3 py-1 text-xs">
+                      <div className="flex w-full">
+                        <label className="w-3">Rp.</label>
+                        <label className="w-16 ml-2 text-right">
+                          {totalPayment.toLocaleString()}
+                        </label>
+                      </div>
+                    </td>
+                    <td className="px-3 py-1 text-xs">
+                      <div className="flex w-full">
+                        <label className="w-3">Rp.</label>
+                        <label className="w-16 ml-2 text-right">
+                          {Number(order.discount).toLocaleString()}
+                        </label>
+                      </div>
+                    </td>
+                    <td className="px-3 py-1 text-xs">
+                      {order.total - totalPayment - order.discount <= 0 ? (
+                        <div className="flex justify-center w-full">LUNAS</div>
+                      ) : (
+                        <div className="flex w-full">
+                          <label className="w-3">Rp.</label>
+                          <label className="w-16 ml-2 text-right">
+                            {(
+                              order.total -
+                              totalPayment -
+                              order.discount
+                            ).toLocaleString()}
+                          </label>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-3 py-1 text-center">
+                      <TdAction
+                        showUrl={`/dashboard/transactions/orders/${order.hashed_id}`}
+                        editUrl={`/dashboard/transactions/orders/edit/${order.hashed_id}`}
+                        deleteUrl="/api/orders/delete/"
+                        deleteId={order.hashed_id}
+                        getToken={token}
+                        returnUrl="/dashboard/transactions/orders"
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          onPageChange={(page) => setCurrentPage(page)}
+          loading={loading}
+        />
       </div>
 
       <MeasurementModal
@@ -350,20 +408,22 @@ export default function Index() {
                   <div className="flex items-center">
                     <label className="w-44">Nama Pelanggan</label>
                     <label>:</label>
-                    <label className="ml-2">{client ? client.name : "-"}</label>
+                    <label className="ml-2">
+                      {customer ? customer.name : "-"}
+                    </label>
                   </div>
                   <div className="flex items-center mt-2">
                     <label className="w-44">Nomor Telepon</label>
                     <label>:</label>
                     <label className="ml-2">
-                      {client ? client.phone : "-"}
+                      {customer ? customer.phone : "-"}
                     </label>
                   </div>
                   <div className="flex mt-2">
                     <label className="w-44">Alamat</label>
                     <label>:</label>
                     <label className="ml-2 w-96 h-10">
-                      {client ? client.address : "-"}
+                      {customer ? customer.address : "-"}
                     </label>
                   </div>
                 </div>

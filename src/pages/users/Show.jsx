@@ -77,7 +77,8 @@ export default function Show() {
       <div>
         <HeaderShow
           titleShow="Data Pengguna"
-          url="/users"
+          url="/settings/users"
+          deleteUrl="/users"
           getId={user.hashed_id}
           token={token}
         />

@@ -7,6 +7,11 @@ import api from "@/apiService";
 import LoadingData from "@/Components/LoadingData";
 import FormattedDateLong from "@/Utils/FormattedDateLong";
 import MeasurementModal from "@/components/Modal";
+import ShowMeasurementModal from "@/components/Modal";
+import PaymentModal from "@/components/Modal";
+import PaymentForm from "@/components/PaymentForm";
+import OrderNotes from "@/components/OrderNotes";
+import NewMeasurementHistory from "@/components/NewMeasurementHistory";
 
 import Svg from "@/components/Svg";
 import MenuSvg from "@/Assets/Svg/MenuSvg";
@@ -15,12 +20,14 @@ import DeleteSvg from "@/Assets/Svg/DeleteSvg";
 import BlackLogo from "@/components/BlackLogo";
 import CheckSvg from "@/Assets/Svg/CheckSvg";
 import ArrowSvg from "@/assets/Svg/ArrowSvg";
+import InputSvg from "@/Assets/Svg/InputSvg";
 
 export default function Edit() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, token } = useAuth();
   const [processing, setProcessing] = useState(false);
+  const today = new Intl.DateTimeFormat("en-CA").format(new Date());
 
   const errorRef = useRef();
   const [subTotal, setSubTotal] = useState(0);
@@ -36,18 +43,23 @@ export default function Edit() {
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [rows, setRows] = useState([]);
 
-  const [client, setClient] = useState();
+  const [customer, setCustomer] = useState();
   const [order, setOrder] = useState();
   const [clothingTypeOptions, setClothingTypeOptions] = useState([]);
+  const [clothingTypes, setClothingTypes] = useState([]);
   const [materialOptions, setMaterialOptions] = useState([]);
 
   const [orderDetails, setOrderDetails] = useState([]);
   const [showMeasurementModalOpen, setShowMeasurementModalOpen] =
     useState(false);
+  const [measurementModalOpen, setMeasurementModalOpen] = useState(false);
+  const [downPaymentModalOpen, setDownPaymentModalOpen] = useState(false);
+  const [showInputMeasurements, setShowInputMeasurements] = useState(false);
   const [measurementHistoryId, setMeasurementHistoryId] = useState(null);
   const [measurementHistories, setMeasurementHistories] = useState(null);
   const [orderDetailIndex, setOrderDetailIndex] = useState(null);
   const [showDetail, setShowDetail] = useState([]);
+  const [measurements, setMeasurements] = useState(null);
 
   const handleBtnDetail = (index) => {
     if (showDetail.includes(index)) {
@@ -64,17 +76,37 @@ export default function Edit() {
     setOrderDetails(updateOrderDetails);
   };
 
-  const handleBtnMeasurement = (clothingTypeId, clientData, detailIndex) => {
-    if (clientData == null) {
+  const handleBtnMeasurement = (
+    clothingTypeId,
+    customerData,
+    orderDetailIndex,
+  ) => {
+    if (customerData == null) {
       alert("Silahkan pilih pelanggan terlebih dahulu..!!");
     } else {
-      setOrderDetailIndex(detailIndex);
-      setMeasurementHistoryId(orderDetails[detailIndex].measurement_history_id);
-      const clientId = clientData.hashed_id;
+      const clothingTypeindex = clothingTypes.findIndex(
+        (type) => type.hashed_id === clothingTypeId,
+      );
+      const formattedMeasurements = clothingTypes[
+        clothingTypeindex
+      ].measurement_details.map((item) => ({
+        name: item.measurement,
+        value: 0,
+      }));
+
+      formattedMeasurements.push({ name: "", value: 0 });
+
+      if (orderDetails[orderDetailIndex].measurement_history_id) {
+        setMeasurements(orderDetails[orderDetailIndex].measurements);
+      } else {
+        setMeasurements(formattedMeasurements);
+      }
+      setOrderDetailIndex(orderDetailIndex);
+      const customerId = customerData.hashed_id;
       const fetchData = async () => {
         try {
-          const response = await api.get("/api/getbyclientandclothing", {
-            params: { clientId, clothingTypeId },
+          const response = await api.get("/api/getbycustomerandclothing", {
+            params: { customerId, clothingTypeId },
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -97,9 +129,10 @@ export default function Edit() {
       };
 
       fetchData();
-      setShowMeasurementModalOpen(true);
+      setMeasurementModalOpen(true);
     }
   };
+
   const handleSelectMaterialChange = (selectedOption, index) => {
     rows[index].material_number = selectedOption.number;
     orderDetails[index].material_id = selectedOption.value;
@@ -136,6 +169,7 @@ export default function Edit() {
         measurement_history_id: null,
         material_id: null,
         quantity: 0,
+        measurements: null,
         price: 0,
         fabric_consumed_meter: 0,
         notes: null,
@@ -147,6 +181,7 @@ export default function Edit() {
           value: null,
           material_number: null,
           clothing_type: null,
+          measurements: [],
           qty: 0,
           price: 0,
           total: 0,
@@ -157,7 +192,7 @@ export default function Edit() {
       const newOrderDetail = {
         clothing_type_id: selectedOption.value,
         material_id: orderDetails[rowIndex].material_id,
-        measurement_history_id: orderDetails[rowIndex].measurement_history_id,
+        measurements: orderDetails[rowIndex].measurements,
         quantity: orderDetails[rowIndex].quantity,
         price: orderDetails[rowIndex].price,
         fabric_consumed_meter: 0,
@@ -242,6 +277,10 @@ export default function Edit() {
       total: getSubTotal,
     }));
   };
+  const handleBtnShowMeasurement = (orderDetailIndex) => {
+    setOrderDetailIndex(orderDetailIndex);
+    setShowMeasurementModalOpen(true);
+  };
 
   useEffect(() => {
     const headers = {
@@ -268,24 +307,27 @@ export default function Edit() {
             requestClothingTypes,
           ]);
 
-        const formattedClothingTypeOptions = responseClothingTypes.data.map(
-          (item) => ({
+        const formattedClothingTypeOptions =
+          responseClothingTypes.data.data.map((item) => ({
             value: item.hashed_id,
             label: item.type,
+          }));
+
+        const formattedMaterialOptions = responseMaterials.data.data.map(
+          (item) => ({
+            value: item.hashed_id,
+            label: item.code + " | " + item.name,
+            number: item.code,
           }),
         );
 
-        const formattedMaterialOptions = responseMaterials.data.map((item) => ({
-          value: item.hashed_id,
-          label: item.code + " | " + item.name,
-          number: item.code,
-        }));
         setRows([]);
         responseOrder.data.order.order_details.map((item) => {
           const newFormatedRow = {
             value: item.clothing_type.hashed_id,
             material_number: item.material.code,
             clothing_type: item.clothing_type.type,
+            measurements: JSON.parse(item.measurements),
             qty: item.quantity,
             price: item.price,
             total: item.quantity * item.price,
@@ -296,6 +338,7 @@ export default function Edit() {
           value: null,
           material_number: null,
           clothing_type: null,
+          measurements: null,
           qty: null,
           price: null,
           total: null,
@@ -307,8 +350,9 @@ export default function Edit() {
         const getAmountPaid = getDownPayment ? getDownPayment.amount_paid : 0;
         setOrderDetails(responseOrder.data.order.order_details);
         setClothingTypeOptions(formattedClothingTypeOptions);
+        setClothingTypes(responseClothingTypes.data.data);
         setMaterialOptions(formattedMaterialOptions);
-        setClient(responseOrder.data.order.client);
+        setCustomer(responseOrder.data.order.customer);
         setOrder(responseOrder.data.order);
         setSubTotal(responseOrder.data.order.total);
         setDownPayment(getAmountPaid);
@@ -334,7 +378,7 @@ export default function Edit() {
     setGetErrors("");
     const orderData = new FormData();
     orderData.append("user_id", user.hashed_id);
-    orderData.append("client_id", order.client_id);
+    orderData.append("customer_id", order.customer_id);
     orderData.append("order_date", order.order_date);
     orderData.append("fitting_date", order.fitting_date);
     orderData.append("due_date", order.due_date);
@@ -430,28 +474,28 @@ export default function Edit() {
                 <label className="w-40">Nama Pelanggan</label>
                 <label>:</label>
                 <label className="ml-2 font-semibold text-sm w-100">
-                  {client ? client.name : "-"}
+                  {customer ? customer.name : "-"}
                 </label>
               </div>
               <div className="flex items-start mt-2">
                 <label className="w-40">Alamat</label>
                 <label>:</label>
                 <label className="ml-2 font-semibold text-sm w-100 h-14">
-                  {client ? client.address : "-"}
+                  {customer ? customer.address : "-"}
                 </label>
               </div>
               <div className="flex items-center mt-2">
                 <label className="w-40">No. Handphone</label>
                 <label>:</label>
                 <label className="ml-2 font-semibold text-sm">
-                  {client ? client.phone : "-"}
+                  {customer ? customer.phone : "-"}
                 </label>
               </div>
               <div className="flex items-center mt-2">
                 <label className="w-40">Email</label>
                 <label>:</label>
                 <label className="ml-2 font-semibold text-sm">
-                  {client ? client.email : "-"}
+                  {customer ? customer.email : "-"}
                 </label>
               </div>
             </div>
@@ -494,7 +538,7 @@ export default function Edit() {
                 <tr className="h-10 bg-stone-200">
                   <th className="th-center text-xs w-10">No.</th>
                   <th className="th-center text-sm">Jenis Pesanan</th>
-                  <th className="th-center text-sm w-24">Ukuran</th>
+                  <th className="th-center text-sm w-36">Ukuran</th>
                   <th className="th-center text-sm w-72">No. Kain</th>
                   <th className="th-center text-sm w-16">Qty</th>
                   <th className="th-center text-sm w-36">Harga</th>
@@ -508,6 +552,7 @@ export default function Edit() {
                     <td className="td-center">{index + 1}</td>
                     <td className="td-left">
                       <Select
+                        placeholder="Pilih jenis pakaian"
                         value={
                           row.value
                             ? clothingTypeOptions.find(
@@ -523,18 +568,16 @@ export default function Edit() {
                       />
                     </td>
                     <td className="td-center">
-                      {row.value &&
-                      orderDetails[index].measurement_history_id ? (
+                      {row.value && orderDetails[index].measurements ? (
                         <div className="flex-all-center w-full">
                           <button
                             type="button"
                             className={
-                              "flex-all-center text-green-700 cursor-pointer"
+                              "flex-all-center button-primary cursor-pointer"
                             }
-                            onClick={() =>
-                              handleBtnMeasurement(row.value, client, index)
-                            }
+                            onClick={() => handleBtnShowMeasurement(index)}
                           >
+                            <span className="mx-1">Lihat Ukuran</span>
                             <Svg title="Menu" c={"w-5 fill-current mx-1"}>
                               <CheckSvg />
                             </Svg>
@@ -549,12 +592,12 @@ export default function Edit() {
                                 "flex-all-center button-success cursor-pointer"
                               }
                               onClick={() =>
-                                handleBtnMeasurement(row.value, client, index)
+                                handleBtnMeasurement(row.value, customer, index)
                               }
                             >
-                              <span className="mx-1">Pilih</span>
+                              <span className="mx-1">Input Ukuran</span>
                               <Svg title="Menu" c={"w-5 fill-current mx-1"}>
-                                <MenuSvg />
+                                <InputSvg />
                               </Svg>
                             </button>
                           </div>
@@ -641,29 +684,7 @@ export default function Edit() {
                     colSpan={5}
                     rowSpan={3}
                   >
-                    <div>
-                      <span className="flex mt-2 font-semibold">Catatan :</span>
-                      <div className="flex">
-                        <span className="flex w-2">1.</span>
-                        <span className="flex text-left ml-2 w-150">
-                          Lebih dari 2 bulan barang tidak diambil, segala
-                          kehilangan / kerusakan dan lain-lain diluar tanggung
-                          jawab kami
-                        </span>
-                      </div>
-                      <div className="flex">
-                        <span className="flex w-2">2.</span>
-                        <span className="flex ml-2 w-150">
-                          Dengan nota tersebut barang bisa diterima
-                        </span>
-                      </div>
-                      <div className="flex">
-                        <span className="flex w-2">3.</span>
-                        <span className="flex ml-2 w-150">
-                          Kehilangan nota pengambilan bukan tanggung jawab kami
-                        </span>
-                      </div>
-                    </div>
+                    <OrderNotes />
                   </td>
                   <td className="td-right text-sm font-semibold">Total</td>
                   <td className="td-right text-sm font-semibold">
@@ -683,10 +704,13 @@ export default function Edit() {
                       <label className="w-5 flex">Rp.</label>
                       <input
                         className="flex ml-2 px-1 w-full text-right spinner-disabled"
+                        title="Input uang muka"
                         type="number"
                         value={Number(downPayment)}
                         min={0}
-                        onChange={handleDepositChange}
+                        onClick={() => {
+                          setDownPaymentModalOpen(true);
+                        }}
                       />
                     </div>
                   </td>
@@ -709,142 +733,304 @@ export default function Edit() {
           </div>
         </form>
       </div>
-      <MeasurementModal
-        title={"Pilih Ukuran"}
+
+      <ShowMeasurementModal
+        title={"Detail Ukuran"}
         isOpen={showMeasurementModalOpen}
         onClose={() => setShowMeasurementModalOpen(false)}
       >
-        <div>
-          <table className="table-auto mt-2 w-full">
-            <thead>
-              <tr className="h-10 bg-stone-200">
-                <th className="th-center w-10">No.</th>
-                <th className="th-center w-32">Jenis Pakaian</th>
-                <th className="th-center w-28">Tanggal Ukur</th>
-                <th className="th-center w-60">Diukur Oleh</th>
-                <th className="th-center w-72">Detail Ukuran</th>
-                <th className="th-center w-32">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {measurementHistories &&
-                measurementHistories.map((measurement, index) => {
-                  const isShow = showDetail.includes(index);
-                  const measurementDetails = JSON.parse(
-                    measurement.measurement_details,
-                  );
-                  return (
-                    <tr className="bg-white" key={index}>
-                      <td className="td-center">{index + 1}</td>
-                      <td className="td-center">
-                        {measurement.clothing_type.type}
-                      </td>
-                      <td className="td-center">{measurement.measured_at}</td>
-                      <td className="td-left"></td>
-                      <td className="td-left">
-                        <div className="flex w-full">
-                          {isShow ? (
-                            <div className="w-72">
-                              <div className="w-full border-b py-1">
-                                Detail Ukuran
-                              </div>
-                              <div className="mt-2">
-                                {measurementDetails.map(
-                                  (itemDetail, indexDetail) => (
-                                    <div
-                                      key={indexDetail}
-                                      className="flex items-start"
-                                    >
-                                      <label className="w-6">
-                                        {indexDetail + 1}.{" "}
-                                      </label>
-                                      <label className="w-36">
-                                        {itemDetail.name}
-                                      </label>
-                                      <label>=</label>
-                                      <label className="ml-2">
-                                        {itemDetail.value}
-                                      </label>
-                                      <label className="flex w-6 ml-2">
-                                        cm
-                                      </label>
-                                    </div>
-                                  ),
-                                )}
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="w-72">Tampilkan Detail Ukuran</div>
-                          )}
-
-                          <button
-                            type="button"
-                            className="flex justify-center items-center w-4 mx-auto hover:text-stone-900 cursor-pointer"
-                            onClick={() => handleBtnDetail(index)}
-                          >
-                            <Svg
-                              title="Arrow"
-                              c={
-                                isShow
-                                  ? "nav-svg w-5 fill-current rotate-180"
-                                  : "nav-svg w-5 fill-current"
-                              }
-                            >
-                              <ArrowSvg />
-                            </Svg>
-                          </button>
-                        </div>
-                      </td>
-                      <td className="td-center">
-                        <div className="w-full flex-all-center p-1 my-1">
-                          <input
-                            name="measurement_history_id"
-                            type="radio"
-                            value={measurement.hashed_id}
-                            defaultChecked={
-                              measurementHistoryId == measurement.hashed_id
-                                ? true
-                                : false
-                            }
-                            onClick={(e) =>
-                              handleMeasurementHistoryId(e, orderDetailIndex)
-                            }
-                          />
-                          <label className="ml-1">Pilih</label>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-            </tbody>
-          </table>
-          {!measurementHistories ||
-            (measurementHistories.length == 0 && (
-              <div className="w-full flex-all-center text-red-700 p-2">
-                Belum ada ukuran untuk pelanggan dan jenis pakaian yang
-                dipilih...!! silahkan input data pengukuran terlebih dahulu.
+        {showMeasurementModalOpen && (
+          <div>
+            <div className="p-4 border border-gray-200 shadow-lg rounded-xl w-full mt-4">
+              <div className="flex items-center">
+                <label className="w-44">Nama Pelanggan</label>
+                <label>:</label>
+                <label className="ml-2">{customer?.name}</label>
               </div>
-            ))}
+              <div className="flex items-center mt-2">
+                <label className="w-44">Jenis Pakaian</label>
+                <label>:</label>
+                <label className="ml-2">
+                  {rows[orderDetailIndex]?.clothing_type}
+                </label>
+              </div>
+              <div className="mt-4">
+                <div className="flex items-center border-b p-1 w-96">
+                  <label className="w-44">Bagian yang di ukur</label>
+                </div>
+                {JSON.parse(orderDetails[orderDetailIndex].measurements).map(
+                  (measurement, index) => {
+                    return (
+                      measurement.name != "" && (
+                        <div
+                          key={index}
+                          className="flex items-center border-b p-1 w-96"
+                        >
+                          <label className="w-6">{index + 1}. </label>
+                          <label className="w-56">{measurement.name}</label>
+                          <label className="ml-4">{measurement.value}</label>
+                          <label className="flex w-6 ml-2">cm</label>
+                        </div>
+                      )
+                    );
+                  },
+                )}
+              </div>
+            </div>
+            <div className="flex justify-end mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMeasurementModalOpen(false);
+                }}
+                className="flex-all-center button-danger px-2 cursor-pointer"
+              >
+                <Svg title="Close" c={"w-5 fill-current"}>
+                  <DeleteSvg />
+                </Svg>
+                <span className="ml-1">Close</span>
+              </button>
+              {/* <button
+                type="button"
+                onClick={() => {
+                  setMeasurementModalOpen(true);
+                  setShowMeasurementModalOpen(false);
+                }}
+                className="flex-all-center button-success px-2 cursor-pointer ml-2"
+              >
+                <Svg title="Close" c={"w-5 fill-current"}>
+                  <ReloadSvg />
+                </Svg>
+                <span className="ml-1">Rubah Ukuran</span>
+              </button> */}
+            </div>
+          </div>
+        )}
+      </ShowMeasurementModal>
+
+      <MeasurementModal
+        title={"Silahkan Masukkan Ukuran Baru atau Pilih ukuran lama"}
+        isOpen={measurementModalOpen}
+        onClose={() => setMeasurementModalOpen(false)}
+      >
+        <div className="flex items-center">
+          <input
+            name="measurmentOptions"
+            value={"choose"}
+            type="radio"
+            defaultChecked="true"
+            onClick={() => setShowInputMeasurements(false)}
+          />
+          <span className="flex ml-2">Pilih ukuran lama</span>
+          <input
+            className="ml-4"
+            name="measurmentOptions"
+            value={"input"}
+            type="radio"
+            onClick={() => setShowInputMeasurements(true)}
+          />
+          <span className="flex ml-2">Masukkan ukuran baru</span>
         </div>
-        <div className="flex justify-end mt-2">
+        {!showInputMeasurements ? (
+          <>
+            <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm mt-4">
+              <table className="table-auto w-full divide-y divide-gray-200 bg-white text-left  text-gray-500">
+                <thead className="bg-gray-100 font-semibold text-gray-700  text-sm">
+                  <tr>
+                    <th className="px-6 py-3 text-center">No.</th>
+                    <th className="px-6 py-3 text-center">Jenis Pakaian</th>
+                    <th className="px-6 py-3 text-center">Tanggal Ukur</th>
+                    <th className="px-6 py-3 text-center">Diukur Oleh</th>
+                    <th className="px-6 py-3">Detail Ukuran</th>
+                    <th className="px-6 py-3 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {measurementHistories &&
+                    measurementHistories.map((measurement, index) => {
+                      const isShow = showDetail.includes(index);
+                      const measurementDetails = JSON.parse(
+                        measurement.measurement_details,
+                      );
+                      return (
+                        <tr
+                          key={index}
+                          className="hover:bg-gray-50 transition-colors text-sm"
+                        >
+                          <td className="px-3 py-1 text-center">{index + 1}</td>
+                          <td className="px-3 py-1 text-center">
+                            {measurement.clothing_type.type}
+                          </td>
+                          <td className="px-3 py-1 text-center">
+                            {FormattedDateShort(measurement.measured_at)}
+                          </td>
+                          <td className="px-3 py-1 text-center">
+                            {measurement.measured_by}
+                          </td>
+                          <td className="px-3 py-1">
+                            <div className="flex w-full">
+                              {isShow ? (
+                                <div className="w-72">
+                                  <div className="w-full border-b py-1">
+                                    Detail Ukuran
+                                  </div>
+                                  <div className="mt-2">
+                                    {measurementDetails.map(
+                                      (itemDetail, indexDetail) => {
+                                        return (
+                                          itemDetail.name != "" && (
+                                            <div
+                                              key={indexDetail}
+                                              className="flex items-start"
+                                            >
+                                              <label className="w-6">
+                                                {indexDetail + 1}.{" "}
+                                              </label>
+                                              <label className="w-36">
+                                                {itemDetail.name}
+                                              </label>
+                                              <label>=</label>
+                                              <label className="ml-2">
+                                                {itemDetail.value}
+                                              </label>
+                                              <label className="flex w-6 ml-2">
+                                                cm
+                                              </label>
+                                            </div>
+                                          )
+                                        );
+                                      },
+                                    )}
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="w-72">
+                                  Tampilkan Detail Ukuran
+                                </div>
+                              )}
+
+                              <button
+                                type="button"
+                                className="flex justify-center items-center w-4 mx-auto hover:text-stone-900 cursor-pointer"
+                                onClick={() => handleBtnDetail(index)}
+                              >
+                                <Svg
+                                  title="Arrow"
+                                  c={
+                                    isShow
+                                      ? "nav-svg w-5 fill-current rotate-180"
+                                      : "nav-svg w-5 fill-current"
+                                  }
+                                >
+                                  <ArrowSvg />
+                                </Svg>
+                              </button>
+                            </div>
+                          </td>
+                          <td className="px-3 py-1 text-center">
+                            <div className="w-full flex-all-center p-1 my-1">
+                              <input
+                                name="measurement_history_id"
+                                type="radio"
+                                value={measurement.hashed_id}
+                                onClick={() =>
+                                  handleMeasurementHistory(
+                                    measurementDetails,
+                                    orderDetailIndex,
+                                  )
+                                }
+                              />
+                              <label className="ml-1">Pilih</label>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+              {!measurementHistories ||
+                (measurementHistories.length == 0 && (
+                  <div className="w-full flex-all-center text-red-700 p-2">
+                    Belum ada ukuran untuk pelanggan dan jenis pakaian yang
+                    dipilih...!! silahkan input data pengukuran terlebih dahulu.
+                  </div>
+                ))}
+            </div>
+            <div className="flex justify-end mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (measurements == null) {
+                    alert("Silahkan pilih ukuran terlebih dahulu..!!");
+                  } else {
+                    setMeasurementModalOpen(false);
+                  }
+                }}
+                className="flex-all-center button-success px-2 cursor-pointer"
+              >
+                <Svg title="Close" c={"w-5 fill-current"}>
+                  <CheckSvg />
+                </Svg>
+                <span className="ml-1">Submit</span>
+              </button>
+            </div>
+          </>
+        ) : (
+          <NewMeasurementHistory
+            measurements={measurements}
+            setOrderDetails={setOrderDetails}
+            orderDetails={orderDetails}
+            setMeasurements={setMeasurements}
+            customer={customer}
+            indexOrderDetail={orderDetailIndex}
+            clothingTypeId={orderDetails[orderDetailIndex]?.clothing_type_id}
+            clothingType={rows[orderDetailIndex]?.clothing_type}
+            today={today}
+            setMeasurementModalOpen={setMeasurementModalOpen}
+          ></NewMeasurementHistory>
+        )}
+      </MeasurementModal>
+
+      <PaymentModal
+        title={"Input Pembayaran"}
+        isOpen={downPaymentModalOpen}
+        onClose={() => setDownPaymentModalOpen(false)}
+      >
+        <PaymentForm data={order} action={handleChange} />
+        <div className="flex justify-end gap-2 mt-2">
+          <button
+            onClick={() => {
+              setDownPaymentModalOpen(false);
+              setOrder((prevData) => ({
+                ...prevData,
+                ["amount_paid"]: 0,
+                ["payment_method"]: "",
+                ["payment_notes"]: "",
+              }));
+            }}
+            className="flex-all-center button-danger mx-1 cursor-pointer"
+          >
+            <Svg title="Cancel" c={"w-5 fill-current mx-1"}>
+              <DeleteSvg />
+            </Svg>
+            <span className="mx-1">Cancel</span>
+          </button>
           <button
             type="button"
             onClick={() => {
-              if (measurementHistoryId == null) {
-                alert("Silahkan pilih ukuran terlebih dahulu..!!");
-              } else {
-                setShowMeasurementModalOpen(false);
-              }
+              setDownPaymentModalOpen(false);
+              setDownPayment(order.amount_paid);
+              setBalance(Number(subTotal) - Number(order.amount_paid));
             }}
-            className="flex-all-center button-success mx-1 cursor-pointer"
+            className="flex-all-center button-success px-2 cursor-pointer"
           >
-            <Svg title="Close" c={"w-5 fill-current mx-1"}>
+            <Svg title="Close" c={"w-5 fill-current"}>
               <CheckSvg />
             </Svg>
-            <span className="mx-1">Submit</span>
+            <span className="ml-1">Submit</span>
           </button>
         </div>
-      </MeasurementModal>
+      </PaymentModal>
     </>
   );
 }

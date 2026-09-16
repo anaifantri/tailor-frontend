@@ -60,73 +60,83 @@ export default function Show() {
 
   return (
     <>
-      <div>
+      <div className="w-250">
         <HeaderShow
           titleShow="Data Tukang Jahit"
-          url="/tailors"
+          url="/tailors/tailors"
+          deleteUrl="/tailors"
           getId={tailor.hashed_id}
           token={token}
         />
         <SuccessMessage message={message} duration="3000" />
         <div className="grid grid-cols-3 gap-2 mt-4">
-          <div className="flex-all-center col-span-1">
+          <div className="flex-all-center col-span-1 border border-gray-200 shadow-lg rounded-xl p-10">
+            <span className="flex text-center w-full">Foto Profil</span>
             {tailor.photo ? (
-              <img
-                src={tailor.photo}
-                alt=""
-                className="flex w-56 h-56 mx-2 rounded-full"
-              />
+              <img src={tailor.photo} alt="" className="flex w-full" />
             ) : (
-              <Svg title="Profile" c={"w-36 fill-current mx-2"}>
+              <Svg title="Profile" c={"w-full fill-current mx-2"}>
                 <ProfileSvg />
               </Svg>
             )}
           </div>
-          <div className=" border rounded-xl p-2 col-span-2 texl-lg w-120">
-            <div className="flex w-full p-1">
-              <label className="flex w-32">ID Penjahit</label>
-              <label>:</label>
-              <label className="flex ml-2 font-semibold">{tailor.code}</label>
-            </div>
-            <div className="flex w-full p-1">
-              <label className="flex w-32">Nama</label>
-              <label>:</label>
-              <label className="flex ml-2 font-semibold">{tailor.name}</label>
-            </div>
-            <div className="flex w-full p-1">
-              <label className="flex w-32">Alamat</label>
-              <label>:</label>
-              <label className="flex ml-2 font-semibold">
-                {tailor.address}
-              </label>
-            </div>
-            <div className="flex w-full p-1">
-              <label className="flex w-32">Nomor Hp.</label>
-              <label>:</label>
-              <label className="flex ml-2 font-semibold">{tailor.phone}</label>
-            </div>
-            <div className="flex w-full p-1">
-              <label className="flex w-32">Email</label>
-              <label>:</label>
-              <label className="flex ml-2 font-semibold">{tailor.email}</label>
-            </div>
-            <div className="flex w-full p-1">
-              <label className="flex w-32">Status</label>
-              <label>:</label>
-              <label className="flex ml-2 font-semibold">
-                {tailor.is_active ? "Aktif" : "Non Aktif"}
-              </label>
-            </div>
-            <div className="flex w-full px-1">
-              <label className="flex w-32 mt-2">Keahlian</label>
-              <label className="mt-2">:</label>
-              <div>
-                {specialty.map((item, index) => (
-                  <div key={index} className="flex mt-2 font-semibold">
-                    <label className="ml-2">-</label>
-                    <label className="ml-2">{item}</label>
-                  </div>
-                ))}
+          <div className="flex border border-gray-200 shadow-lg rounded-xl col-span-2 p-8">
+            <div className="divide-y divide-gray-400 w-full">
+              <div className="flex w-full p-2">
+                <label className="flex w-32">ID Penjahit</label>
+                <label>:</label>
+                <label className="flex ml-2 font-semibold">{tailor.code}</label>
+              </div>
+              <div className="flex w-full p-2">
+                <label className="flex w-32">Nama</label>
+                <label>:</label>
+                <label className="flex ml-2 font-semibold">{tailor.name}</label>
+              </div>
+              <div className="flex w-full p-2">
+                <label className="flex w-32">Alamat</label>
+                <label>:</label>
+                <label className="flex ml-2 font-semibold">
+                  {tailor.address}
+                </label>
+              </div>
+              <div className="flex w-full p-2">
+                <label className="flex w-32">Nomor Hp.</label>
+                <label>:</label>
+                <label className="flex ml-2 font-semibold">
+                  {tailor.phone}
+                </label>
+              </div>
+              <div className="flex w-full p-2">
+                <label className="flex w-32">Email</label>
+                <label>:</label>
+                <label className="flex ml-2 font-semibold">
+                  {tailor.email}
+                </label>
+              </div>
+              <div className="flex w-full p-2">
+                <label className="flex w-32">Status</label>
+                <label>:</label>
+                <label className="flex ml-2 font-semibold">
+                  {tailor.is_active ? "Aktif" : "Non Aktif"}
+                </label>
+              </div>
+              <div className="flex w-full px-1">
+                <label className="flex w-32 mt-2">Keahlian</label>
+                <label className="mt-2">:</label>
+                <div className="grid grid-cols-3 gap-4 ml-2">
+                  {specialty.map((item, index) => (
+                    <div key={index} className="flex mt-2 font-semibold">
+                      <input
+                        type="checkbox"
+                        readOnly
+                        checked={specialty.includes(item)}
+                        className="w-5 h-5 rounded-md border-gray-300 text-indigo-600"
+                      />
+                      <label className="ml-2">{item}</label>
+                    </div>
+                  ))}
+                </div>
+                <div></div>
               </div>
             </div>
           </div>

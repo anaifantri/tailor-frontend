@@ -54,7 +54,7 @@ export default function BtnDelete({
       <Svg title="Delete" c={"w-5 fill-current mx-1"}>
         <DeleteSvg />
       </Svg>
-      <span className="mx-1">Delete</span>
+      <span className="mx-1">Hapus</span>
     </button>
   );
 }

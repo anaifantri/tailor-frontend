@@ -35,15 +35,15 @@ export default function Modal({ title, isOpen, onClose, children }) {
           <h3 className="text-lg font-medium text-gray-950">{title}</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-red-600 font-bold text-xl leading-none cursor-pointer"
+            className="text-red-600 hover:text-red-800 font-bold text-xl leading-none cursor-pointer"
           >
-            <Svg title="Back" c={"w-5 fill-current mx-1"}>
+            <Svg title="Back" c={"w-6 fill-current mx-1"}>
               <DeleteSvg />
             </Svg>
           </button>
         </div>
 
-        <div className="text-sm text-gray-600 mb-6">{children}</div>
+        <div className="text-sm text-gray-600 mb-2">{children}</div>
       </div>
     </div>
   );

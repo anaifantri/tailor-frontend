@@ -82,7 +82,7 @@ function ResetPassword() {
                 <span
                   className={
                     message
-                      ? "flex-all-center m-auto w-full text-red-700 text-sm items-center"
+                      ? "flex-all-center m-auto w-full text-teal-400 text-sm items-center"
                       : "hidden"
                   }
                 >

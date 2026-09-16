@@ -4,18 +4,24 @@ import BtnBack from "@/components/BtnBack";
 import BtnEdit from "@/components/BtnEdit";
 import BtnDelete from "@/components/BtnDelete";
 
-export default function HeaderShow({ titleShow, url, getId, token }) {
+export default function HeaderShow({
+  titleShow,
+  url,
+  deleteUrl,
+  getId,
+  token,
+}) {
   return (
     <>
-      <div className="grid grid-cols-2 gap-1 w-full border-b">
-        <div className="flex w-full font-semibold p-1 text-lg">
+      <div className="grid grid-cols-2 gap-1 w-full border border-gray-200 shadow-lg rounded-lg p-2">
+        <div className="flex w-full font-semibold text-lg">
           Detail {titleShow}
         </div>
-        <div className="flex justify-end w-full mx-1 p-1">
+        <div className="flex justify-end w-full mx-1">
           <BtnBack backUrl={`/dashboard${url}`} />
           <BtnEdit editUrl={`/dashboard${url}/edit/${getId}`} />
           <BtnDelete
-            deleteUrl={`/api${url}/delete/`}
+            deleteUrl={`/api${deleteUrl}/delete/`}
             deleteId={getId}
             getToken={token}
             returnUrl={`/dashboard${url}`}
