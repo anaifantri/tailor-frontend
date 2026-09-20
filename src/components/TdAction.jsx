@@ -43,6 +43,7 @@ export default function TdAction({
         }
       } catch (err) {
         setError(err.message);
+        console.log(err);
       }
     }
   };

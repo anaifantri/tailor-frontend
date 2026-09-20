@@ -4,9 +4,11 @@ import { useAuth } from "@/context/AuthContext";
 import api from "@/apiService";
 
 import FormattedDateLong from "@/Utils/FormattedDateLong";
+import FormattedDateShort from "@/Utils/FormattedDateShort";
 
-import HeaderShow from "@/components/HeaderShow";
+import HeaderShowAll from "@/components/HeaderShowAll";
 import BtnPay from "@/components/BtnPay";
+import BtnPdf from "@/components/BtnPdf";
 import ShowMeasurementModal from "@/components/Modal";
 import PaymentModal from "@/components/Modal";
 import ProgressModal from "@/components/Modal";
@@ -59,13 +61,37 @@ export default function Show() {
     notes: null,
   });
 
-  const [measurementHistory, setMeasurementHistory] = useState(null);
   const [customer, setCustomer] = useState(null);
   const [clothingType, setClothingType] = useState(null);
+  const [category, setCategory] = useState(null);
   const [measurementDetails, setMeasurementDetails] = useState([]);
   const [measurements, setMeasurements] = useState([]);
   const [showMeasurementModalOpen, setShowMeasurementModalOpen] =
     useState(false);
+
+  const rok = ["Panjang Rok", "Lingkar Pinggang", "Lingkar Pinggul"];
+  const celana = [
+    "Panjang Celana",
+    "Lingkar Pinggang",
+    "Lingkar Pinggul",
+    "Pesak",
+    "Paha",
+    "Lutut",
+    "Kaki",
+  ];
+  const baju = [
+    "Panjang Badan",
+    "Lebar Bahu",
+    "Panjang Tangan",
+    "Lingkar Lengan",
+    "Manset",
+    "Lingkar Badan",
+    "Lingkar Perut",
+    "Lingkar Pinggul",
+    "Lebar Dada",
+    "Lebar Punggung",
+    "Lingkar Leher",
+  ];
 
   const progress = [
     "Antrian",
@@ -76,33 +102,10 @@ export default function Show() {
     "Pengambilan",
   ];
 
-  const handleShowMeasurements = (clothingType, measurements) => {
+  const handleShowMeasurements = (clothingType, category, measurements) => {
     setClothingType(clothingType);
+    setCategory(category);
     setMeasurements(JSON.parse(measurements));
-    // const fetchData = async () => {
-    //   try {
-    //     const response = await api.get(
-    //       "/api/measurement-histories/" + measurementHistoryId,
-    //       {
-    //         headers: {
-    //           Authorization: `Bearer ${token}`,
-    //         },
-    //       },
-    //     );
-    //     setMeasurementHistory(response.data.measurement_history);
-    //     setMeasurementDetails(
-    //       JSON.parse(response.data.measurement_history.measurement_details),
-    //     );
-    //     setCustomer(response.data.measurement_history.customer);
-    //     setClothingType(response.data.measurement_history.clothing_type);
-    //   } catch (error) {
-    //     setError(error);
-    //     console.log(error);
-    //   } finally {
-    //     setLoading(false);
-    //   }
-    // };
-    // fetchData();
     setShowMeasurementModalOpen(true);
   };
 
@@ -228,6 +231,13 @@ export default function Show() {
             },
           });
           setOrder(response.data.order);
+          const orderDetails = response.data.order.order_details;
+          const formattedMeasurementDetail = orderDetails.map((item) => ({
+            category: item.clothing_type.category,
+            code: item.clothing_type.code,
+            measurements: JSON.parse(item.measurements),
+          }));
+          setMeasurementDetails(formattedMeasurementDetail);
           setCustomer(response.data.order.customer);
           const payments = response.data.order.payments;
           const getDownPayment = payments.find(
@@ -326,8 +336,8 @@ export default function Show() {
 
   return (
     <>
-      <div className="w-280">
-        <HeaderShow
+      <div className="w-300">
+        <HeaderShowAll
           titleShow="Data Pesanan"
           url="/transactions/orders"
           deleteUrl="/orders"
@@ -429,7 +439,7 @@ export default function Show() {
                 const isShow = showDetail.includes(index);
                 const nextProgress = productionProgress.length;
                 return (
-                  <tr className="h-8" key={index}>
+                  <tr className="h-8 hover:bg-gray-200" key={index}>
                     <td className="td-center text-sm">{index + 1}</td>
                     <td className="td-center">{item.material.code}</td>
                     <td className="td-left">
@@ -553,6 +563,7 @@ export default function Show() {
                           onClick={() =>
                             handleShowMeasurements(
                               item.clothing_type.type,
+                              item.clothing_type.category,
                               item.measurements,
                             )
                           }
@@ -675,6 +686,284 @@ export default function Show() {
               </tr>
             </tbody>
           </table>
+        </div>
+        <div className="grid grid-cols-2 gap-2 w-full h-175 mt-4">
+          <div className="border border-stone-900 rounded-xl p-2">
+            <div className="grid grid-cols-3 gap-4 border-b">
+              <div className="col-span-2">
+                <div className="flex py-1">
+                  <label className="w-32">No. Nota</label>
+                  <label>:</label>
+                  <label className="ml-2">
+                    {order.number ? order.number : "-"}
+                  </label>
+                </div>
+                <div className="flex py-1">
+                  <label className="w-32">Nama Pelanggan</label>
+                  <label>:</label>
+                  <label className="ml-2">
+                    {customer?.name ? customer?.name : "-"}
+                  </label>
+                </div>
+                <div className="flex py-1">
+                  <label className="w-32">No. Hp.</label>
+                  <label>:</label>
+                  <label className="ml-2">
+                    {customer?.phone ? customer?.phone : "-"}
+                  </label>
+                </div>
+              </div>
+              <div className="col-span-1">
+                <div className="flex py-1 justify-end">
+                  <label className="w-24">Tgl. Pesan</label>
+                  <label>:</label>
+                  <label className="ml-2 w-24">
+                    {order.order_date
+                      ? FormattedDateShort(order.order_date)
+                      : "-"}
+                  </label>
+                </div>
+                <div className="flex py-1 justify-end">
+                  <label className="w-24">Tgl. Fitting</label>
+                  <label>:</label>
+                  <label className="ml-2 w-24">
+                    {order.fitting_date
+                      ? FormattedDateShort(order.fitting_date)
+                      : "-"}
+                  </label>
+                </div>
+                <div className="flex py-1 justify-end">
+                  <label className="w-24">Tgl. Selesai</label>
+                  <label>:</label>
+                  <label className="ml-2 w-24">
+                    {order.due_date ? FormattedDateShort(order.due_date) : "-"}
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-rows-2 gap-2 mt-2 h-150">
+              <div className="p-1">
+                <div className="flex justify-center items-center font-semibold w-full p-1 bg-gray-200 rounded-md border border-gray-300 shadow-sm">
+                  <label>Gambar dan catatan untuk atasan</label>
+                </div>
+              </div>
+              <div className="p-1">
+                <div className="flex justify-center items-center font-semibold w-full p-1 bg-gray-200 rounded-md border border-gray-300 shadow-sm">
+                  <label>Detail ukuran untuk atasan</label>
+                </div>
+                {measurementDetails.some(
+                  (detail) => detail.category === "baju",
+                ) && (
+                  <>
+                    <div className="flex">
+                      <div>
+                        <div className="flex justify-center items-center border w-40 mt-1 font-semibold">
+                          BAJU / ATASAN
+                        </div>
+                        {baju.map((measurement, index) => {
+                          return (
+                            <div
+                              key={index}
+                              className="flex items-start border-x border-b px-2 w-40"
+                            >
+                              <label className="w-6">{index + 1}. </label>
+                              <label>{measurement}</label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {measurementDetails.map((item, index) => {
+                        if (item.category == "baju") {
+                          return (
+                            <div key={index}>
+                              <div className="flex justify-center items-center border-y border-r mt-1 font-semibold px-2">
+                                {item.code}
+                              </div>
+                              {item.measurements.map((measurement, index) => {
+                                if (measurement.name != "") {
+                                  return (
+                                    <div
+                                      key={index}
+                                      className="flex items-center justify-center border-r border-b px-2"
+                                    >
+                                      <label>{measurement.value}</label>
+                                    </div>
+                                  );
+                                }
+                              })}
+                            </div>
+                          );
+                        }
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="border border-stone-900 rounded-xl p-2">
+            <div className="grid grid-cols-3 gap-4 border-b">
+              <div className="col-span-2">
+                <div className="flex py-1">
+                  <label className="w-32">No. Nota</label>
+                  <label>:</label>
+                  <label className="ml-2">
+                    {order.number ? order.number : "-"}
+                  </label>
+                </div>
+                <div className="flex py-1">
+                  <label className="w-32">Nama Pelanggan</label>
+                  <label>:</label>
+                  <label className="ml-2">
+                    {customer?.name ? customer?.name : "-"}
+                  </label>
+                </div>
+                <div className="flex py-1">
+                  <label className="w-32">No. Hp.</label>
+                  <label>:</label>
+                  <label className="ml-2">
+                    {customer?.phone ? customer?.phone : "-"}
+                  </label>
+                </div>
+              </div>
+              <div className="col-span-1">
+                <div className="flex py-1 justify-end">
+                  <label className="w-24">Tgl. Pesan</label>
+                  <label>:</label>
+                  <label className="ml-2 w-24">
+                    {order.order_date
+                      ? FormattedDateShort(order.order_date)
+                      : "-"}
+                  </label>
+                </div>
+                <div className="flex py-1 justify-end">
+                  <label className="w-24">Tgl. Fitting</label>
+                  <label>:</label>
+                  <label className="ml-2 w-24">
+                    {order.fitting_date
+                      ? FormattedDateShort(order.fitting_date)
+                      : "-"}
+                  </label>
+                </div>
+                <div className="flex py-1 justify-end">
+                  <label className="w-24">Tgl. Selesai</label>
+                  <label>:</label>
+                  <label className="ml-2 w-24">
+                    {order.due_date ? FormattedDateShort(order.due_date) : "-"}
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-rows-2 gap-2 mt-2 h-150">
+              <div className="p-1">
+                <div className="flex justify-center items-center font-semibold w-full p-1 bg-gray-200 rounded-md border border-gray-300 shadow-sm">
+                  <label>Gambar dan catatan untuk bawahan</label>
+                </div>
+              </div>
+              <div className="p-1">
+                <div className="flex justify-center items-center font-semibold w-full p-1 bg-gray-200 rounded-md border border-gray-300 shadow-sm">
+                  <label>Detail ukuran untuk bawahan</label>
+                </div>
+                {/* <div className="flex"> */}
+                {measurementDetails.some(
+                  (detail) => detail.category === "celana",
+                ) && (
+                  <>
+                    <div className="flex">
+                      <div>
+                        <div className="flex justify-center items-center border w-40 mt-1 font-semibold">
+                          CELANA
+                        </div>
+                        {celana.map((measurement, index) => {
+                          return (
+                            <div
+                              key={index}
+                              className="flex items-start border-x border-b px-2 w-40"
+                            >
+                              <label className="w-6">{index + 1}. </label>
+                              <label>{measurement}</label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {measurementDetails.map((item, index) => {
+                        if (item.category == "celana") {
+                          return (
+                            <div key={index}>
+                              <div className="flex justify-center items-center border-y border-r mt-1 font-semibold px-2">
+                                {item.code}
+                              </div>
+                              {item.measurements.map((measurement, index) => {
+                                if (measurement.name != "") {
+                                  return (
+                                    <div
+                                      key={index}
+                                      className="flex items-center justify-center border-r border-b px-2"
+                                    >
+                                      <label>{measurement.value}</label>
+                                    </div>
+                                  );
+                                }
+                              })}
+                            </div>
+                          );
+                        }
+                      })}
+                    </div>
+                  </>
+                )}
+
+                {measurementDetails.some(
+                  (detail) => detail.category === "rok",
+                ) && (
+                  <>
+                    <div className="flex">
+                      <div>
+                        <div className="flex justify-center items-center border w-40 mt-1 font-semibold">
+                          ROK
+                        </div>
+                        {rok.map((measurement, index) => {
+                          return (
+                            <div
+                              key={index}
+                              className="flex items-start border-x border-b px-2 w-40"
+                            >
+                              <label className="w-6">{index + 1}. </label>
+                              <label>{measurement}</label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {measurementDetails.map((item, index) => {
+                        if (item.category == "rok") {
+                          return (
+                            <div key={index}>
+                              <div className="flex justify-center items-center border-y border-r mt-1 font-semibold px-2">
+                                {item.code}
+                              </div>
+                              {item.measurements.map((measurement, index) => {
+                                if (measurement.name != "") {
+                                  return (
+                                    <div
+                                      key={index}
+                                      className="flex items-center justify-center border-r border-b px-2"
+                                    >
+                                      <label>{measurement.value}</label>
+                                    </div>
+                                  );
+                                }
+                              })}
+                            </div>
+                          );
+                        }
+                      })}
+                    </div>
+                  </>
+                )}
+                {/* </div> */}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -909,7 +1198,12 @@ export default function Show() {
       <ShowMeasurementModal
         title={"Detail Ukuran"}
         isOpen={showMeasurementModalOpen}
-        onClose={() => setShowMeasurementModalOpen(false)}
+        onClose={() => {
+          setClothingType("");
+          setCategory("");
+          setMeasurements([]);
+          setShowMeasurementModalOpen(false);
+        }}
       >
         {showMeasurementModalOpen && (
           <div>
@@ -918,6 +1212,11 @@ export default function Show() {
                 <label className="w-44">Nama Pelanggan</label>
                 <label>:</label>
                 <label className="ml-2">{customer?.name}</label>
+              </div>
+              <div className="flex items-center mt-2">
+                <label className="w-44">Katagori Pakaian</label>
+                <label>:</label>
+                <label className="ml-2 uppercase">{category}</label>
               </div>
               <div className="flex items-center mt-2">
                 <label className="w-44">Jenis Pakaian</label>
@@ -950,6 +1249,7 @@ export default function Show() {
                 type="button"
                 onClick={() => {
                   setClothingType("");
+                  setCategory("");
                   setMeasurements([]);
                   setShowMeasurementModalOpen(false);
                 }}

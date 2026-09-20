@@ -444,7 +444,7 @@ export default function Edit() {
         <form onSubmit={handleSubmit}>
           <HeaderEdit
             titleEdit="Data Pesanan"
-            backUrl="/dashboard/orders"
+            backUrl="/dashboard/transactions/orders"
             getProcessing={processing}
           />
           <div className="flex-all-center w-full border-3 border-stone-900 rounded-4xl h-28 mt-4">

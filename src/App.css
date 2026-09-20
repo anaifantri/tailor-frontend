@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+@theme {
+  --spacing-print-p: 0.4in;
+  --width-card: 9.5in;
+  --height-card: 5.5in;
+  --spacing-print-margin: 0.4in;
+}
+
 @layer components {
   input[type="text"],
   input[type="date"],
@@ -73,5 +80,18 @@
   }
   .my-select-container .select__control {
     @apply border border-amber-700;
+  }
+
+  @keyframes shimmer-sweep {
+    0% {
+      transform: translateX(-100%) skewX(-15deg);
+    }
+    100% {
+      transform: translateX(100%) skewX(-15deg);
+    }
+  }
+
+  .animate-shimmer {
+    animation: shimmer-sweep 2.5s infinite ease-in-out;
   }
 }

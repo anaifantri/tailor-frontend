@@ -5,6 +5,7 @@ import { useLocation, useSearchParams } from "react-router-dom";
 import api from "@/apiService";
 
 import HeaderIndex from "@/components/HeaderIndex";
+import Pagination from "@/components/Pagination";
 import TdAction from "@/components/TdAction";
 import Filters from "@/components/Filters";
 import SuccessMessage from "@/components/SuccessMessage";
@@ -29,6 +30,11 @@ export default function Index() {
   const [month, setMonth] = useState(currentMonthIndex + 1);
   const [year, setYear] = useState(currentYear);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+
   const handleSearchChange = (event) => {
     setSearch(event.target.value);
   };
@@ -45,13 +51,21 @@ export default function Index() {
     const fetchData = async () => {
       try {
         const response = await api.get("/api/payments", {
-          params: { month, year, search },
+          params: {
+            page: currentPage,
+            per_page: perPage,
+            month,
+            year,
+            search,
+          },
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        console.log(response.data);
-        setPayments(response.data);
+        setPayments(response.data.data);
+        setCurrentPage(response.data.current_page);
+        setTotalPages(response.data.last_page);
+        setTotalItems(response.data.total);
       } catch (error) {
         setError(error);
         console.log(error);
@@ -60,7 +74,18 @@ export default function Index() {
       }
     };
     fetchData();
-  }, [month, year, search]);
+  }, [currentPage, perPage, month, year, search]);
+
+  const handlePerPageChange = (e) => {
+    setPerPage(Number(e.target.value));
+    setCurrentPage(1);
+  };
+
+  const getRowNumber = (index) => (currentPage - 1) * perPage + index + 1;
+
+  if (loading) {
+    return <LoadingData />;
+  }
 
   if (loading) {
     return <LoadingData />;
@@ -79,6 +104,8 @@ export default function Index() {
           addUrl="/dashboard/transactions/payments/create"
         />
         <Filters
+          pageAction={handlePerPageChange}
+          perPage={perPage}
           monthAction={handleMonthChange}
           yearAction={handleYearChange}
           searchAction={handleSearchChange}
@@ -119,7 +146,9 @@ export default function Index() {
                     key={index}
                     className="hover:bg-gray-50 transition-colors"
                   >
-                    <td className="px-4 py-1 text-center">{index + 1}</td>
+                    <td className="px-4 py-1 text-center">
+                      {getRowNumber(index)}
+                    </td>
                     <td className="px-4 py-1 text-center">{order.number}</td>
                     <td className="px-4 py-1 text-center">
                       {FormattedDateShort(order.order_date)}
@@ -162,6 +191,13 @@ export default function Index() {
             </tbody>
           </table>
         </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          onPageChange={(page) => setCurrentPage(page)}
+          loading={loading}
+        />
       </div>
     </>
   );

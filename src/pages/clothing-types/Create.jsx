@@ -5,8 +5,6 @@ import { useAuth } from "@/context/AuthContext";
 import api from "@/apiService";
 
 import HeaderCreate from "@/components/HeaderCreate";
-import Svg from "@/components/Svg";
-import DeleteSvg from "@/Assets/Svg/DeleteSvg";
 
 export default function Create() {
   const navigate = useNavigate();
@@ -19,43 +17,12 @@ export default function Create() {
   const [errorMessage, setErrorMessage] = useState("");
   const [getErrors, setGetErrors] = useState({});
 
-  const rok = ["Panjang Rok", "Lingkar Pinggang", "Lingkar Pinggul"];
-  const celana = [
-    "Panjang Celana",
-    "Lingkar Pinggang",
-    "Lingkar Pinggul",
-    "Pesak",
-    "Paha",
-    "Lutut",
-    "Kaki",
-  ];
-  const baju = [
-    "Panjang Badan",
-    "Lebar Bahu",
-    "Panjang Tangan",
-    "Lingkar Lengan",
-    "Manset",
-    "Lingkar Badan",
-    "Lingkar Perut",
-    "Lingkar Pinggul",
-    "Lebar Dada",
-    "Lebar Punggung",
-    "Lingkar Leher",
-  ];
-  const [measurements, setMeasurements] = useState(baju);
-
   const [formData, setFormData] = useState({
     code: "",
     type: "",
+    category: "",
     base_price: 0,
   });
-
-  const handleRemove = (indexToRemove) => {
-    const updatedMeasurements = measurements.filter(
-      (_, index) => index !== indexToRemove,
-    );
-    setMeasurements(updatedMeasurements);
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -65,29 +32,9 @@ export default function Create() {
     }));
   };
 
-  const handleMeasurements = (e, index) => {
-    if (index !== measurements.length - 1 && e.target.value === "") {
-      const updatedMeasurements = measurements.filter(
-        (_, indexArray) => indexArray !== index,
-      );
-      setMeasurements(updatedMeasurements);
-    } else {
-      const newMeasurements = [...measurements];
-      newMeasurements[index] = e.target.value;
-      setMeasurements(newMeasurements);
-    }
-  };
-
   useEffect(() => {
     codeRef.current.focus();
   }, []);
-
-  useEffect(() => {
-    const lastMeasurements = measurements.at(-1);
-    if (lastMeasurements != "") {
-      setMeasurements((prevMeasurements) => [...prevMeasurements, ""]);
-    }
-  }, [measurements]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -96,12 +43,8 @@ export default function Create() {
     const clothingType = new FormData();
     clothingType.append("code", formData.code);
     clothingType.append("type", formData.type);
+    clothingType.append("category", formData.category);
     clothingType.append("base_price", formData.base_price);
-    measurements.map((measurement, index) => {
-      if (measurement != "") {
-        clothingType.append(`measurements[${index}][measurement]`, measurement);
-      }
-    });
 
     try {
       setProcessing(true);
@@ -111,11 +54,18 @@ export default function Create() {
           "Content-Type": "mulipart/form-data",
         },
       });
-      navigate("/dashboard/settings/clothing-types", {
-        state: {
-          message: "Penambahan data jenis pakaian berhasil..!!",
+      const getClothingType = response.data.clothing_type;
+      navigate(
+        "/dashboard/settings/clothing-types/" + getClothingType.hashed_id,
+        {
+          state: {
+            message:
+              "Penambahan data jenis pakaian dengan nama " +
+              getClothingType.type +
+              " berhasil..!!",
+          },
         },
-      });
+      );
     } catch (err) {
       if (!err?.response) {
         setErrorMessage("No Server Response..!!");
@@ -215,60 +165,35 @@ export default function Create() {
               </span>
             )}
             <div className="flex items-center mt-2">
-              <label className="w-44">Katagori</label>
+              <label className="w-44">Katagori Pakaian</label>
               <input
                 type="radio"
                 name="category"
                 value={"baju"}
-                onClick={() => setMeasurements(baju)}
-                defaultChecked
+                onClick={handleChange}
+                required
               />
-              <label className="ml-1">Baju</label>
+              <label className="ml-1">BAJU</label>
               <input
                 className="ml-4"
                 type="radio"
                 name="category"
                 value={"celana"}
-                onClick={() => setMeasurements(celana)}
+                onClick={handleChange}
+                required
               />
-              <label className="ml-1">Celana</label>
+              <label className="ml-1">CELANA</label>
               <input
                 className="ml-4"
                 type="radio"
                 name="category"
                 value={"rok"}
-                onClick={() => setMeasurements(rok)}
+                onClick={handleChange}
+                required
               />
-              <label className="ml-1">Rok</label>
+              <label className="ml-1">ROK</label>
             </div>
-            <div className="mt-4">
-              <label className="w-44">Bagian yang perlu di ukur : </label>
-              {measurements.map((measurement, index) => (
-                <div key={index} className="flex items-center mt-2">
-                  <label className="w-6">{index + 1}. </label>
-                  <input
-                    type="text"
-                    value={measurement}
-                    placeholder="Masukkan bagian yang perlu di ukur"
-                    className="flex p-2 h-8 w-100"
-                    onChange={(event) => handleMeasurements(event, index)}
-                  />
-                  {measurements.length > 1 &&
-                    index !== measurements.length - 1 && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemove(index)}
-                        className="flex-all-center ml-2 p-1 m-1 rounded-md text-white bg-red-700 hover:bg-red-500 cursor-pointer"
-                      >
-                        <Svg title="Delete" c={"w-5 fill-current"}>
-                          <DeleteSvg />
-                        </Svg>
-                      </button>
-                    )}
-                </div>
-              ))}
-            </div>
-            {getErrors.measurements && (
+            {getErrors.category && (
               <span
                 ref={errorRef}
                 className={
@@ -277,7 +202,7 @@ export default function Create() {
                     : "hidden"
                 }
               >
-                {getErrors.measurements}
+                {getErrors.category}
               </span>
             )}
           </div>

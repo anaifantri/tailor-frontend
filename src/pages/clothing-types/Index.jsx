@@ -124,6 +124,7 @@ export default function Index() {
                 <th className="px-4 py-2 text-center">No.</th>
                 <th className="px-4 py-2 text-center">Kode</th>
                 <th className="px-4 py-2">Jenis Pakaian</th>
+                <th className="px-4 py-2">Katagori</th>
                 <th className="px-4 py-2 text-center">Harga</th>
                 <th className="px-4 py-2 text-center">Action</th>
               </tr>
@@ -136,6 +137,7 @@ export default function Index() {
                   </td>
                   <td className="px-4 py-1 text-center">{type.code}</td>
                   <td className="px-4 py-1">{type.type}</td>
+                  <td className="px-4 py-1 uppercase">{type.category}</td>
                   <td className="px-4 py-1 text-center">
                     {Number(type.base_price).toLocaleString()}
                   </td>

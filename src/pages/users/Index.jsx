@@ -143,7 +143,7 @@ export default function Index() {
                     <TdAction
                       showUrl={`/dashboard/settings/users/${user.hashed_id}`}
                       editUrl={`/dashboard/settings/users/edit/${user.hashed_id}`}
-                      deleteUrl="/api/users/destroy/"
+                      deleteUrl="/api/users/delete/"
                       deleteId={user.hashed_id}
                       getToken={token}
                       returnUrl="/dashboard/settings/users"

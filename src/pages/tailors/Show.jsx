@@ -70,47 +70,53 @@ export default function Show() {
         />
         <SuccessMessage message={message} duration="3000" />
         <div className="grid grid-cols-3 gap-2 mt-4">
-          <div className="flex-all-center col-span-1 border border-gray-200 shadow-lg rounded-xl p-10">
-            <span className="flex text-center w-full">Foto Profil</span>
-            {tailor.photo ? (
-              <img src={tailor.photo} alt="" className="flex w-full" />
-            ) : (
-              <Svg title="Profile" c={"w-full fill-current mx-2"}>
-                <ProfileSvg />
-              </Svg>
-            )}
+          <div className="flex-all-center col-span-1 border border-gray-200 shadow-lg rounded-xl px-8">
+            <div>
+              <span className="flex justify-center w-full">Foto Profil</span>
+              {tailor.photo ? (
+                <img src={tailor.photo} alt="" className="flex w-full mt-6" />
+              ) : (
+                <Svg title="Profile" c={"w-full fill-current mt-6"}>
+                  <ProfileSvg />
+                </Svg>
+              )}
+            </div>
           </div>
           <div className="flex border border-gray-200 shadow-lg rounded-xl col-span-2 p-8">
             <div className="divide-y divide-gray-400 w-full">
               <div className="flex w-full p-2">
                 <label className="flex w-32">ID Penjahit</label>
                 <label>:</label>
-                <label className="flex ml-2 font-semibold">{tailor.code}</label>
+                <label className="flex ml-2 font-semibold">
+                  {tailor.code ? tailor.code : "-"}
+                </label>
               </div>
               <div className="flex w-full p-2">
-                <label className="flex w-32">Nama</label>
+                <label className="flex w-32">Nama Penjahit</label>
                 <label>:</label>
-                <label className="flex ml-2 font-semibold">{tailor.name}</label>
+                <label className="flex ml-2 font-semibold">
+                  {tailor.name ? tailor.name : "-"}
+                </label>
               </div>
               <div className="flex w-full p-2">
                 <label className="flex w-32">Alamat</label>
                 <label>:</label>
                 <label className="flex ml-2 font-semibold">
-                  {tailor.address}
+                  {tailor.address ? tailor.address : "-"}
                 </label>
               </div>
               <div className="flex w-full p-2">
                 <label className="flex w-32">Nomor Hp.</label>
                 <label>:</label>
                 <label className="flex ml-2 font-semibold">
-                  {tailor.phone}
+                  {tailor.phone ? tailor.phone : "-"}
                 </label>
               </div>
               <div className="flex w-full p-2">
                 <label className="flex w-32">Email</label>
                 <label>:</label>
                 <label className="flex ml-2 font-semibold">
-                  {tailor.email}
+                  {tailor.email ? tailor.email : "-"}
                 </label>
               </div>
               <div className="flex w-full p-2">

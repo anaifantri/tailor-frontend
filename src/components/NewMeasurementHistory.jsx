@@ -10,6 +10,7 @@ import DeleteSvg from "@/assets/Svg/DeleteSvg";
 
 export default function NewMeasurementHistory({
   measurements,
+  measurementsLength,
   setOrderDetails,
   orderDetails,
   setMeasurements,
@@ -17,6 +18,7 @@ export default function NewMeasurementHistory({
   indexOrderDetail,
   clothingTypeId,
   clothingType,
+  category,
   today,
   setMeasurementModalOpen,
 }) {
@@ -29,6 +31,7 @@ export default function NewMeasurementHistory({
   const [newMeasurementHistory, setNewMeasurementHistory] = useState({
     customer_id: customer.hashed_id,
     clothing_type_id: clothingTypeId,
+    category: category,
     measured_at: today,
     measured_by: "",
     measurement_details: measurements,
@@ -37,13 +40,21 @@ export default function NewMeasurementHistory({
 
   const handleMeasurements = (e, index) => {
     const { name, value } = e.target;
-    const newMeasurements = [...measurements];
-    newMeasurements[index][name] = value;
-    setMeasurements(newMeasurements);
-    setNewMeasurementHistory((prevData) => ({
-      ...prevData,
-      ["measurement_details"]: newMeasurements,
-    }));
+    if (index !== measurements.length - 1 && name == "name" && value === "") {
+      const updatedMeasurements = measurements.filter(
+        (_, indexArray) => indexArray !== index,
+      );
+      setMeasurements(updatedMeasurements);
+      setNewMeasurementHistory(updatedMeasurements);
+    } else {
+      const newMeasurements = [...measurements];
+      newMeasurements[index][name] = value;
+      setMeasurements(newMeasurements);
+      setNewMeasurementHistory((prevData) => ({
+        ...prevData,
+        ["measurement_details"]: newMeasurements,
+      }));
+    }
   };
 
   const handleChange = (e) => {
@@ -54,16 +65,16 @@ export default function NewMeasurementHistory({
     }));
   };
 
-  const handleDeleteMeasurement = (indexToRemove) => {
-    const updatedMeasurements = measurements.filter(
-      (_, index) => index !== indexToRemove,
-    );
-    setMeasurements(updatedMeasurements);
-    setNewMeasurementHistory((prevData) => ({
-      ...prevData,
-      ["measurement_details"]: updatedMeasurements,
-    }));
-  };
+  // const handleDeleteMeasurement = (indexToRemove) => {
+  //   const updatedMeasurements = measurements.filter(
+  //     (_, index) => index !== indexToRemove,
+  //   );
+  //   setMeasurements(updatedMeasurements);
+  //   setNewMeasurementHistory((prevData) => ({
+  //     ...prevData,
+  //     ["measurement_details"]: updatedMeasurements,
+  //   }));
+  // };
 
   useEffect(() => {
     const lastMeasurement = measurements.at(-1);
@@ -83,6 +94,7 @@ export default function NewMeasurementHistory({
     const measurementHistory = new FormData();
     measurementHistory.append("customer_id", customer.hashed_id);
     measurementHistory.append("clothing_type_id", clothingTypeId);
+    measurementHistory.append("category", category);
     measurementHistory.append("measured_by", newMeasurementHistory.measured_by);
     measurementHistory.append("measured_at", newMeasurementHistory.measured_at);
     measurementHistory.append("notes", newMeasurementHistory.notes);
@@ -133,6 +145,13 @@ export default function NewMeasurementHistory({
             <label className="ml-2">{customer?.name}</label>
           </div>
           <div className="flex items-center mt-2">
+            <label className="w-44">Katagori Pakaian</label>
+            <label>:</label>
+            <label className="ml-2">
+              {category == "baju" ? "Baju / Atasan" : category}
+            </label>
+          </div>
+          <div className="flex items-center mt-2">
             <label className="w-44">Jenis Pakaian</label>
             <label>:</label>
             <label className="ml-2">{clothingType}</label>
@@ -168,7 +187,7 @@ export default function NewMeasurementHistory({
               name="measured_by"
               onChange={handleChange}
               type="text"
-              className="ml-2 px-2 w-72"
+              className="ml-2 px-2 w-64"
               placeholder="Masukkan nama pengukur"
               required
             />
@@ -185,9 +204,7 @@ export default function NewMeasurementHistory({
               </span>
             )}
           </div>
-          <label className="flex w-32 mt-4 ml-2 font-semibold">
-            Keterangan :
-          </label>
+          <label className="flex w-32 mt-4 font-semibold">Keterangan :</label>
           <textarea
             name="notes"
             rows={4}
@@ -212,27 +229,34 @@ export default function NewMeasurementHistory({
           <div className="flex items-center border-b p-1 w-104">
             <label className="w-44">Bagian yang perlu di ukur</label>
           </div>
-          {measurements.map((measurement, index) => (
-            <div key={index} className="flex items-center border-b p-1 w-104">
-              <label className="w-6">{index + 1}. </label>
-              <input
-                type="text"
-                name="name"
-                value={measurement.name || ""}
-                onChange={(e) => handleMeasurements(e, index)}
-                className="w-56 px-1"
-                placeholder="Tambahan"
-              />
-              <input
-                type="number"
-                name="value"
-                onChange={(e) => handleMeasurements(e, index)}
-                value={measurement.value || ""}
-                required={measurement.name != "" && measurement.name != null}
-                className="w-20 px-2 text-center spinner-disabled ml-2"
-              />
-              <label className="flex w-6 ml-2">cm</label>
-              {measurements.length > 1 && index < measurements.length - 1 && (
+          {measurementsLength != 0 &&
+            measurements.map((measurement, index) => (
+              <div key={index} className="flex items-center border-b p-1 w-104">
+                <label className="w-6">{index + 1}. </label>
+                {index >= measurementsLength ? (
+                  <input
+                    type="text"
+                    name="name"
+                    value={measurement.name || ""}
+                    onChange={(e) => handleMeasurements(e, index)}
+                    className="w-52 px-1"
+                    placeholder="Tambahan"
+                  />
+                ) : (
+                  <label className="w-52">{measurement.name || ""}</label>
+                )}
+
+                <input
+                  type="text"
+                  placeholder="Masukkan ukuran"
+                  name="value"
+                  onChange={(e) => handleMeasurements(e, index)}
+                  value={measurement.value || ""}
+                  required={measurement.name != "" && measurement.name != null}
+                  className="w-40 px-2 text-center spinner-disabled ml-2"
+                />
+                <label className="flex w-6 ml-2">cm</label>
+                {/* {measurements.length > 1 && index < measurements.length - 1 && (
                 <button
                   type="button"
                   onClick={() => handleDeleteMeasurement(index)}
@@ -242,9 +266,9 @@ export default function NewMeasurementHistory({
                     <DeleteSvg />
                   </Svg>
                 </button>
-              )}
-            </div>
-          ))}
+              )} */}
+              </div>
+            ))}
         </div>
       </div>
       <div className="flex w-full justify-end mt-2 px-4">

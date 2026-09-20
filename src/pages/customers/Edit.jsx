@@ -86,8 +86,14 @@ export default function Edit() {
           "Content-Type": "mulipart/form-data",
         },
       });
-      navigate("/dashboard/customers", {
-        state: { message: "Berhasil mengubah data pelanggan..!!" },
+      const customer = response.data;
+      navigate("/dashboard/customers/" + customer.hashed_id, {
+        state: {
+          message:
+            "Berhasil mengubah data pelanggan dengan nama " +
+            customer.name +
+            "..!!",
+        },
       });
     } catch (err) {
       if (!err?.response) {

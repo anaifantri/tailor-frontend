@@ -1,4 +1,6 @@
 export default function Filters({
+  pageAction,
+  perPage,
   monthAction,
   yearAction,
   searchAction,
@@ -62,13 +64,31 @@ export default function Filters({
       </div>
       <div className="mt-2 ml-4">
         <label className="flex w-20">Pencarian</label>
-        <input
-          type="text"
-          placeholder="Search"
-          value={search}
-          onChange={searchAction}
-          className="py-1 px-2"
-        />
+        <div className="flex items-center">
+          <input
+            type="text"
+            placeholder="Search"
+            value={search}
+            onChange={searchAction}
+            className="py-1 px-2"
+          />
+          <div className="flex items-center border border-gray-200 shadow-sm rounded-md py-1 px-3 ml-4">
+            <span className="text-sm">Tampilkan</span>
+            <select
+              value={perPage}
+              onChange={pageAction}
+              className="w-14 px-2 ml-4"
+            >
+              <option value={1}>1</option>
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span className="text-sm ml-1">data</span>
+          </div>
+        </div>
       </div>
     </div>
   );

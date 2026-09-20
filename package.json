@@ -10,12 +10,18 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-pdf/renderer": "^4.9.0",
     "@tailwindcss/vite": "^4.3.3",
     "axios": "^1.18.1",
+    "buffer": "^6.0.3",
+    "lucide-react": "^1.46.0",
+    "qrcode.react": "^4.2.0",
     "react": "^19.2.7",
+    "react-device-detect": "^2.2.3",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.11.0",
     "react-select": "^5.10.2",
+    "recharts": "^3.10.1",
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {

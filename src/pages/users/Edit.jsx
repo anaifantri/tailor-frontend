@@ -24,7 +24,6 @@ export default function Edit() {
   const [getErrors, setGetErrors] = useState({});
   const [errorMessage, setErrorMessage] = useState("");
   const [errorPassword, setErrorPassword] = useState(null);
-  const [oldUser, setOldUser] = useState(null);
 
   const [editUser, setEditUser] = useState({
     hashed_id: "",
@@ -76,7 +75,6 @@ export default function Edit() {
         },
       });
       setEditUser(response.data.user);
-      setOldUser(response.data.user);
       setPhotoPreview(response.data.user.photo);
     } catch (err) {
       if (!err?.response) {
@@ -139,18 +137,18 @@ export default function Edit() {
             "Content-Type": "mulipart/form-data",
           },
         });
-        if (oldUser.hashed_id == editUser.hashed_id) {
+        if (user.hashed_id == editUser.hashed_id) {
           if (editUser.password != null && editUser.password != "") {
             logout();
           } else {
-            navigate(`/dashboard/users/${id}`, {
+            navigate(`/dashboard/settings/users/${id}`, {
               state: {
                 message: "Berhasil mengubah data profile..!!",
               },
             });
           }
         } else {
-          navigate("/dashboard/settings/users", {
+          navigate(`/dashboard/settings/users/${id}`, {
             state: { message: "Berhasil mengubah data user..!!" },
           });
         }
@@ -274,9 +272,9 @@ export default function Edit() {
               <label className="flex mt-2">Username</label>
               <input
                 type="text"
-                name="Masukkan username (min. 6 karakter"
+                name="username"
                 className="flex p-2 h-8 w-full"
-                placeholder="Username"
+                placeholder="Masukkan username (min. 6 karakter"
                 autoComplete="off"
                 onChange={handleChange}
                 defaultValue={editUser.username}

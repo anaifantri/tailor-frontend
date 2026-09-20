@@ -68,6 +68,7 @@ export default function Create() {
         const getBalance =
           orderTotal - (totalPayment - response.data.payment.amount_paid);
         setOrderBalance(getBalance);
+        console.log(response.data.payment);
       } catch (error) {
         setError(error);
         console.log(error);
@@ -149,9 +150,41 @@ export default function Create() {
             backUrl="/dashboard/transactions/payments"
             getProcessing={processing}
           />
-          <div className="grid grid-cols-2 gap-4 mt-4">
-            <div className="border rounded-lg p-2">
+          <div className="grid grid-cols-2 gap-2 mt-4">
+            <div className="flex ml-2 font-semibold">Data Pelanggan</div>
+            <div className="flex ml-2 font-semibold">Data Pembayaran</div>
+            <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm texl-lg p-2">
+              <div className="flex items-center">
+                <label className="w-32">Nomor Pesanan</label>
+                <label>:</label>
+                <label className="ml-2 font-semibold">
+                  {payment.order.number}
+                </label>
+              </div>
               <div className="flex items-center mt-2">
+                <label className="w-32">Nama Pelanggan</label>
+                <label>:</label>
+                <label className="ml-2 font-semibold">
+                  {payment.order.customer.name}
+                </label>
+              </div>
+              <div className="flex items-center mt-2">
+                <label className="w-32">Nomor Telepon</label>
+                <label>:</label>
+                <label className="ml-2 font-semibold">
+                  {payment.order.customer.phone}
+                </label>
+              </div>
+              <div className="flex mt-2">
+                <label className="w-32">Alamat</label>
+                <label>:</label>
+                <label className="ml-2 font-semibold w-80">
+                  {payment.order.customer.address}
+                </label>
+              </div>
+            </div>
+            <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm texl-lg p-2">
+              <div className="flex items-center">
                 <label className="w-32">Tgl. Bayar</label>
                 <label>:</label>
                 <input
@@ -186,9 +219,7 @@ export default function Create() {
                   className="ml-2 w-80 border rounded-lg px-2"
                 ></textarea>
               </div>
-            </div>
-            <div className="border rounded-lg p-2">
-              <div className="flex items-start">
+              <div className="flex items-start mt-2">
                 <label className="w-32">Type Pembayaran</label>
                 <label>:</label>
                 <div>

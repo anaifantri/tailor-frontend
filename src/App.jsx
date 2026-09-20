@@ -36,6 +36,8 @@ import Orders from "@/pages/orders/Index";
 import OrderCreate from "@/pages/orders/Create";
 import OrderShow from "@/pages/orders/Show";
 import OrderEdit from "@/pages/orders/Edit";
+import OrderPdf from "@/pages/orders/OrderPdf";
+import OrderPrint from "@/pages/orders/OrderPrint";
 
 import ClothingTypes from "@/pages/clothing-types/Index";
 import ClothingTypeCreate from "@/pages/clothing-types/Create";
@@ -125,6 +127,11 @@ const router = createBrowserRouter([
 
           { path: "transactions/orders", element: <Orders /> },
           { path: "transactions/orders/create", element: <OrderCreate /> },
+          { path: "transactions/orders/order-pdf/:id", element: <OrderPdf /> },
+          {
+            path: "transactions/orders/order-print/:id",
+            element: <OrderPrint />,
+          },
           { path: "transactions/orders/:id", element: <OrderShow /> },
           { path: "transactions/orders/edit/:id", element: <OrderEdit /> },
 
@@ -148,12 +155,15 @@ const router = createBrowserRouter([
           { path: "transactions/payments/edit/:id", element: <PaymentEdit /> },
 
           {
-            path: "measurement-histories/create/:id",
+            path: "customers/measurement-histories/create/:id",
             element: <MeasurementCreate />,
           },
-          { path: "measurement-histories/:id", element: <MeasurementShow /> },
           {
-            path: "measurement-histories/edit/:id",
+            path: "customers/measurement-histories/:id",
+            element: <MeasurementShow />,
+          },
+          {
+            path: "customers/measurement-histories/edit/:id",
             element: <MeasurementEdit />,
           },
         ],

@@ -16,9 +16,10 @@ export default function Show() {
     hashed_id: "",
     code: "",
     type: "",
+    category: "",
     base_price: "",
   });
-  const [measurements, setMeasurements] = useState([]);
+  // const [measurements, setMeasurements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -31,7 +32,6 @@ export default function Show() {
           },
         });
         setClothingType(response.data.clothing_type);
-        setMeasurements(response.data.clothing_type.measurement_details);
       } catch (err) {
         if (!err?.response) {
           setError("No Server Response..!!");
@@ -61,14 +61,14 @@ export default function Show() {
     <>
       <div className="w-160">
         <HeaderShow
-          titleShow="Data Jenis Kain"
+          titleShow={"Jenis Pakaian " + clothingType.type}
           url="/settings/clothing-types"
           deleteUrl="/clothing-types"
           getId={clothingType.hashed_id}
           token={token}
         />
         <SuccessMessage message={message} duration="3000" />
-        <div className="border border-gray-200 shadow-lg rounded-xl px-6 py-2 mt-4">
+        <div className="divide-y divide-gray-200 border border-gray-200 shadow-lg rounded-xl px-6 py-2 mt-4">
           <div className="flex w-full p-1">
             <label className="flex w-48">Kode</label>
             <label>:</label>
@@ -84,6 +84,13 @@ export default function Show() {
             </label>
           </div>
           <div className="flex w-full p-1">
+            <label className="flex w-48">Katagori Pakaian</label>
+            <label>:</label>
+            <label className="flex ml-2 font-semibold uppercase">
+              {clothingType.category}
+            </label>
+          </div>
+          <div className="flex w-full p-1">
             <label className="flex w-48">Harga</label>
             <label>:</label>
             <label className="flex ml-2 font-semibold">
@@ -92,7 +99,8 @@ export default function Show() {
                 : "-"}
             </label>
           </div>
-          <div className="flex mt-6">
+          <div></div>
+          {/* <div className="flex mt-6">
             <label className="flex w-48 font-semibold">
               Bagian yang perlu di ukur
             </label>
@@ -106,7 +114,7 @@ export default function Show() {
               </div>
             ))}
             <div></div>
-          </div>
+          </div> */}
         </div>
       </div>
     </>

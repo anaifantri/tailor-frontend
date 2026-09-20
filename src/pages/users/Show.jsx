@@ -93,28 +93,38 @@ export default function Show() {
                 <img
                   src={user.photo}
                   alt=""
-                  className="flex border border-slate-200 shadow-xl w-64 h-64 mx-2 mt-2 rounded-full"
+                  className="flex border border-slate-200 shadow-xl w-56 h-56 mx-2 mt-2 rounded-full"
                 />
               ) : (
-                <Svg title="Profile" c={" w-64 h-64 fill-current mx-2 mt-2"}>
+                <Svg title="Profile" c={" w-56 h-56 fill-current mx-2 mt-2"}>
                   <ProfileSvg />
                 </Svg>
               )}
             </div>
           </div>
-          <div className="border border-slate-200 shadow-xl rounded-xl p-4 col-span-2 w-full text-lg">
-            <label className="flex w-full">Nama Lengkap</label>
-            <label className="flex font-semibold">{user.name}</label>
-            <label className="flex mt-2">Username</label>
-            <label className="flex font-semibold">{user.username}</label>
-            <label className="flex mt-2">Email</label>
-            <label className="flex font-semibold">{user.email}</label>
-            <label className="flex mt-2">Nomor Hp.</label>
-            <label className="flex font-semibold">{user.phone}</label>
-            <label className="flex mt-2">Status</label>
-            <label className="flex font-semibold">
-              {user.is_active == true ? "Aktif" : "Non Aktif"}
-            </label>
+          <div className="divide-y divide-gray-200 border border-slate-200 shadow-xl rounded-xl p-4 col-span-2 w-full text-base">
+            <div>
+              <label className="flex w-full">Nama Lengkap</label>
+              <label className="flex font-semibold">{user.name}</label>
+            </div>
+            <div>
+              <label className="flex mt-2">Username</label>
+              <label className="flex font-semibold">{user.username}</label>
+            </div>
+            <div>
+              <label className="flex mt-2">Email</label>
+              <label className="flex font-semibold">{user.email}</label>
+            </div>
+            <div>
+              <label className="flex mt-2">Nomor Hp.</label>
+              <label className="flex font-semibold">{user.phone}</label>
+            </div>
+            <div>
+              <label className="flex mt-2">Status</label>
+              <label className="flex font-semibold">
+                {user.is_active == true ? "Aktif" : "Non Aktif"}
+              </label>
+            </div>
           </div>
         </div>
         {/* <div className="grid grid-cols-3 gap-2 w-full p-1 mt-2">

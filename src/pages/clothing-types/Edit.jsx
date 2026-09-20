@@ -17,9 +17,10 @@ export default function Show() {
     hashed_id: "",
     code: "",
     type: "",
+    category: "",
     base_price: "",
   });
-  const [measurements, setMeasurements] = useState([""]);
+  // const [measurements, setMeasurements] = useState([""]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const errorRef = useRef();
@@ -36,11 +37,11 @@ export default function Show() {
           },
         });
         setClothingType(response.data.clothing_type);
-        const getMeasurements =
-          response.data.clothing_type.measurement_details.map(
-            (measurement) => measurement.measurement,
-          );
-        setMeasurements(getMeasurements);
+        // const getMeasurements =
+        //   response.data.clothing_type.measurement_details.map(
+        //     (measurement) => measurement.measurement,
+        //   );
+        // setMeasurements(getMeasurements);
       } catch (err) {
         if (!err?.response) {
           setError("No Server Response..!!");
@@ -58,39 +59,12 @@ export default function Show() {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    const lastMeasurements = measurements.at(-1);
-    if (lastMeasurements != "") {
-      setMeasurements((prevMeasurements) => [...prevMeasurements, ""]);
-    }
-  }, [measurements]);
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setClothingType((prevData) => ({
       ...prevData,
       [name]: value,
     }));
-  };
-
-  const handleMeasurements = (e, index) => {
-    if (e.target.value == "") {
-      const updatedMeasurements = measurements.filter(
-        (_, indexArray) => indexArray !== index,
-      );
-      setMeasurements(updatedMeasurements);
-    } else {
-      const newMeasurements = [...measurements];
-      newMeasurements[index] = e.target.value;
-      setMeasurements(newMeasurements);
-    }
-  };
-
-  const removeMeasurement = (indexToRemove) => {
-    const updatedMeasurements = measurements.filter(
-      (_, indexArray) => indexArray !== indexToRemove,
-    );
-    setMeasurements(updatedMeasurements);
   };
 
   const handleSubmit = async (e) => {
@@ -101,12 +75,8 @@ export default function Show() {
     formData.append("hashed_id", clothingType.hashed_id);
     formData.append("code", clothingType.code);
     formData.append("type", clothingType.type);
+    formData.append("category", clothingType.category);
     formData.append("base_price", clothingType.base_price);
-    measurements.map((measurement, index) => {
-      if (measurement != "") {
-        formData.append(`measurements[${index}][measurement]`, measurement);
-      }
-    });
 
     try {
       setProcessing(true);
@@ -120,9 +90,18 @@ export default function Show() {
           },
         },
       );
-      navigate("/dashboard/setting/clothing-types", {
-        state: { message: "Berhasil mengubah data jenis pakaian..!!" },
-      });
+      const getClothingType = response.data;
+      navigate(
+        "/dashboard/settings/clothing-types/" + getClothingType.hashed_id,
+        {
+          state: {
+            message:
+              "Perubahan data jenis pakaian dengan nama " +
+              getClothingType.type +
+              " berhasil..!!",
+          },
+        },
+      );
     } catch (err) {
       if (!err?.response) {
         setErrorMessage("No Server Response..!!");
@@ -231,33 +210,41 @@ export default function Show() {
                 {getErrors.base_price}
               </span>
             )}
-            <div className="mt-4">
-              <label className="w-44">Bagian yang perlu di ukur : </label>
-              {measurements.map((measurement, index) => (
-                <div key={index} className="flex items-center mt-2">
-                  <label className="w-6">{index + 1}. </label>
-                  <input
-                    type="text"
-                    value={measurement ? measurement : ""}
-                    placeholder="Masukkan bagian yang perlu di ukur"
-                    className="flex p-2 h-8 w-100"
-                    onChange={(event) => handleMeasurements(event, index)}
-                  />
-                  {measurement !== "" && (
-                    <button
-                      type="button"
-                      onClick={() => removeMeasurement(index)}
-                      className="flex-all-center p-1 m-1 rounded-md text-white bg-red-700 hover:bg-red-500 cursor-pointer"
-                    >
-                      <Svg title="Delete" c={"w-5 fill-current"}>
-                        <DeleteSvg />
-                      </Svg>
-                    </button>
-                  )}
-                </div>
-              ))}
+            <div className="flex items-center mt-2">
+              <label className="w-44">Katagori Pakaian</label>
+              <input
+                type="radio"
+                name="category"
+                value={"baju"}
+                onClick={handleChange}
+                defaultChecked={clothingType.category == "baju" ? true : false}
+                required
+              />
+              <label className="ml-1">BAJU</label>
+              <input
+                className="ml-4"
+                type="radio"
+                name="category"
+                value={"celana"}
+                onClick={handleChange}
+                defaultChecked={
+                  clothingType.category == "celana" ? true : false
+                }
+                required
+              />
+              <label className="ml-1">CELANA</label>
+              <input
+                className="ml-4"
+                type="radio"
+                name="category"
+                value={"rok"}
+                onClick={handleChange}
+                defaultChecked={clothingType.category == "rok" ? true : false}
+                required
+              />
+              <label className="ml-1">ROK</label>
             </div>
-            {getErrors.measurements && (
+            {getErrors.category && (
               <span
                 ref={errorRef}
                 className={
@@ -266,7 +253,7 @@ export default function Show() {
                     : "hidden"
                 }
               >
-                {getErrors.measurements}
+                {getErrors.category}
               </span>
             )}
           </div>

@@ -134,7 +134,7 @@ export default function Create() {
         });
         console.log(response.data);
         navigate(
-          "/dashboard/transaction/payments/" + response.data.payment.hashed_id,
+          "/dashboard/transactions/payments/" + response.data.payment.hashed_id,
           {
             state: {
               message: response.data.message,
@@ -260,11 +260,12 @@ export default function Create() {
                         </table>
                       ) : (
                         <label className="w-120">
-                          {order.order_details.map((detail, i) => (
+                          Tampilkan detail pesanan
+                          {/* {order.order_details.map((detail, i) => (
                             <label className="ml-1" key={i}>
                               {detail.clothing_type.type},
                             </label>
-                          ))}
+                          ))} */}
                         </label>
                       )}
 

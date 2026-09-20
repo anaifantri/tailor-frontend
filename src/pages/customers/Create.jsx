@@ -56,9 +56,13 @@ export default function Create() {
           "Content-Type": "mulipart/form-data",
         },
       });
-      navigate("/dashboard/customers", {
+      const customer = response.data.customer;
+      navigate("/dashboard/customers/" + customer.hashed_id, {
         state: {
-          message: "Penambahan data pelanggan berhasil..!!",
+          message:
+            "Penambahan data pelanggan dengan nama " +
+            customer.name +
+            "berhasil..!!",
         },
       });
     } catch (err) {

@@ -109,7 +109,9 @@ export default function Create() {
             "Content-Type": "mulipart/form-data",
           },
         });
-        navigate("/dashboard/settings/users", {
+        console.log(response.data.user);
+        const hashed_id = response.data.user.hashed_id;
+        navigate("/dashboard/settings/users/" + hashed_id, {
           state: {
             message: "Penambahan user baru berhasil..!!",
           },
@@ -321,16 +323,16 @@ export default function Create() {
                 <input
                   name="is_active"
                   type="radio"
-                  value={1}
+                  defaultValue={1}
                   onClick={handleChange}
-                  checked={formData.is_active}
+                  defaultChecked={formData.is_active}
                 />
                 <label className="flex ml-1">Aktif</label>
                 <input
                   name="is_active"
                   className="flex ml-8"
                   type="radio"
-                  value={0}
+                  defaultValue={0}
                   onClick={handleChange}
                 />
                 <label className="flex ml-1">Tidak Aktif</label>

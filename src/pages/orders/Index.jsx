@@ -123,35 +123,9 @@ export default function Index() {
           addTitle="Tambah Pesanan"
           addUrl="/dashboard/transactions/orders/create"
         />
-        <div className="flex items-center">
-          <div className="flex items-center border border-gray-200 shadow-sm rounded-md py-1 px-2 mt-2">
-            <span className="text-sm text-gray-600">Tampilkan</span>
-            <select
-              value={perPage}
-              onChange={handlePerPageChange}
-              className="w-14 px-2 ml-2"
-            >
-              <option value={1}>1</option>
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
-            <span className="text-sm text-gray-600 ml-1">data</span>
-          </div>
-          <div className="flex items-center border border-gray-200 shadow-sm rounded-md py-1 px-2 mt-2 ml-6">
-            <label className="flex w-20">Pencarian</label>
-            <input
-              type="text"
-              placeholder="search"
-              value={search}
-              onChange={handleSearchChange}
-              className="px-2"
-            />
-          </div>
-        </div>
         <Filters
+          pageAction={handlePerPageChange}
+          perPage={perPage}
           monthAction={handleMonthChange}
           yearAction={handleYearChange}
           searchAction={handleSearchChange}

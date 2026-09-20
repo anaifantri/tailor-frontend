@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { osName, browserName } from "react-device-detect";
 import { useAuth } from "@/context/AuthContext";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import Svg from "@/components/Svg";
@@ -12,7 +13,6 @@ function Login() {
   const message = location.state?.message;
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [processing, setProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [getErrors, setGetErrors] = useState({});
@@ -29,12 +29,16 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    const deviceName = `${osName} - ${browserName}`;
     setGetErrors("");
     setErrorMessage("");
     setProcessing(true);
     try {
-      await login({ username: username, password: password });
+      await login({
+        username: username,
+        password: password,
+        device_name: deviceName,
+      });
       setUsername("");
       setPassword("");
       setProcessing(false);
@@ -58,19 +62,38 @@ function Login() {
     <>
       <div className="flex-all-center w-full h-screen top-0 bg-stone-50">
         <div className="grid grid-cols-2 w-150 h-100 bg-white border border-stone-100 rounded-4xl drop-shadow-xl">
-          <div className="flex-all-center rounded-4xl bg-stone-900">
-            <div>
-              <div className="flex-all-center w-full text-white">
-                <img className="w-48" src={LogoRiori} alt="" />
+          <div className="flex-all-center relative overflow-hidden rounded-4xl bg-radial from-stone-800 from-50% to-stone-900">
+            <div className="relative w-56 h-56 flex items-center justify-center">
+              {/* 2. Wrapper Dalam: Memaksa gambar dan mask memiliki dimensi grid yang sama persis */}
+              <div className="relative w-full h-full grid place-items-center">
+                {/* Logo Utama */}
+                <img
+                  src={LogoRiori}
+                  alt="Logo"
+                  className="col-start-1 row-start-1 w-full h-full object-contain opacity-90 select-none"
+                />
+
+                {/* Lapisan Kilau (Ukuran disamakan persis lewat CSS Grid) */}
+                <div
+                  className="col-start-1 row-start-1 w-full h-full overflow-hidden pointer-events-none"
+                  style={{
+                    WebkitMaskImage: `url(${LogoRiori})`,
+                    maskImage: `url(${LogoRiori})`,
+                    WebkitMaskSize: "contain",
+                    maskSize: "contain",
+                    WebkitMaskRepeat: "no-repeat",
+                    maskPosition: "center",
+                    WebkitMaskPosition: "center",
+                  }}
+                >
+                  {/* Garis cahaya yang melintas */}
+                  <div className="absolute inset-0 animate-shimmer bg-linear-to-r from-transparent via-white/50 to-transparent" />
+                </div>
               </div>
             </div>
           </div>
           <div className="flex-all-center">
             <div>
-              {/* <div className="drop-shadow-lg m-auto w-24 h-24 flex bg-white rounded-full border border-slate-400 p-1">
-                <div className="flex-all-center drop-shadow-md m-auto rounded-full border border-slate-300"></div>
-              </div> */}
-
               <div className="flex-all-center p-2">
                 <h2 className="tracking-widest font-bold text-xl text-stone-800">
                   Sign In
@@ -144,8 +167,8 @@ function Login() {
                       type="submit"
                       className={
                         processing
-                          ? "flex justify-center items-center w-48 m-auto font-semibold tracking-widest mt-6 drop-shadow-xl rounded-2xl p-2 button-disabled cursor-pointer"
-                          : "flex justify-center items-center w-48 m-auto font-semibold tracking-widest mt-6 drop-shadow-xl rounded-2xl p-2 button-login cursor-pointer"
+                          ? "flex justify-center items-center w-48 m-auto font-semibold tracking-widest mt-6 drop-shadow-xl rounded-2xl p-2 button-disabled cursor-pointer bg-linear-to-b from-stone-900 to-stone-800"
+                          : "flex justify-center items-center w-48 m-auto font-semibold tracking-widest mt-6 drop-shadow-xl rounded-2xl p-2 button-login cursor-pointer bg-linear-to-b from-stone-900 to-stone-700 transition-all duration-300 border border-white/20 hover:border-white/40 shadow-sm hover:shadow-stone-900"
                       }
                     >
                       {processing && (

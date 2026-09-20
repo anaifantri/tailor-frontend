@@ -10,7 +10,7 @@ import LoadingData from "@/components/LoadingData";
 
 export default function Edit() {
   const { id } = useParams();
-  const { user, token } = useAuth();
+  const { token } = useAuth();
   const navigate = useNavigate();
   const [photoPreview, setPhotoPreview] = useState("");
   const fileInputRef = useRef(null);
@@ -36,16 +36,7 @@ export default function Edit() {
     "Lainnya",
   ];
 
-  const [editTailor, setEditTailor] = useState({
-    hashed_id: "",
-    code: "",
-    name: "",
-    address: "",
-    email: "",
-    phone: "",
-    photo: null,
-    is_active: null,
-  });
+  const [editTailor, setEditTailor] = useState(null);
 
   const [processing, setProcessing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -136,7 +127,8 @@ export default function Edit() {
           "Content-Type": "mulipart/form-data",
         },
       });
-      navigate("/dashboard/tailors", {
+      const tailor = response.data;
+      navigate("/dashboard/tailors/tailors/" + tailor.hashed_id, {
         state: { message: "Berhasil mengubah data tukang jahit..!!" },
       });
     } catch (err) {
@@ -179,7 +171,7 @@ export default function Edit() {
                     </Svg>
                   )}
                 </div>
-                {getErrors.photo && (
+                {getErrors?.photo && (
                   <span
                     ref={errorRef}
                     className={
@@ -188,7 +180,7 @@ export default function Edit() {
                         : "hidden"
                     }
                   >
-                    {getErrors.photo}
+                    {getErrors?.photo}
                   </span>
                 )}
                 <div className="flex-all-center mt-4">
@@ -222,11 +214,11 @@ export default function Edit() {
                     autoComplete="off"
                     ref={nameRef}
                     onChange={handleChange}
-                    defaultValue={editTailor.name}
+                    defaultValue={editTailor?.name}
                     required
                   />
                 </div>
-                {getErrors.name && (
+                {getErrors?.name && (
                   <span
                     ref={errorRef}
                     className={
@@ -235,7 +227,7 @@ export default function Edit() {
                         : "hidden"
                     }
                   >
-                    {getErrors.name}
+                    {getErrors?.name}
                   </span>
                 )}
                 <div className="flex mt-2">
@@ -245,10 +237,10 @@ export default function Edit() {
                     className="flex p-1 w-120"
                     rows={3}
                     onChange={handleChange}
-                    defaultValue={editTailor.address}
+                    defaultValue={editTailor?.address}
                   />
                 </div>
-                {getErrors.address && (
+                {getErrors?.address && (
                   <span
                     ref={errorRef}
                     className={
@@ -257,7 +249,7 @@ export default function Edit() {
                         : "hidden"
                     }
                   >
-                    {getErrors.address}
+                    {getErrors?.address}
                   </span>
                 )}
                 <div className="flex items-center mt-2">
@@ -269,11 +261,11 @@ export default function Edit() {
                     placeholder="Input Nomor Hp."
                     autoComplete="off"
                     onChange={handleChange}
-                    defaultValue={editTailor.phone}
+                    defaultValue={editTailor?.phone}
                     required
                   />
                 </div>
-                {getErrors.phone && (
+                {getErrors?.phone && (
                   <span
                     ref={errorRef}
                     className={
@@ -282,7 +274,7 @@ export default function Edit() {
                         : "hidden"
                     }
                   >
-                    {getErrors.phone}
+                    {getErrors?.phone}
                   </span>
                 )}
                 <div className="flex items-center mt-2">
@@ -294,11 +286,10 @@ export default function Edit() {
                     placeholder="Input email"
                     autoComplete="off"
                     onChange={handleChange}
-                    defaultValue={editTailor.email}
-                    required
+                    defaultValue={editTailor?.email}
                   />
                 </div>
-                {getErrors.email && (
+                {getErrors?.email && (
                   <span
                     ref={errorRef}
                     className={
@@ -307,7 +298,7 @@ export default function Edit() {
                         : "hidden"
                     }
                   >
-                    {getErrors.email}
+                    {getErrors?.email}
                   </span>
                 )}
                 <div className="flex items-center mt-2">
@@ -316,7 +307,7 @@ export default function Edit() {
                     type="radio"
                     name="is_active"
                     value={1}
-                    checked={editTailor.is_active == 1}
+                    checked={editTailor?.is_active == 1}
                     onChange={handleChange}
                     className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                   />
@@ -325,13 +316,13 @@ export default function Edit() {
                     type="radio"
                     name="is_active"
                     value={0}
-                    checked={editTailor.is_active == 0}
+                    checked={editTailor?.is_active == 0}
                     onChange={handleChange}
                     className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 ml-4"
                   />
                   <label className="ml-2">Non Aktif</label>
                 </div>
-                {getErrors.is_active && (
+                {getErrors?.is_active && (
                   <span
                     ref={errorRef}
                     className={
@@ -340,18 +331,18 @@ export default function Edit() {
                         : "hidden"
                     }
                   >
-                    {getErrors.is_active}
+                    {getErrors?.is_active}
                   </span>
                 )}
                 <div className="flex mt-2">
                   <label className="w-36">Keahlian</label>
                   <div className="grid grid-cols-3 gap-4">
-                    {specialties.map((item, index) => (
+                    {specialties?.map((item, index) => (
                       <div className="flex mt-2" key={index}>
                         <input
                           type="checkbox"
                           value={item}
-                          checked={specialty.includes(item)}
+                          checked={specialty?.includes(item)}
                           onChange={handleCbChange}
                           className="w-5 h-5 rounded-md border-gray-300 text-indigo-600 accent-indigo-600 focus:ring-indigo-500"
                         />
@@ -360,7 +351,7 @@ export default function Edit() {
                     ))}
                   </div>
                 </div>
-                {getErrors.specialty && (
+                {getErrors?.specialty && (
                   <span
                     ref={errorRef}
                     className={
@@ -369,7 +360,7 @@ export default function Edit() {
                         : "hidden"
                     }
                   >
-                    {getErrors.specialty}
+                    {getErrors?.specialty}
                   </span>
                 )}
               </div>

@@ -16,7 +16,7 @@ export default function Show() {
   const location = useLocation();
   const message = location.state?.message;
   const [payment, setPayment] = useState(null);
-  const [client, setClient] = useState(null);
+  const [customer, setCustomer] = useState(null);
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -31,7 +31,7 @@ export default function Show() {
         });
         setPayment(response.data.payment);
         setOrder(response.data.payment.order);
-        setClient(response.data.payment.order.client);
+        setCustomer(response.data.payment.order.customer);
       } catch (err) {
         if (!err?.response) {
           setError("No Server Response..!!");
@@ -68,7 +68,7 @@ export default function Show() {
         />
         <SuccessMessage message={message} duration="3000" />
         <div className="flex-all-center mt-4">
-          <div className=" border rounded-xl p-2 texl-lg w-130">
+          <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm texl-lg w-full p-6">
             <div className="flex-all-center w-full border-b p-2">
               <img className="h-20" src={LogoBlack} alt="" />
               <div>
@@ -101,7 +101,7 @@ export default function Show() {
               <label className="flex w-44">Nama Pelanggan</label>
               <label>:</label>
               <label className="flex ml-2 font-semibold">
-                {client ? client.name : "-"}
+                {customer ? customer.name : "-"}
               </label>
             </div>
             <div className="flex w-full p-1">

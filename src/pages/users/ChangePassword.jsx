@@ -102,7 +102,7 @@ export default function ChangePassword() {
                 type="password"
                 name="current_password"
                 className="flex items-center mt-2 py-1 px-2 w-80"
-                placeholder="Input New Password"
+                placeholder="Masukkan password lama"
                 autoComplete="off"
                 required
                 ref={passwordRef}
@@ -125,7 +125,7 @@ export default function ChangePassword() {
                 type="password"
                 name="password"
                 className="flex items-center mt-2 py-1 px-2 w-80"
-                placeholder="Input New Password"
+                placeholder="Masukkan password baru"
                 autoComplete="off"
                 required
                 onChange={handleChange}
@@ -147,7 +147,7 @@ export default function ChangePassword() {
                 name="password_confirmation"
                 type="password"
                 className="flex items-center mt-2 py-1 px-2 w-80"
-                placeholder="Password Confirmation"
+                placeholder="Konfirmasi password"
                 autoComplete="off"
                 required
                 onChange={handleChange}

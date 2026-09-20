@@ -34,7 +34,7 @@ export default function RightNav() {
               <LiNavLink
                 title="Ganti Password"
                 c="li-nav-link"
-                url={`/dashboard/users/change-password`}
+                url={`/dashboard/settings/users/change-password`}
               >
                 <Svg title="Arrow" c={"nav-svg w-5 fill-current"}>
                   <ProfileSvg />

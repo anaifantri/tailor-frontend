@@ -16,7 +16,6 @@ export default function Create() {
   const { id } = useParams();
   const { token } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [clothingType, setClothingType] = useState(null);
   const [customer, setCustomer] = useState(null);
   const [customerId, setCustomerId] = useState(null);
   const [measurementDetails, setMeasurementDetails] = useState([]);
@@ -42,7 +41,6 @@ export default function Create() {
         );
         setCustomer(response.data.measurement_history.customer);
         setCustomerId(response.data.measurement_history.customer.hashed_id);
-        setClothingType(response.data.measurement_history.clothing_type);
       } catch (err) {
         if (!err?.response) {
           setError("No Server Response..!!");
@@ -66,14 +64,16 @@ export default function Create() {
 
   return (
     <>
-      <div className="w-150">
-        <div className="grid grid-cols-2 gap-1 w-full border-b">
+      <div className="w-300">
+        <div className="grid grid-cols-2 gap-2 w-full border-b">
           <div className="flex w-full font-semibold p-1 text-lg">
             Detail Data Pengukuran
           </div>
           <div className="flex justify-end w-full mx-1 p-1">
             <BtnBack backUrl={"/dashboard/customers/" + customerId} />
-            <BtnEdit editUrl={"/dashboard/measurement-histories/edit/" + id} />
+            <BtnEdit
+              editUrl={"/dashboard/customers/measurement-histories/edit/" + id}
+            />
             <BtnDelete
               deleteUrl={`/api/measurement-histories/delete/`}
               deleteId={id}
@@ -82,91 +82,99 @@ export default function Create() {
             />
           </div>
         </div>
-        <div className="flex-all-center mt-4">
-          <div>
-            <label className="font-semibold mt-4 ml-2">
-              INFORMASI PELANGGAN
-            </label>
-            <div className="flex p-4 border border-gray-200 shadow-lg rounded-xl w-full mt-1">
-              <div>
-                <div className="flex items-center">
-                  <label className="w-44">Nama Pelanggan</label>
-                  <label>:</label>
-                  <label className="ml-2 font-semibold">
-                    {customer ? customer.name : "-"}
-                  </label>
-                </div>
-                <div className="flex items-center mt-2">
-                  <label className="w-44">Nomor Telepon</label>
-                  <label>:</label>
-                  <label className="ml-2 font-semibold">
-                    {customer ? customer.phone : "-"}
-                  </label>
-                </div>
-                <div className="flex mt-2">
-                  <label className="w-44">Alamat</label>
-                  <label>:</label>
-                  <label className="ml-2 w-96 h-10 font-semibold">
-                    {customer ? customer.address : "-"}
-                  </label>
-                </div>
+        <div className="grid grid-cols-2 gap-4 mt-4">
+          <div className="flex justify-center p-4 border border-gray-200 shadow-lg rounded-xl w-full mt-1">
+            <div className="divide-y divide-gray-200">
+              <label className="flex font-semibold w-full p-2 bg-gray-200 rounded-md border border-gray-300 shadow-sm">
+                INFORMASI PELANGGAN
+              </label>
+              <div className="flex items-center p-2">
+                <label className="w-40">Nama Pelanggan</label>
+                <label>:</label>
+                <label className="ml-2 font-semibold">
+                  {customer ? customer.name : "-"}
+                </label>
               </div>
+              <div className="flex items-center p-2">
+                <label className="w-40">Nomor Telepon</label>
+                <label>:</label>
+                <label className="ml-2 font-semibold">
+                  {customer ? customer.phone : "-"}
+                </label>
+              </div>
+              <div className="flex p-2">
+                <label className="w-40">Alamat</label>
+                <label>:</label>
+                <textarea
+                  className="ml-2 w-96 border rounded-sm border-gray-200 p-1 font-semibold text-sm bg-gray-50"
+                  rows={3}
+                  readOnly
+                >
+                  {customer ? customer.address : "-"}
+                </textarea>
+              </div>
+              <label className="flex font-semibold w-full p-2 mt-4 bg-gray-200 rounded-md border border-gray-300 shadow-sm">
+                INFORMASI PENGUKURAN
+              </label>
+              <div className="flex items-center p-2">
+                <label className="w-40">Katagori Pakaian</label>
+                <label>:</label>
+                <label className="ml-2 font-semibold uppercase">
+                  {measurementHistory?.category}
+                </label>
+              </div>
+              <div className="flex items-center p-2">
+                <label className="w-40">Jenis Pakaian</label>
+                <label>:</label>
+                <label className="ml-2 font-semibold uppercase">
+                  {measurementHistory?.clothing_type.type}
+                </label>
+              </div>
+              <div className="flex items-center p-2">
+                <label className="w-40">Tanggal Ukur</label>
+                <label>:</label>
+                <label className="ml-2 font-semibold">
+                  {FormattedDateLong(measurementHistory?.measured_at)}
+                </label>
+              </div>
+              <div className="flex items-center p-2">
+                <label className="w-40">Diukur Oleh</label>
+                <label>:</label>
+                <label className="ml-2 font-semibold">
+                  {measurementHistory?.measured_by}
+                </label>
+              </div>
+              <label className="flex font-semibold mt-4 p-2 bg-gray-200 rounded-md border border-gray-300 shadow-sm">
+                Keterangan
+              </label>
+              <label className="flex border border-gray-200 shadow-md rounded-md w-full min-h-16 px-2 py-1 mt-2">
+                {measurementHistory?.notes}
+              </label>
             </div>
+          </div>
 
-            <label className="flex font-semibold mt-4 ml-2">
-              DETAIL PENGUKURAN
-            </label>
-            <div className="flex p-4 border border-gray-200 shadow-lg rounded-xl w-full mt-1">
-              <div>
-                <div className="flex items-center">
-                  <label className="w-44">Jenis Pakaian</label>
-                  <label>:</label>
-                  <label className="ml-2 font-semibold">
-                    {clothingType?.type}
-                  </label>
-                </div>
-                <div className="flex items-center mt-2">
-                  <label className="w-44">Tanggal Ukur</label>
-                  <label>:</label>
-                  <label className="ml-2 font-semibold">
-                    {FormattedDateLong(measurementHistory?.measured_at)}
-                  </label>
-                </div>
-                <div className="flex items-center mt-2">
-                  <label className="w-44">Diukur Oleh</label>
-                  <label>:</label>
-                  <label className="ml-2 font-semibold">
-                    {measurementHistory?.measured_by}
-                  </label>
-                </div>
-                <div className="mt-4">
-                  <div className="flex items-center border-b p-1 w-72">
-                    <label className="w-44">Detail Ukuran</label>
-                  </div>
-                  {measurementDetails?.map((measurement, index) => {
-                    return (
-                      measurement.name != "" && (
-                        <div key={index} className="flex items-start">
-                          <label className="w-6">{index + 1}. </label>
-                          <label className="w-36 font-semibold">
-                            {measurement.name}
-                          </label>
-                          <label>=</label>
-                          <label className="ml-2 font-semibold">
-                            {measurement.value}
-                          </label>
-                          <label className="flex w-6 ml-2">cm</label>
-                        </div>
-                      )
-                    );
-                  })}
-                </div>
-              </div>
+          <div className="divide-y divide-gray-200 p-4 border border-gray-200 shadow-lg rounded-xl w-full">
+            <div className="flex font-semibold w-full p-2 bg-gray-200 rounded-md border border-gray-300 shadow-sm">
+              <label className="w-40">Detail Ukuran</label>
             </div>
-            <label className="flex font-semibold mt-4 ml-2">Keterangan</label>
-            <label className="flex mt-2 border border-gray-200 shadow-md rounded-md w-full min-h-16 px-2 py-1">
-              {measurementHistory?.notes}
-            </label>
+            {measurementDetails?.map((measurement, index) => {
+              return (
+                measurement.name != "" && (
+                  <div key={index} className="flex items-start p-1">
+                    <label className="w-6">{index + 1}. </label>
+                    <label className="w-36 font-semibold">
+                      {measurement.name}
+                    </label>
+                    <label>=</label>
+                    <label className="ml-2 font-semibold">
+                      {measurement.value}
+                    </label>
+                    <label className="flex w-6 ml-2">cm</label>
+                  </div>
+                )
+              );
+            })}
+            <div></div>
           </div>
         </div>
       </div>

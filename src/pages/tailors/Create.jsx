@@ -110,7 +110,8 @@ export default function Create() {
             "Content-Type": "mulipart/form-data",
           },
         });
-        navigate("/dashboard/tailors", {
+        const tailor = response.data.tailor;
+        navigate("/dashboard/tailors/tailors/" + tailor.hashed_id, {
           state: {
             message: "Penambahan data tukang jahit berhasil..!!",
           },
