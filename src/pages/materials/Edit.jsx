@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import api from "@/apiService";
 import { useAuth } from "@/context/AuthContext";
 
@@ -9,19 +9,20 @@ import ImageSvg from "@/assets/Svg/ImageSvg";
 import LoadingData from "@/components/LoadingData";
 
 export default function Edit() {
-  const { id } = useParams();
+  const { ulid } = useParams();
   const { token } = useAuth();
   const navigate = useNavigate();
+
   const [photoPreview, setPhotoPreview] = useState("");
   const fileInputRef = useRef(null);
   const [photo, setPhoto] = useState(null);
   const nameRef = useRef();
-  const errorRef = useRef();
+
   const [getErrors, setGetErrors] = useState({});
   const [errorMessage, setErrorMessage] = useState("");
 
   const [editMaterial, setEditMaterial] = useState({
-    hashed_id: "",
+    ulid: "",
     code: "",
     name: "",
     description: "",
@@ -31,48 +32,37 @@ export default function Edit() {
   });
 
   const [processing, setProcessing] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const handleChange = (e) => {
-    if (e.target.name == "photo") {
-      const file = e.target.files[0];
-      if (file) {
-        setPhoto(file);
-        const previewUrl = URL.createObjectURL(file);
-        setPhotoPreview(previewUrl);
-      }
-    } else if (e.target.name == "unit") {
-      const selectedIndex = e.target.selectedIndex;
-      const unit = e.target.options[selectedIndex].value;
-      setEditMaterial({ ...editMaterial, [e.target.name]: unit });
-    } else {
-      setEditMaterial({ ...editMaterial, [e.target.name]: e.target.value });
-    }
-  };
-
-  const handlePhotoClick = () => {
-    fileInputRef.current.click();
-  };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await api.get("/api/materials/" + id, {
+        const response = await api.get(`/api/materials/${ulid}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        setEditMaterial(response.data.material);
-        setPhotoPreview(response.data.material.photo);
+
+        const materialData = response.data.material;
+        setEditMaterial({
+          ulid: materialData.ulid || "",
+          code: materialData.code || "",
+          name: materialData.name || "",
+          description: materialData.description || "",
+          unit: materialData.unit || "pilih",
+          initial_stock: materialData.initial_stock || 0,
+          stock: materialData.stock || 0,
+        });
+        setPhotoPreview(materialData.photo || "");
       } catch (err) {
         if (!err?.response) {
-          setError("No Server Response..!!");
+          setError("No Server Response!");
         } else if (err.response?.status === 401) {
-          setError("Unauthorized..!!");
+          setError("Unauthorized!");
         } else {
-          setError(err.response.data.message);
+          setError(err.response?.data?.message || "Gagal mengambil data");
         }
       } finally {
         setLoading(false);
@@ -80,270 +70,253 @@ export default function Edit() {
     };
 
     fetchData();
-  }, []);
+  }, [ulid, token]);
 
-  if (loading) {
-    return <LoadingData />;
-  }
-
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setGetErrors("");
-
-    if (editMaterial.unit == "pilih") {
-      alert("Silahkan pilih satuan terlebih dahulu...!!!");
+  const handleChange = (e) => {
+    const { name, value, files } = e.target;
+    if (name === "photo") {
+      const file = files[0];
+      if (file) {
+        setPhoto(file);
+        setPhotoPreview(URL.createObjectURL(file));
+      }
     } else {
-      const formData = new FormData();
-      formData.append("hashed_id", editMaterial.hashed_id);
-      formData.append("code", editMaterial.code);
-      formData.append("name", editMaterial.name);
-      formData.append("description", editMaterial.description);
-      formData.append("unit", editMaterial.unit);
-      formData.append("initial_stock", editMaterial.initial_stock);
-      formData.append("stock", editMaterial.stock);
-      if (photo) {
-        formData.append("photo", photo);
-      }
-      try {
-        setProcessing(true);
-        const response = await api.post(`/api/materials/${id}/edit`, formData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "mulipart/form-data",
-          },
-        });
-        navigate("/dashboard/settings/materials", {
-          state: { message: "Berhasil mengubah data kain..!!" },
-        });
-      } catch (err) {
-        if (!err?.response) {
-          setErrorMessage("No Server Response..!!");
-        } else if (err.response?.status === 401) {
-          setErrorMessage("Unauthorized..!!");
-        } else {
-          setGetErrors(err.response.data.errors);
-          nameRef.current.focus();
-          setErrorMessage("Update gagal..!!");
-        }
-      } finally {
-        setProcessing(false);
-      }
+      setEditMaterial((prev) => ({ ...prev, [name]: value }));
     }
   };
 
+  const handlePhotoClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setGetErrors({});
+    setErrorMessage("");
+
+    if (editMaterial.unit === "") {
+      alert("Silakan pilih satuan terlebih dahulu!");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("_method", "PUT"); // Method spoofing untuk multipart/form-data Laravel
+    formData.append("code", editMaterial.code);
+    formData.append("name", editMaterial.name);
+    formData.append("description", editMaterial.description || "");
+    formData.append("unit", editMaterial.unit);
+    formData.append("initial_stock", editMaterial.initial_stock);
+    formData.append("stock", editMaterial.stock);
+
+    if (photo) {
+      formData.append("photo", photo);
+    }
+
+    try {
+      setProcessing(true);
+      await api.post(`/api/materials/${ulid}`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      navigate("/dashboard/settings/materials", {
+        state: { message: "Berhasil mengubah data kain!" },
+      });
+    } catch (err) {
+      if (!err?.response) {
+        setErrorMessage("No Server Response!");
+      } else if (err.response?.status === 401) {
+        setErrorMessage("Unauthorized!");
+      } else if (err.response?.status === 422) {
+        setGetErrors(err.response.data.errors || {});
+      } else {
+        setErrorMessage(err.response?.data?.message || "Update gagal!");
+      }
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  if (loading) return <LoadingData />;
+  if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
+
   return (
-    <>
-      <div className="w-250">
-        <form onSubmit={handleSubmit}>
-          <HeaderEdit
-            titleEdit="Data Kain"
-            backUrl="/dashboard/settings/materials"
-            getProcessing={processing}
-          />
-          <div className="grid grid-cols-3 gap-2 mt-4">
-            <div className="flex-all-center col-span-1 border border-gray-200 shadow-lg rounded-xl p-10">
-              <div>
-                <div className="flex-all-center">
-                  {photoPreview ? (
-                    <img src={photoPreview} alt="" className="flex w-full" />
-                  ) : (
-                    <Svg title="Profile" c={"w-full fill-current"}>
-                      <ImageSvg />
-                    </Svg>
-                  )}
-                </div>
-                <div className="flex-all-center">
-                  <input
-                    type="file"
-                    name="photo"
-                    ref={fileInputRef}
-                    onChange={handleChange}
-                    style={{ display: "none" }}
-                    accept="image/*"
+    <div className="w-250">
+      <form onSubmit={handleSubmit}>
+        <HeaderEdit
+          titleEdit="Data Kain"
+          backUrl="/dashboard/settings/materials"
+          getProcessing={processing}
+        />
+
+        {errorMessage && (
+          <div className="mt-2 text-red-600 text-sm font-semibold">
+            {errorMessage}
+          </div>
+        )}
+
+        <div className="grid grid-cols-3 gap-2 mt-4">
+          <div className="flex-all-center col-span-1 border border-gray-200 shadow-lg rounded-xl p-10">
+            <div>
+              <div className="flex-all-center">
+                {photoPreview ? (
+                  <img
+                    src={photoPreview}
+                    alt="Preview"
+                    className="flex w-56 h-56 object-cover rounded-md"
                   />
-                  <button
-                    type="button"
-                    className="flex-all-center bg-amber-500 text-white rounded-lg px-4 py-1 hover:bg-amber-700 mt-2 cursor-pointer"
-                    onClick={handlePhotoClick}
-                  >
-                    Ganti Foto Kain
-                  </button>
-                </div>
-                {getErrors.photo && (
-                  <span
-                    ref={errorRef}
-                    className={
-                      errorMessage
-                        ? "flex w-full text-red-500 text-xs items-center"
-                        : "hidden"
-                    }
-                  >
-                    {getErrors.photo}
-                  </span>
+                ) : (
+                  <Svg title="Profile" c={"w-56 h-56 fill-current"}>
+                    <ImageSvg />
+                  </Svg>
                 )}
               </div>
-            </div>
-            <div className="flex border border-gray-200 shadow-lg rounded-xl col-span-2 p-4">
-              <div>
-                <div className="flex items-center">
-                  <label className="w-36">Nomor Kain</label>
-                  <input
-                    type="text"
-                    name="code"
-                    className="flex p-2 py-1 w-120"
-                    placeholder="Masukkan nomor kain"
-                    autoComplete="off"
-                    ref={nameRef}
-                    onChange={handleChange}
-                    defaultValue={editMaterial.code}
-                    required
-                  />
-                </div>
-                {getErrors.code && (
-                  <span
-                    ref={errorRef}
-                    className={
-                      errorMessage
-                        ? "flex w-full text-red-500 text-xs items-center"
-                        : "hidden"
-                    }
-                  >
-                    {getErrors.code}
-                  </span>
-                )}
-                <div className="flex items-center">
-                  <label className="w-36">Nama Kain</label>
-                  <input
-                    type="text"
-                    name="name"
-                    className="flex p-2 py-1 w-120"
-                    placeholder="Masukkan nama kain"
-                    autoComplete="off"
-                    ref={nameRef}
-                    onChange={handleChange}
-                    defaultValue={editMaterial.name}
-                    required
-                  />
-                </div>
-                {getErrors.name && (
-                  <span
-                    ref={errorRef}
-                    className={
-                      errorMessage
-                        ? "flex w-full text-red-500 text-xs items-center"
-                        : "hidden"
-                    }
-                  >
-                    {getErrors.name}
-                  </span>
-                )}
-                <div className="flex items-center mt-2">
-                  <label className="w-36">PilihSatuan</label>
-                  <select
-                    className="py-1 w-36"
-                    name="unit"
-                    value={editMaterial.unit}
-                    onChange={handleChange}
-                  >
-                    <option value="pilih">Pilih</option>
-                    <option value="meter">Meter</option>
-                    <option value="roll">Roll</option>
-                    <option value="yard">Yard</option>
-                  </select>
-                </div>
-                {getErrors.unit && (
-                  <span
-                    ref={errorRef}
-                    className={
-                      getErrors
-                        ? "flex w-full text-red-500 text-xs items-center"
-                        : "hidden"
-                    }
-                  >
-                    {getErrors.unit}
-                  </span>
-                )}
-                <div className="flex items-center mt-2">
-                  <label className="w-36">Stok Awal</label>
-                  <input
-                    type="number"
-                    placeholder="0"
-                    min={0}
-                    name="initial_stock"
-                    value={editMaterial.initial_stock}
-                    className="flex px-2 py-1 w-20 text-right"
-                    autoComplete="off"
-                    onChange={handleChange}
-                  />
-                </div>
-                {getErrors.initial_stock && (
-                  <span
-                    ref={errorRef}
-                    className={
-                      getErrors
-                        ? "flex w-full text-red-500 text-xs items-center"
-                        : "hidden"
-                    }
-                  >
-                    {getErrors.initial_stock}
-                  </span>
-                )}
-                <div className="flex items-center mt-2">
-                  <label className="w-36">Stok Saat ini</label>
-                  <input
-                    type="number"
-                    placeholder="0"
-                    min={0}
-                    value={editMaterial.stock}
-                    name="stock"
-                    className="flex px-2 py-1 w-20 text-right"
-                    autoComplete="off"
-                    onChange={handleChange}
-                  />
-                </div>
-                {getErrors.stock && (
-                  <span
-                    ref={errorRef}
-                    className={
-                      getErrors
-                        ? "flex w-full text-red-500 text-xs items-center"
-                        : "hidden"
-                    }
-                  >
-                    {getErrors.stock}
-                  </span>
-                )}
-                <div className="flex mt-2">
-                  <label className="w-36">Deskripsi</label>
-                  <textarea
-                    name="description"
-                    className="flex px-2 py-1 w-120"
-                    rows={3}
-                    onChange={handleChange}
-                    defaultValue={editMaterial.description}
-                  />
-                </div>
-                {getErrors.description && (
-                  <span
-                    ref={errorRef}
-                    className={
-                      errorMessage
-                        ? "flex w-full text-red-500 text-xs items-center"
-                        : "hidden"
-                    }
-                  >
-                    {getErrors.description}
-                  </span>
-                )}
+              <div className="flex-all-center mt-2">
+                <input
+                  type="file"
+                  name="photo"
+                  ref={fileInputRef}
+                  onChange={handleChange}
+                  style={{ display: "none" }}
+                  accept="image/jpeg,image/png,image/jpg"
+                />
+                <button
+                  type="button"
+                  className="bg-amber-500 text-white rounded-lg px-4 py-1 hover:bg-amber-700 cursor-pointer"
+                  onClick={handlePhotoClick}
+                >
+                  Ganti Foto Kain
+                </button>
               </div>
+              {getErrors.photo && (
+                <span className="flex w-full text-red-500 text-xs items-center mt-1">
+                  {getErrors.photo[0]}
+                </span>
+              )}
             </div>
           </div>
-        </form>
-      </div>
-    </>
+
+          <div className="flex border border-gray-200 shadow-lg rounded-xl col-span-2 p-4">
+            <div className="w-full">
+              <div className="flex items-center">
+                <label className="w-36">Nomor Kain</label>
+                <input
+                  type="text"
+                  name="code"
+                  className="flex p-2 py-1 w-120 border rounded"
+                  placeholder="Masukkan nomor kain"
+                  autoComplete="off"
+                  onChange={handleChange}
+                  value={editMaterial.code}
+                  required
+                />
+              </div>
+              {getErrors.code && (
+                <span className="flex text-red-500 text-xs mt-1 ml-36">
+                  {getErrors.code[0]}
+                </span>
+              )}
+
+              <div className="flex items-center mt-2">
+                <label className="w-36">Nama Kain</label>
+                <input
+                  type="text"
+                  name="name"
+                  className="flex p-2 py-1 w-120 border rounded"
+                  placeholder="Masukkan nama kain"
+                  autoComplete="off"
+                  ref={nameRef}
+                  onChange={handleChange}
+                  value={editMaterial.name}
+                  required
+                />
+              </div>
+              {getErrors.name && (
+                <span className="flex text-red-500 text-xs mt-1 ml-36">
+                  {getErrors.name[0]}
+                </span>
+              )}
+
+              <div className="flex items-center mt-2">
+                <label className="w-36">Pilih Satuan</label>
+                <select
+                  className="py-1 w-36 border rounded px-2"
+                  name="unit"
+                  value={editMaterial.unit}
+                  onChange={handleChange}
+                >
+                  <option value="">Pilih</option>
+                  <option value="meter">Meter</option>
+                  <option value="roll">Roll</option>
+                  <option value="yard">Yard</option>
+                </select>
+              </div>
+              {getErrors.unit && (
+                <span className="flex text-red-500 text-xs mt-1 ml-36">
+                  {getErrors.unit[0]}
+                </span>
+              )}
+
+              <div className="flex items-center mt-2">
+                <label className="w-36">Stok Awal</label>
+                <input
+                  type="number"
+                  placeholder="0"
+                  min={0}
+                  step="0.01"
+                  name="initial_stock"
+                  value={editMaterial.initial_stock}
+                  className="flex px-2 py-1 w-28 text-right border rounded"
+                  autoComplete="off"
+                  onChange={handleChange}
+                />
+              </div>
+              {getErrors.initial_stock && (
+                <span className="flex text-red-500 text-xs mt-1 ml-36">
+                  {getErrors.initial_stock[0]}
+                </span>
+              )}
+
+              <div className="flex items-center mt-2">
+                <label className="w-36">Stok Saat ini</label>
+                <input
+                  type="number"
+                  placeholder="0"
+                  min={0}
+                  step="0.01"
+                  value={editMaterial.stock}
+                  name="stock"
+                  className="flex px-2 py-1 w-28 text-right border rounded"
+                  autoComplete="off"
+                  onChange={handleChange}
+                />
+              </div>
+              {getErrors.stock && (
+                <span className="flex text-red-500 text-xs mt-1 ml-36">
+                  {getErrors.stock[0]}
+                </span>
+              )}
+
+              <div className="flex mt-2">
+                <label className="w-36">Deskripsi</label>
+                <textarea
+                  name="description"
+                  className="flex px-2 py-1 w-120 border rounded"
+                  rows={3}
+                  onChange={handleChange}
+                  value={editMaterial.description}
+                />
+              </div>
+              {getErrors.description && (
+                <span className="flex text-red-500 text-xs mt-1 ml-36">
+                  {getErrors.description[0]}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
   );
 }

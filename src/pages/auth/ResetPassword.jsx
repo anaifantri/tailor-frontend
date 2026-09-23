@@ -47,14 +47,14 @@ function ResetPassword() {
         password_confirmation: passwordConfirmation,
       });
       setMessage(response.data.message);
-      console.log(response.data);
+      setPasswordConfirmation("");
+      setPassword("");
       setTimeout(() => {
         navigate("/");
       }, 3000);
       setProcessing(false);
     } catch (error) {
       if (error.response && error.response.status === 422) {
-        // Laravel validation errors
         setErrors(error.response.data.errors);
       } else {
         setMessage("Something went wrong. Please try again.");

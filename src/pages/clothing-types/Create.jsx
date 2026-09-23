@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-
 import api from "@/apiService";
-
 import HeaderCreate from "@/components/HeaderCreate";
 
 export default function Create() {
@@ -11,8 +9,7 @@ export default function Create() {
   const { token } = useAuth();
   const [processing, setProcessing] = useState(false);
 
-  const errorRef = useRef();
-  const codeRef = useRef();
+  const codeRef = useRef(null);
 
   const [errorMessage, setErrorMessage] = useState("");
   const [getErrors, setGetErrors] = useState({});
@@ -33,48 +30,40 @@ export default function Create() {
   };
 
   useEffect(() => {
-    codeRef.current.focus();
+    codeRef.current?.focus();
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setGetErrors("");
-
-    const clothingType = new FormData();
-    clothingType.append("code", formData.code);
-    clothingType.append("type", formData.type);
-    clothingType.append("category", formData.category);
-    clothingType.append("base_price", formData.base_price);
+    setGetErrors({});
+    setErrorMessage("");
 
     try {
       setProcessing(true);
-      const response = await api.post("/api/clothing-types", clothingType, {
+      const response = await api.post("/api/clothing-types", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "mulipart/form-data",
         },
       });
-      const getClothingType = response.data.clothing_type;
-      navigate(
-        "/dashboard/settings/clothing-types/" + getClothingType.hashed_id,
-        {
-          state: {
-            message:
-              "Penambahan data jenis pakaian dengan nama " +
-              getClothingType.type +
-              " berhasil..!!",
-          },
+
+      const clothingType = response.data.clothing_type;
+      navigate(`/dashboard/settings/clothing-types/${clothingType.ulid}`, {
+        state: {
+          message: `Penambahan data jenis pakaian dengan nama ${clothingType.type} berhasil..!!`,
         },
-      );
+      });
     } catch (err) {
       if (!err?.response) {
         setErrorMessage("No Server Response..!!");
       } else if (err.response?.status === 401) {
         setErrorMessage("Unauthorized..!!");
-      } else {
+      } else if (err.response?.data?.errors) {
         setGetErrors(err.response.data.errors);
-        console.log(err.response.data);
-        codeRef.current.focus();
+        codeRef.current?.focus();
+      } else {
+        setErrorMessage(
+          err.response?.data?.message || "Gagal menyimpan data..!!",
+        );
       }
     } finally {
       setProcessing(false);
@@ -82,132 +71,117 @@ export default function Create() {
   };
 
   return (
-    <>
-      <div className="w-160">
-        <form onSubmit={handleSubmit}>
-          <HeaderCreate
-            titleCreate="Data Jenis Pakaian"
-            backUrl="/dashboard/settings/clothing-types"
-            getProcessing={processing}
-          />
+    <div className="w-160">
+      <form onSubmit={handleSubmit}>
+        <HeaderCreate
+          titleCreate="Data Jenis Pakaian"
+          backUrl="/dashboard/settings/clothing-types"
+          getProcessing={processing}
+        />
 
-          <div className="border border-gray-200 shadow-lg rounded-xl col-span-2 p-4 mt-4">
-            <div className="flex items-center">
-              <label className="w-44">Kode</label>
-              <input
-                type="text"
-                name="code"
-                className="flex p-2 h-8 w-100"
-                placeholder="Masukkan kode"
-                autoComplete="off"
-                ref={codeRef}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            {getErrors.code && (
-              <span
-                ref={errorRef}
-                className={
-                  getErrors
-                    ? "flex w-full text-red-500 text-xs items-center"
-                    : "hidden"
-                }
-              >
-                {getErrors.code}
-              </span>
-            )}
-            <div className="flex items-center mt-2">
-              <label className="w-44">Jenis Pakaian</label>
-              <input
-                type="text"
-                name="type"
-                className="flex p-2 h-8 w-100"
-                placeholder="Masukkan jenis pakaian"
-                autoComplete="off"
-                onChange={handleChange}
-                required
-              />
-            </div>
-            {getErrors.type && (
-              <span
-                ref={errorRef}
-                className={
-                  getErrors
-                    ? "flex w-full text-red-500 text-xs items-center"
-                    : "hidden"
-                }
-              >
-                {getErrors.type}
-              </span>
-            )}
-            <div className="flex items-center mt-2">
-              <label className="w-44">Harga</label>
-              <input
-                type="number"
-                name="base_price"
-                className="flex p-2 h-8 w-100 spinner-disabled"
-                autoComplete="off"
-                placeholder="Masukkan harga dasar"
-                onChange={handleChange}
-              />
-            </div>
-            {getErrors.base_price && (
-              <span
-                ref={errorRef}
-                className={
-                  getErrors
-                    ? "flex w-full text-red-500 text-xs items-center"
-                    : "hidden"
-                }
-              >
-                {getErrors.base_price}
-              </span>
-            )}
-            <div className="flex items-center mt-2">
-              <label className="w-44">Katagori Pakaian</label>
-              <input
-                type="radio"
-                name="category"
-                value={"baju"}
-                onClick={handleChange}
-                required
-              />
-              <label className="ml-1">BAJU</label>
-              <input
-                className="ml-4"
-                type="radio"
-                name="category"
-                value={"celana"}
-                onClick={handleChange}
-                required
-              />
-              <label className="ml-1">CELANA</label>
-              <input
-                className="ml-4"
-                type="radio"
-                name="category"
-                value={"rok"}
-                onClick={handleChange}
-                required
-              />
-              <label className="ml-1">ROK</label>
-            </div>
-            {getErrors.category && (
-              <span
-                ref={errorRef}
-                className={
-                  getErrors
-                    ? "flex w-full text-red-500 text-xs items-center"
-                    : "hidden"
-                }
-              >
-                {getErrors.category}
-              </span>
-            )}
+        {errorMessage && (
+          <div className="p-2 mt-2 text-sm text-red-600 bg-red-100 rounded">
+            {errorMessage}
           </div>
-        </form>
-      </div>
-    </>
+        )}
+
+        <div className="border border-gray-200 shadow-lg rounded-xl p-4 mt-4">
+          <div className="flex items-center">
+            <label className="w-44">Kode</label>
+            <input
+              type="text"
+              name="code"
+              className="flex p-2 h-8 w-100 border rounded"
+              placeholder="Masukkan kode"
+              autoComplete="off"
+              ref={codeRef}
+              value={formData.code}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          {getErrors.code && (
+            <span className="flex w-full text-red-500 text-xs items-center mt-1">
+              {getErrors.code[0]}
+            </span>
+          )}
+
+          <div className="flex items-center mt-2">
+            <label className="w-44">Jenis Pakaian</label>
+            <input
+              type="text"
+              name="type"
+              className="flex p-2 h-8 w-100 border rounded"
+              placeholder="Masukkan jenis pakaian"
+              autoComplete="off"
+              value={formData.type}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          {getErrors.type && (
+            <span className="flex w-full text-red-500 text-xs items-center mt-1">
+              {getErrors.type[0]}
+            </span>
+          )}
+
+          <div className="flex items-center mt-2">
+            <label className="w-44">Harga</label>
+            <input
+              type="number"
+              name="base_price"
+              className="flex p-2 h-8 w-100 border rounded spinner-disabled"
+              autoComplete="off"
+              placeholder="Masukkan harga dasar"
+              value={formData.base_price}
+              onChange={handleChange}
+            />
+          </div>
+          {getErrors.base_price && (
+            <span className="flex w-full text-red-500 text-xs items-center mt-1">
+              {getErrors.base_price[0]}
+            </span>
+          )}
+
+          <div className="flex items-center mt-2">
+            <label className="w-44">Kategori Pakaian</label>
+            <input
+              type="radio"
+              name="category"
+              value="baju"
+              checked={formData.category === "baju"}
+              onChange={handleChange}
+              required
+            />
+            <label className="ml-1">BAJU</label>
+            <input
+              className="ml-4"
+              type="radio"
+              name="category"
+              value="celana"
+              checked={formData.category === "celana"}
+              onChange={handleChange}
+              required
+            />
+            <label className="ml-1">CELANA</label>
+            <input
+              className="ml-4"
+              type="radio"
+              name="category"
+              value="rok"
+              checked={formData.category === "rok"}
+              onChange={handleChange}
+              required
+            />
+            <label className="ml-1">ROK</label>
+          </div>
+          {getErrors.category && (
+            <span className="flex w-full text-red-500 text-xs items-center mt-1">
+              {getErrors.category[0]}
+            </span>
+          )}
+        </div>
+      </form>
+    </div>
   );
 }

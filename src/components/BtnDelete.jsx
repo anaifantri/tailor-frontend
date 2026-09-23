@@ -1,60 +1,80 @@
-import { Link, useNavigate } from "react-router-dom";
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "@/apiService";
 import Svg from "@/components/Svg";
 import DeleteSvg from "@/assets/Svg/DeleteSvg";
-import api from "@/apiService";
 
 export default function BtnDelete({
   deleteId,
   deleteUrl,
   getToken,
   returnUrl,
+  onSuccess,
 }) {
-  const [error, setError] = useState(null);
   const navigate = useNavigate();
-  // Handle the delete operation
-  const handleDelete = async (url, id, token, getReturnUrl) => {
+  const [processing, setProcessing] = useState(false);
+
+  const handleDelete = async () => {
     const isConfirmed = window.confirm(
-      "Apakah anda yakin ingin menghapus data ini..?",
+      "Apakah Anda yakin ingin menghapus data ini?",
     );
-    if (isConfirmed) {
-      try {
-        // Send the DELETE request to the API
-        const response = await api.post(
-          url + id,
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          },
-        );
-        if (response.data.message) {
-          navigate(getReturnUrl, {
-            state: { message: response.data.message },
-          });
-        } else if (response.data.failed) {
-          navigate(getReturnUrl, {
-            data: { failed: response.data.failed },
-          });
-        }
-      } catch (err) {
-        setError(err.message);
-        console.error("There was an error!", err);
+
+    if (!isConfirmed) return;
+
+    // Format URL dengan aman agar dipastikan memiliki slash '/' di antara URL dan ID
+    const formattedUrl = `${deleteUrl}/${deleteId}`;
+
+    try {
+      setProcessing(true);
+
+      // Gunakan HTTP Method DELETE (bukan POST)
+      const response = await api.delete(formattedUrl, {
+        headers: {
+          Authorization: `Bearer ${getToken}`,
+        },
+      });
+
+      const successMsg = response.data?.message || "Data berhasil dihapus.";
+
+      // Jika ada callback onSuccess (digunakan pada tabel Index untuk refresh data)
+      if (onSuccess) {
+        onSuccess(successMsg);
       }
+
+      // Navigasi ke halaman tujuan jika returnUrl disediakan
+      if (returnUrl) {
+        navigate(returnUrl, {
+          state: { message: successMsg },
+        });
+      }
+    } catch (err) {
+      const errorMsg =
+        err.response?.data?.message || "Terjadi kesalahan saat menghapus data.";
+
+      if (returnUrl) {
+        navigate(returnUrl, {
+          state: { failed: errorMsg },
+        });
+      } else {
+        alert(errorMsg);
+      }
+    } finally {
+      setProcessing(false);
     }
   };
+
   return (
     <button
       type="button"
-      onClick={() => handleDelete(deleteUrl, deleteId, getToken, returnUrl)}
-      className="flex-all-center button-danger cursor-pointer"
+      onClick={handleDelete}
+      disabled={processing}
+      className="flex-all-center button-danger cursor-pointer disabled:opacity-50"
+      title="Hapus Data"
     >
       <Svg title="Delete" c={"w-5 fill-current mx-1"}>
         <DeleteSvg />
       </Svg>
-      <span className="mx-1">Hapus</span>
+      <span className="mx-1">{processing ? "Proses..." : "Hapus"}</span>
     </button>
   );
 }

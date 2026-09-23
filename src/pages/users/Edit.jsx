@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import api from "@/apiService";
 import { useAuth } from "@/context/AuthContext";
 
@@ -10,77 +10,72 @@ import ProfileSvg from "@/assets/Svg/ProfileSvg";
 import LoadingData from "@/components/LoadingData";
 
 export default function Edit() {
-  const { id } = useParams();
-  const { user, token, logout } = useAuth();
+  const { id } = useParams(); // URL Param 'id' mewakili 'ulid'
+  const { user: currentUser, token, logout } = useAuth();
   const navigate = useNavigate();
-  const [photoPreview, setPhotoPreview] = useState("");
+
   const fileInputRef = useRef(null);
+  const confirmPasswordRef = useRef(null);
+  const nameRef = useRef(null);
+
+  const [photoPreview, setPhotoPreview] = useState("");
   const [photo, setPhoto] = useState(null);
   const [changePassword, setChangePassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
-  const confirmPasswordRef = useRef();
-  const nameRef = useRef();
-  const errorRef = useRef();
+
   const [getErrors, setGetErrors] = useState({});
   const [errorMessage, setErrorMessage] = useState("");
-  const [errorPassword, setErrorPassword] = useState(null);
+  const [errorPassword, setErrorPassword] = useState("");
 
   const [editUser, setEditUser] = useState({
-    hashed_id: "",
+    ulid: "",
     name: "",
     username: "",
     email: "",
     phone: "",
-    photo: null,
-    is_active: null,
-    password: null,
+    photo: "",
+    is_active: 1,
+    password: "",
   });
 
   const [processing, setProcessing] = useState(false);
-  const [loading, setLoading] = useState(false);
-  // const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [errorInfo, setErrorInfo] = useState({ status: null, message: "" });
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    if (name == "photo") {
-      const file = e.target.files[0];
-      if (file) {
-        setPhoto(file);
-        const previewUrl = URL.createObjectURL(file);
-        setPhotoPreview(previewUrl);
+  // Clean up URL preview memory leak
+  useEffect(() => {
+    return () => {
+      if (photoPreview && photoPreview.startsWith("blob:")) {
+        URL.revokeObjectURL(photoPreview);
       }
-    } else {
-      setEditUser({ ...editUser, [name]: value });
-    }
-  };
-
-  const handleCbChange = (event) => {
-    setChangePassword(event.target.checked);
-    setErrorPassword(null);
-    setEditUser({ ...editUser, ["password"]: null });
-  };
-
-  const handlePhotoClick = () => {
-    fileInputRef.current.click();
-  };
+    };
+  }, [photoPreview]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       setErrorInfo({ status: null, message: "" });
-      const response = await api.get("/api/users/" + id, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const response = await api.get(`/api/users/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      setEditUser(response.data.user);
-      setPhotoPreview(response.data.user.photo);
+
+      const userData = response.data.data;
+      setEditUser({
+        ulid: userData.ulid,
+        name: userData.name || "",
+        username: userData.username || "",
+        email: userData.email || "",
+        phone: userData.phone || "",
+        is_active: userData.is_active ? 1 : 0,
+        password: "",
+      });
+
+      setPhotoPreview(userData.photo || "");
     } catch (err) {
       if (!err?.response) {
         setErrorInfo({
           status: "NO_SERVER_RESPONSE",
-          message: `Gagal memuat data, tidak ada respon dari server`,
+          message: "Gagal memuat data, tidak ada respon dari server.",
         });
       } else {
         setErrorInfo({
@@ -95,82 +90,108 @@ export default function Edit() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [id, token]);
+
+  const handleChange = (e) => {
+    const { name, value, type, files } = e.target;
+
+    if (type === "file") {
+      const file = files[0];
+      if (file) {
+        setPhoto(file);
+        setPhotoPreview(URL.createObjectURL(file));
+      }
+    } else {
+      setEditUser((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleCbChange = (e) => {
+    const checked = e.target.checked;
+    setChangePassword(checked);
+    setErrorPassword("");
+    setConfirmPassword("");
+    setEditUser((prev) => ({ ...prev, password: "" }));
+  };
 
   const handleConfirmPasswordChange = (e) => {
-    setConfirmPassword(e.target.value);
-    if (editUser.password !== e.target.value) {
+    const val = e.target.value;
+    setConfirmPassword(val);
+    if (editUser.password !== val) {
       setErrorPassword("Password tidak cocok");
     } else {
       setErrorPassword("");
     }
   };
 
+  const handlePhotoClick = () => {
+    fileInputRef.current.click();
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setGetErrors("");
-    setErrorInfo({ status: null, message: "" });
+    setGetErrors({});
+    setErrorMessage("");
 
-    if (changePassword == true && editUser.password !== confirmPassword) {
+    if (changePassword && editUser.password !== confirmPassword) {
       setErrorPassword("Password tidak cocok");
       alert("Konfirmasi password tidak cocok..!!");
-      confirmPasswordRef.current.focus();
-    } else {
-      const formData = new FormData();
-      formData.append("id", editUser.id);
-      formData.append("name", editUser.name);
-      formData.append("username", editUser.username);
-      formData.append("email", editUser.email);
-      formData.append("phone", editUser.phone);
-      formData.append("is_active", editUser.is_active);
-      if (editUser.password != null && editUser.password != "") {
-        formData.append("password", editUser.password);
-      }
-      if (photo) {
-        formData.append("photo", photo);
-      }
-      try {
-        setProcessing(true);
-        const response = await api.post(`/api/users/${id}/edit`, formData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "mulipart/form-data",
-          },
+      confirmPasswordRef.current?.focus();
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("_method", "PUT"); // Method spoofing untuk Laravel multipart update
+    formData.append("name", editUser.name);
+    formData.append("username", editUser.username);
+    formData.append("email", editUser.email);
+    formData.append("phone", editUser.phone);
+    formData.append("is_active", editUser.is_active);
+
+    if (changePassword && editUser.password) {
+      formData.append("password", editUser.password);
+    }
+
+    if (photo) {
+      formData.append("photo", photo, photo.name);
+    }
+    console.log(photo);
+
+    try {
+      setProcessing(true);
+      await api.post(`/api/users/${id}`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // "Content-Type": "mulipart/form-data",
+        },
+      });
+
+      // Jika user mengubah profilnya sendiri dan memperbarui password
+      if (
+        currentUser?.ulid === editUser.ulid &&
+        changePassword &&
+        editUser.password
+      ) {
+        logout();
+      } else {
+        navigate(`/dashboard/settings/users/${id}`, {
+          state: { message: "Berhasil mengubah data pengguna..!!" },
         });
-        if (user.hashed_id == editUser.hashed_id) {
-          if (editUser.password != null && editUser.password != "") {
-            logout();
-          } else {
-            navigate(`/dashboard/settings/users/${id}`, {
-              state: {
-                message: "Berhasil mengubah data profile..!!",
-              },
-            });
-          }
-        } else {
-          navigate(`/dashboard/settings/users/${id}`, {
-            state: { message: "Berhasil mengubah data user..!!" },
-          });
-        }
-      } catch (err) {
-        if (!err?.response) {
-          setErrorInfo({
-            status: "NO_SERVER_RESPONSE",
-            message: `Gagal memuat data, tidak ada respon dari server`,
-          });
-        } else if (err.response?.status != 422) {
-          setErrorInfo({
-            status: err.response.status,
-            message: `Gagal memuat data (${err.response.statusText})`,
-          });
-        } else {
-          setGetErrors(err.response.data.errors);
-          nameRef.current.focus();
-          setErrorMessage("Update gagal..!!");
-        }
-      } finally {
-        setProcessing(false);
       }
+    } catch (err) {
+      if (!err?.response) {
+        setErrorMessage("Gagal menyimpan data, tidak ada respon dari server.");
+      } else if (err.response?.status === 422) {
+        setGetErrors(err.response.data.errors || {});
+        nameRef.current?.focus();
+        setErrorMessage("Update gagal, periksa inputan Anda.");
+      } else {
+        setErrorMessage(
+          err.response.data?.message || "Terjadi kesalahan server.",
+        );
+      }
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -189,236 +210,223 @@ export default function Edit() {
   }
 
   return (
-    <>
-      <div>
-        <form onSubmit={handleSubmit}>
-          <HeaderEdit
-            titleEdit="Data Pengguna"
-            backUrl="/dashboard/settings/users"
-            getProcessing={processing}
-          />
-          <div className="grid grid-cols-3 gap-2 mt-4 w-full">
-            <div className="flex-all-center col-span-1">
-              <div>
-                <div className="flex-all-center">
-                  {photoPreview ? (
-                    <img
-                      src={photoPreview}
-                      alt=""
-                      className="flex w-64 h-64 border border-slate-200 shadow-xl rounded-full mx-2"
-                    />
-                  ) : (
-                    <Svg title="Profile" c={"w-64 h-64 fill-current mx-2"}>
-                      <ProfileSvg />
-                    </Svg>
-                  )}
-                </div>
-                <div className="flex-all-center mt-2">
-                  <input
-                    type="file"
-                    name="photo"
-                    ref={fileInputRef}
-                    onChange={handleChange}
-                    style={{ display: "none" }}
-                    accept="image/*"
+    <div>
+      <form onSubmit={handleSubmit}>
+        <HeaderEdit
+          titleEdit="Data Pengguna"
+          backUrl="/dashboard/settings/users"
+          getProcessing={processing}
+        />
+
+        {errorMessage && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded my-2 text-sm">
+            {errorMessage}
+          </div>
+        )}
+
+        <div className="grid grid-cols-3 gap-4 mt-4 w-full">
+          {/* Sisi Kiri - Foto */}
+          <div className="flex-all-center col-span-1">
+            <div>
+              <div className="flex-all-center">
+                {photoPreview ? (
+                  <img
+                    src={photoPreview}
+                    alt="Foto Profil"
+                    className="flex w-64 h-64 border border-slate-200 shadow-xl rounded-full mx-2 object-cover"
                   />
-                  <button
-                    type="button"
-                    className="flex-all-center border border-slate-300 shadow-lg bg-amber-500 text-white rounded-lg px-4 py-1 hover:bg-amber-700 mt-2 cursor-pointer"
-                    onClick={handlePhotoClick}
-                  >
-                    Ganti Foto
-                  </button>
-                </div>
-                {getErrors.photo && (
-                  <span
-                    ref={errorRef}
-                    className={
-                      errorMessage
-                        ? "flex w-full text-red-500 text-xs items-center"
-                        : "hidden"
-                    }
-                  >
-                    {getErrors.photo}
-                  </span>
+                ) : (
+                  <Svg title="Profile" c={"w-64 h-64 fill-current mx-2"}>
+                    <ProfileSvg />
+                  </Svg>
                 )}
               </div>
-            </div>
-            <div className="col-span-2 border-slate-200 border shadow-xl rounded-xl p-4">
-              <label className="flex">Nama Lengkap</label>
-              <input
-                type="text"
-                name="name"
-                className="flex p-2 h-8 w-full"
-                placeholder="Masukkan Nama Lengkap"
-                autoComplete="off"
-                ref={nameRef}
-                onChange={handleChange}
-                defaultValue={editUser.name}
-                required
-              />
-              {getErrors.name && (
-                <span
-                  ref={errorRef}
-                  className={
-                    errorMessage
-                      ? "flex w-full text-red-500 text-xs items-center"
-                      : "hidden"
-                  }
-                >
-                  {getErrors.name}
-                </span>
-              )}
-              <label className="flex mt-2">Username</label>
-              <input
-                type="text"
-                name="username"
-                className="flex p-2 h-8 w-full"
-                placeholder="Masukkan username (min. 6 karakter"
-                autoComplete="off"
-                onChange={handleChange}
-                defaultValue={editUser.username}
-                required
-              />
-              {getErrors.username && (
-                <span
-                  ref={errorRef}
-                  className={
-                    errorMessage
-                      ? "flex w-full text-red-500 text-xs items-center"
-                      : "hidden"
-                  }
-                >
-                  {getErrors.username}
-                </span>
-              )}
-              <label className="flex mt-2">Nomor Hp.</label>
-              <input
-                type="text"
-                name="phone"
-                className="flex p-2 h-8 w-full"
-                placeholder="Masukkan Nomor Hp."
-                autoComplete="off"
-                onChange={handleChange}
-                defaultValue={editUser.phone}
-                required
-              />
-              {getErrors.phone && (
-                <span
-                  ref={errorRef}
-                  className={
-                    errorMessage
-                      ? "flex w-full text-red-500 text-xs items-center"
-                      : "hidden"
-                  }
-                >
-                  {getErrors.phone}
-                </span>
-              )}
-              <label className="flex mt-2">Email</label>
-              <input
-                type="text"
-                name="email"
-                className="flex p-2 h-8 w-full"
-                placeholder="Masukkan email"
-                autoComplete="off"
-                onChange={handleChange}
-                defaultValue={editUser.email}
-                required
-              />
-              {getErrors.email && (
-                <span
-                  ref={errorRef}
-                  className={
-                    errorMessage
-                      ? "flex w-full text-red-500 text-xs items-center"
-                      : "hidden"
-                  }
-                >
-                  {getErrors.email}
-                </span>
-              )}
-              <label className="flex mt-2">Pilih Status</label>
-              <div className="flex">
+              <div className="flex-all-center mt-2">
                 <input
-                  value="1"
-                  type="radio"
-                  name="is_active"
+                  type="file"
+                  name="photo"
+                  ref={fileInputRef}
                   onChange={handleChange}
-                  checked={editUser.is_active == "1"}
+                  style={{ display: "none" }}
+                  accept="image/jpeg,image/png,image/jpg"
                 />
-                <label className="ml-2">Aktif</label>
-                <input
-                  className="ml-4"
-                  value="0"
-                  type="radio"
-                  name="is_active"
-                  onChange={handleChange}
-                  checked={editUser.is_active == "0"}
-                />
-                <label className="ml-2">Non Aktif</label>
-              </div>
-              {getErrors.is_active && (
-                <span
-                  ref={errorRef}
-                  className={
-                    errorMessage
-                      ? "flex w-full text-red-500 text-xs items-center"
-                      : "hidden"
-                  }
+                <button
+                  type="button"
+                  className="flex-all-center border border-slate-300 shadow-lg bg-amber-500 text-white rounded-lg px-4 py-1 hover:bg-amber-700 mt-2 cursor-pointer"
+                  onClick={handlePhotoClick}
                 >
-                  {getErrors.is_active}
-                </span>
-              )}
-              <div className="flex mt-2">
-                <label className="flex">Ganti Password</label>
-                <input
-                  className="outline-none ml-4"
-                  type="checkbox"
-                  checked={changePassword}
-                  onChange={handleCbChange}
-                />
-                <label className="ml-2 italic">yes</label>
+                  Ganti Foto
+                </button>
               </div>
-              {changePassword == true && (
-                <>
-                  <label className="flex mt-2">Password Baru</label>
-                  <input
-                    type="password"
-                    name="password"
-                    className="flex p-2 h-8 w-full"
-                    placeholder="Input password baru"
-                    onChange={handleChange}
-                    required
-                  />
-                  <label className="flex mt-2">Konfirmasi Password</label>
-                  <input
-                    type="password"
-                    className="flex p-2 h-8 w-full"
-                    placeholder="Konfirmasi Password"
-                    onChange={handleConfirmPasswordChange}
-                    ref={confirmPasswordRef}
-                    required
-                  />
-                </>
-              )}
-              {errorPassword && <p style={{ color: "red" }}>{errorPassword}</p>}
-              {getErrors.password && (
-                <span
-                  ref={errorRef}
-                  className={
-                    errorMessage
-                      ? "flex w-full text-red-500 text-xs items-center"
-                      : "hidden"
-                  }
-                >
-                  {getErrors.password}
+              {getErrors.photo && (
+                <span className="flex w-full text-red-500 text-xs items-center mt-1">
+                  {getErrors.photo[0]}
                 </span>
               )}
             </div>
           </div>
-        </form>
-      </div>
-    </>
+
+          {/* Sisi Kanan - Form Detail */}
+          <div className="col-span-2 border-slate-200 border shadow-xl rounded-xl p-4">
+            <label className="flex font-medium">Nama Lengkap</label>
+            <input
+              type="text"
+              name="name"
+              className="flex p-2 h-8 w-full border rounded mt-1"
+              placeholder="Masukkan Nama Lengkap"
+              autoComplete="off"
+              ref={nameRef}
+              value={editUser.name}
+              onChange={handleChange}
+              required
+            />
+            {getErrors.name && (
+              <span className="flex w-full text-red-500 text-xs items-center mt-1">
+                {getErrors.name[0]}
+              </span>
+            )}
+
+            <label className="flex font-medium mt-3">Username</label>
+            <input
+              type="text"
+              name="username"
+              className="flex p-2 h-8 w-full border rounded mt-1"
+              placeholder="Masukkan username"
+              autoComplete="off"
+              value={editUser.username}
+              onChange={handleChange}
+              required
+            />
+            {getErrors.username && (
+              <span className="flex w-full text-red-500 text-xs items-center mt-1">
+                {getErrors.username[0]}
+              </span>
+            )}
+
+            <label className="flex font-medium mt-3">Nomor HP</label>
+            <input
+              type="text"
+              name="phone"
+              className="flex p-2 h-8 w-full border rounded mt-1"
+              placeholder="Masukkan Nomor HP"
+              autoComplete="off"
+              value={editUser.phone}
+              onChange={handleChange}
+              required
+            />
+            {getErrors.phone && (
+              <span className="flex w-full text-red-500 text-xs items-center mt-1">
+                {getErrors.phone[0]}
+              </span>
+            )}
+
+            <label className="flex font-medium mt-3">Email</label>
+            <input
+              type="email"
+              name="email"
+              className="flex p-2 h-8 w-full border rounded mt-1"
+              placeholder="Masukkan email"
+              autoComplete="off"
+              value={editUser.email}
+              onChange={handleChange}
+              required
+            />
+            {getErrors.email && (
+              <span className="flex w-full text-red-500 text-xs items-center mt-1">
+                {getErrors.email[0]}
+              </span>
+            )}
+
+            <label className="flex font-medium mt-3">Pilih Status</label>
+            <div className="flex items-center mt-1">
+              <input
+                type="radio"
+                id="edit_active_1"
+                name="is_active"
+                value="1"
+                onChange={handleChange}
+                checked={Number(editUser.is_active) === 1}
+              />
+              <label htmlFor="edit_active_1" className="ml-1 cursor-pointer">
+                Aktif
+              </label>
+
+              <input
+                type="radio"
+                id="edit_active_0"
+                name="is_active"
+                className="ml-6"
+                value="0"
+                onChange={handleChange}
+                checked={Number(editUser.is_active) === 0}
+              />
+              <label htmlFor="edit_active_0" className="ml-1 cursor-pointer">
+                Non Aktif
+              </label>
+            </div>
+            {getErrors.is_active && (
+              <span className="flex w-full text-red-500 text-xs items-center mt-1">
+                {getErrors.is_active[0]}
+              </span>
+            )}
+
+            <div className="flex items-center mt-4 border-t pt-3">
+              <input
+                id="change_password_cb"
+                className="cursor-pointer"
+                type="checkbox"
+                checked={changePassword}
+                onChange={handleCbChange}
+              />
+              <label
+                htmlFor="change_password_cb"
+                className="ml-2 font-medium cursor-pointer"
+              >
+                Ganti Password
+              </label>
+            </div>
+
+            {changePassword && (
+              <div className="bg-gray-50 p-3 rounded-lg border mt-2">
+                <label className="flex font-medium text-sm">
+                  Password Baru
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  className="flex p-2 h-8 w-full border rounded mt-1"
+                  placeholder="Input password baru"
+                  value={editUser.password}
+                  onChange={handleChange}
+                  required={changePassword}
+                />
+
+                <label className="flex font-medium text-sm mt-2">
+                  Konfirmasi Password
+                </label>
+                <input
+                  type="password"
+                  className="flex p-2 h-8 w-full border rounded mt-1"
+                  placeholder="Konfirmasi Password"
+                  value={confirmPassword}
+                  onChange={handleConfirmPasswordChange}
+                  ref={confirmPasswordRef}
+                  required={changePassword}
+                />
+
+                {errorPassword && (
+                  <p className="text-red-500 text-xs mt-1">{errorPassword}</p>
+                )}
+                {getErrors.password && (
+                  <span className="flex w-full text-red-500 text-xs items-center mt-1">
+                    {getErrors.password[0]}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </form>
+    </div>
   );
 }

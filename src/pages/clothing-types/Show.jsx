@@ -8,29 +8,32 @@ import SuccessMessage from "@/components/SuccessMessage";
 import LoadingData from "@/components/LoadingData";
 
 export default function Show() {
-  const { id } = useParams();
+  const { ulid } = useParams();
   const { token } = useAuth();
   const location = useLocation();
   const message = location.state?.message;
+
   const [clothingType, setClothingType] = useState({
-    hashed_id: "",
+    ulid: "",
     code: "",
     type: "",
     category: "",
     base_price: "",
   });
-  // const [measurements, setMeasurements] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await api.get("/api/clothing-types/" + id, {
+        setLoading(true);
+        const response = await api.get(`/api/clothing-types/${ulid}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
+
         setClothingType(response.data.clothing_type);
       } catch (err) {
         if (!err?.response) {
@@ -38,85 +41,57 @@ export default function Show() {
         } else if (err.response?.status === 401) {
           setError("Unauthorized..!!");
         } else {
-          setError(err.response.data.message);
-          console.log(err.response.data);
+          setError(err.response?.data?.message || "Data tidak ditemukan");
         }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, []);
+    if (ulid && token) {
+      fetchData();
+    }
+  }, [ulid, token]);
 
-  if (loading) {
-    return <LoadingData />;
-  }
-
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
+  if (loading) return <LoadingData />;
+  if (error) return <div className="p-4 text-red-600">Error: {error}</div>;
 
   return (
-    <>
-      <div className="w-160">
-        <HeaderShow
-          titleShow={"Jenis Pakaian " + clothingType.type}
-          url="/settings/clothing-types"
-          deleteUrl="/clothing-types"
-          getId={clothingType.hashed_id}
-          token={token}
-        />
-        <SuccessMessage message={message} duration="3000" />
-        <div className="divide-y divide-gray-200 border border-gray-200 shadow-lg rounded-xl px-6 py-2 mt-4">
-          <div className="flex w-full p-1">
-            <label className="flex w-48">Kode</label>
-            <label>:</label>
-            <label className="flex ml-2 font-semibold">
-              {clothingType.code}
-            </label>
-          </div>
-          <div className="flex w-full p-1">
-            <label className="flex w-48">Jenis Pakaian</label>
-            <label>:</label>
-            <label className="flex ml-2 font-semibold">
-              {clothingType.type}
-            </label>
-          </div>
-          <div className="flex w-full p-1">
-            <label className="flex w-48">Katagori Pakaian</label>
-            <label>:</label>
-            <label className="flex ml-2 font-semibold uppercase">
-              {clothingType.category}
-            </label>
-          </div>
-          <div className="flex w-full p-1">
-            <label className="flex w-48">Harga</label>
-            <label>:</label>
-            <label className="flex ml-2 font-semibold">
-              {clothingType.base_price != 0
-                ? Number(clothingType.base_price).toLocaleString()
-                : "-"}
-            </label>
-          </div>
-          <div></div>
-          {/* <div className="flex mt-6">
-            <label className="flex w-48 font-semibold">
-              Bagian yang perlu di ukur
-            </label>
-            <label>:</label>
-          </div>
-          <div className="divide-y divide-gray-200">
-            {measurements?.map((measurement, index) => (
-              <div key={index} className="flex items-center mt-2">
-                <label className="w-6">{index + 1}. </label>
-                <label>{measurement.measurement}</label>
-              </div>
-            ))}
-            <div></div>
-          </div> */}
+    <div className="w-200">
+      <HeaderShow
+        titleShow={`Jenis Pakaian ${clothingType.type}`}
+        url="/settings/clothing-types"
+        deleteUrl="/api/clothing-types"
+        getId={clothingType.ulid}
+        token={token}
+      />
+
+      {message && <SuccessMessage message={message} duration="3000" />}
+
+      <div className="divide-y divide-gray-200 border border-gray-200 shadow-lg rounded-xl px-6 py-2 mt-4">
+        <div className="w-full p-2">
+          <label className="flex w-48">Kode</label>
+          <label className="flex font-semibold">{clothingType.code}</label>
+        </div>
+        <div className="w-full p-2">
+          <label className="flex w-48">Jenis Pakaian</label>
+          <label className="flex font-semibold">{clothingType.type}</label>
+        </div>
+        <div className="w-full p-2">
+          <label className="flex w-48">Kategori Pakaian</label>
+          <label className="flex font-semibold uppercase">
+            {clothingType.category}
+          </label>
+        </div>
+        <div className="w-full p-2">
+          <label className="flex w-48">Harga Dasar</label>
+          <label className="flex font-semibold">
+            {Number(clothingType.base_price) !== 0
+              ? Number(clothingType.base_price).toLocaleString()
+              : "-"}
+          </label>
         </div>
       </div>
-    </>
+    </div>
   );
 }

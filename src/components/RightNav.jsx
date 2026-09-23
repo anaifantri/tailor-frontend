@@ -15,12 +15,12 @@ export default function RightNav() {
 
   return (
     <div className="flex justify-end items-center col-span-3 w-full">
-      <div className="flex justify-end text-stone-50 hover:text-stone-300 cursor-pointer">
+      <div className="flex justify-end items-center text-stone-50 hover:text-stone-300 cursor-pointer">
         {user && user.photo ? (
           <img
             src={user.photo}
             alt=""
-            className="flex rounded-full w-6 h-6 mx-1"
+            className="flex rounded-full w-8 h-8 border border-gray-200 shadow-sm shadow-gray-200"
           />
         ) : (
           <Svg title="Profile" c={"w-6 fill-current mx-1"}>

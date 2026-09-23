@@ -17,9 +17,11 @@ export default function Index() {
   const failedDelete = searchParams.get("failed");
   const location = useLocation();
   const { token } = useAuth();
+
   const message = location.state?.message;
   const failed = location.state?.failed;
-  const [clothingTypes, setClothingTypes] = useState(null);
+
+  const [clothingTypes, setClothingTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
@@ -31,10 +33,13 @@ export default function Index() {
 
   const handleSearchChange = (event) => {
     setSearch(event.target.value);
+    setCurrentPage(1);
   };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
         const response = await api.get("/api/clothing-types", {
           params: {
             page: currentPage,
@@ -45,18 +50,22 @@ export default function Index() {
             Authorization: `Bearer ${token}`,
           },
         });
-        setClothingTypes(response.data.data);
-        setCurrentPage(response.data.current_page);
-        setTotalPages(response.data.last_page);
-        setTotalItems(response.data.total);
-      } catch (error) {
-        setError(error);
+
+        setClothingTypes(response.data.data || []);
+        setCurrentPage(response.data.current_page || 1);
+        setTotalPages(response.data.last_page || 1);
+        setTotalItems(response.data.total || 0);
+      } catch (err) {
+        setError(err.response?.data?.message || "Gagal memuat data");
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
-  }, [currentPage, perPage, search]);
+
+    if (token) {
+      fetchData();
+    }
+  }, [currentPage, perPage, search, token, message]);
 
   const handlePerPageChange = (e) => {
     setPerPage(Number(e.target.value));
@@ -65,73 +74,66 @@ export default function Index() {
 
   const getRowNumber = (index) => (currentPage - 1) * perPage + index + 1;
 
-  if (loading) {
-    return <LoadingData />;
-  }
-
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
+  if (loading) return <LoadingData />;
+  if (error) return <div className="p-4 text-red-600">Error: {error}</div>;
 
   return (
-    <>
-      <div className="w-200 px-10">
-        <HeaderIndex
-          title="Daftar Jenis Pakaian"
-          addTitle="Tambah Jenis Pakaian"
-          addUrl="/dashboard/settings/clothing-types/create"
-        />
-        <div className="flex items-center">
-          <div className="flex items-center border border-gray-200 shadow-sm rounded-md py-1 px-2 mt-2">
-            <span className="text-sm text-gray-600">Tampilkan</span>
-            <select
-              value={perPage}
-              onChange={handlePerPageChange}
-              className="w-14 px-2 ml-2"
-            >
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
-            <span className="text-sm text-gray-600 ml-1">data</span>
-          </div>
-          <div className="flex items-center border border-gray-200 shadow-sm rounded-md py-1 px-2 mt-2 ml-6">
-            <label className="flex w-20">Pencarian</label>
-            <input
-              type="text"
-              placeholder="search"
-              value={search}
-              onChange={handleSearchChange}
-              className="px-2"
-            />
-          </div>
+    <div className="w-220 px-10">
+      <HeaderIndex
+        title="Daftar Jenis Pakaian"
+        addTitle="Tambah Jenis Pakaian"
+        addUrl="/dashboard/settings/clothing-types/create"
+      />
+      <div className="flex items-center">
+        <div className="flex items-center border border-gray-200 shadow-sm rounded-md py-1 px-2 mt-2">
+          <span className="text-sm text-gray-600">Tampilkan</span>
+          <select
+            value={perPage}
+            onChange={handlePerPageChange}
+            className="w-14 px-2 ml-2"
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+          <span className="text-sm text-gray-600 ml-1">data</span>
         </div>
-        {deleteMessage && (
-          <SuccessMessage message={deleteMessage} duration="3000" />
-        )}
-        {failedDelete && (
-          <FailedMessage message={failedDelete} duration="3000" />
-        )}
-        {message && <SuccessMessage message={message} duration="3000" />}
-        {failed && <FailedMessage message={failed} duration="3000" />}
+        <div className="flex items-center border border-gray-200 shadow-sm rounded-md py-1 px-2 mt-2 ml-6">
+          <label className="flex w-20 text-sm">Pencarian</label>
+          <input
+            type="text"
+            placeholder="search"
+            value={search}
+            onChange={handleSearchChange}
+            className="px-2 border rounded"
+          />
+        </div>
+      </div>
 
-        <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm mt-4">
-          <table className="table-auto w-full divide-y divide-gray-200 bg-white text-left text-sm text-gray-500">
-            <thead className="bg-gray-50 text-xs uppercase font-semibold text-gray-700">
-              <tr>
-                <th className="px-4 py-2 text-center">No.</th>
-                <th className="px-4 py-2 text-center">Kode</th>
-                <th className="px-4 py-2">Jenis Pakaian</th>
-                <th className="px-4 py-2">Katagori</th>
-                <th className="px-4 py-2 text-center">Harga</th>
-                <th className="px-4 py-2 text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {clothingTypes.map((type, index) => (
-                <tr key={index} className="hover:bg-gray-50 transition-colors">
+      {message && <SuccessMessage message={message} duration="3000" />}
+      {failed && <FailedMessage message={failed} duration="3000" />}
+
+      <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm mt-4">
+        <table className="table-auto w-full divide-y divide-gray-200 bg-white text-left text-sm text-gray-500">
+          <thead className="bg-gray-50 text-xs uppercase font-semibold text-gray-700">
+            <tr>
+              <th className="px-4 py-2 text-center">No.</th>
+              <th className="px-4 py-2 text-center">Kode</th>
+              <th className="px-4 py-2">Jenis Pakaian</th>
+              <th className="px-4 py-2">Kategori</th>
+              <th className="px-4 py-2 text-center">Harga</th>
+              <th className="px-4 py-2 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {clothingTypes.length > 0 ? (
+              clothingTypes.map((type, index) => (
+                <tr
+                  key={type.ulid || index}
+                  className="hover:bg-gray-50 transition-colors"
+                >
                   <td className="px-4 py-1 text-center">
                     {getRowNumber(index)}
                   </td>
@@ -143,28 +145,34 @@ export default function Index() {
                   </td>
                   <td className="px-4 py-1 text-center">
                     <TdAction
-                      showUrl={`/dashboard/settings/clothing-types/${type.hashed_id}`}
-                      editUrl={`/dashboard/settings/clothing-types/edit/${type.hashed_id}`}
-                      deleteUrl="/api/clothing-types/delete/"
-                      deleteId={type.hashed_id}
+                      showUrl={`/dashboard/settings/clothing-types/${type.ulid}`}
+                      editUrl={`/dashboard/settings/clothing-types/edit/${type.ulid}`}
+                      deleteUrl="/api/clothing-types"
+                      deleteId={type.ulid}
                       getToken={token}
                       returnUrl="/dashboard/settings/clothing-types"
                     />
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={totalItems}
-          onPageChange={(page) => setCurrentPage(page)}
-          loading={loading}
-        />
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6} className="text-center py-4">
+                  Data jenis pakaian tidak ditemukan.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
-    </>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        onPageChange={(page) => setCurrentPage(page)}
+        loading={loading}
+      />
+    </div>
   );
 }

@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-
 import api from "@/apiService";
-
 import HeaderCreate from "@/components/HeaderCreate";
 
 export default function Create() {
@@ -11,14 +9,12 @@ export default function Create() {
   const { token } = useAuth();
   const [processing, setProcessing] = useState(false);
 
-  const errorRef = useRef();
-  const nameRef = useRef();
+  const nameRef = useRef(null);
 
   const [errorMessage, setErrorMessage] = useState("");
   const [getErrors, setGetErrors] = useState({});
 
   const [formData, setFormData] = useState({
-    code: "",
     name: "",
     address: "",
     email: "",
@@ -34,35 +30,27 @@ export default function Create() {
   };
 
   useEffect(() => {
-    nameRef.current.focus();
+    nameRef.current?.focus();
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setGetErrors("");
-
-    const dataCustomer = new FormData();
-    dataCustomer.append("code", formData.code);
-    dataCustomer.append("name", formData.name);
-    dataCustomer.append("email", formData.email);
-    dataCustomer.append("phone", formData.phone);
-    dataCustomer.append("address", formData.address);
+    setGetErrors({});
+    setErrorMessage("");
 
     try {
       setProcessing(true);
-      const response = await api.post("/api/customers", dataCustomer, {
+      const response = await api.post("/api/customers", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "mulipart/form-data",
+          "Content-Type": "application/json",
         },
       });
+
       const customer = response.data.customer;
-      navigate("/dashboard/customers/" + customer.hashed_id, {
+      navigate("/dashboard/customers/" + customer.ulid, {
         state: {
-          message:
-            "Penambahan data pelanggan dengan nama " +
-            customer.name +
-            "berhasil..!!",
+          message: `Penambahan data pelanggan dengan nama ${customer.name} berhasil..!!`,
         },
       });
     } catch (err) {
@@ -70,9 +58,13 @@ export default function Create() {
         setErrorMessage("No Server Response..!!");
       } else if (err.response?.status === 401) {
         setErrorMessage("Unauthorized..!!");
+      } else if (err.response?.status === 422) {
+        setGetErrors(err.response.data.errors || {});
+        nameRef.current?.focus();
       } else {
-        setGetErrors(err.response.data.errors);
-        nameRef.current.focus();
+        setErrorMessage(
+          err.response?.data?.message || "Terjadi kesalahan server",
+        );
       }
     } finally {
       setProcessing(false);
@@ -80,104 +72,96 @@ export default function Create() {
   };
 
   return (
-    <>
-      <div className="w-160">
-        <form onSubmit={handleSubmit}>
-          <HeaderCreate
-            titleCreate="Data Pelanggan"
-            backUrl="/dashboard/customers"
-            getProcessing={processing}
-          />
-          <div className="border border-slate-200 shadow-xl rounded-xl p-4 mt-4">
-            <label>Nama Pelanggan</label>
-            <input
-              type="text"
-              name="name"
-              className="flex p-2 h-8 w-full mt-1"
-              placeholder="Masukkan Nama Pelanggan"
-              autoComplete="off"
-              ref={nameRef}
-              onChange={handleChange}
-              required
-            />
-            {getErrors?.name && (
-              <span
-                ref={errorRef}
-                className={
-                  getErrors
-                    ? "flex w-full text-red-500 text-xs items-center"
-                    : "hidden"
-                }
-              >
-                {getErrors?.name}
-              </span>
-            )}
-            <label className="flex mt-4">Alamat</label>
-            <textarea
-              name="address"
-              className="flex p-1 w-full mt-1"
-              placeholder="Masukkan Alamat"
-              rows={3}
-              onChange={handleChange}
-            />
-            {getErrors?.address && (
-              <span
-                ref={errorRef}
-                className={
-                  errorMessage
-                    ? "flex w-full text-red-500 text-xs items-center"
-                    : "hidden"
-                }
-              >
-                {getErrors?.address}
-              </span>
-            )}
-            <label className="flex mt-4">Nomor Hp.</label>
-            <input
-              type="text"
-              name="phone"
-              className="flex p-2 h-8 w-full mt-1"
-              placeholder="Masukkan Nomor Hp."
-              autoComplete="off"
-              onChange={handleChange}
-              required
-            />
-            {getErrors?.phone && (
-              <span
-                ref={errorRef}
-                className={
-                  getErrors
-                    ? "flex w-full text-red-500 text-xs items-center"
-                    : "hidden"
-                }
-              >
-                {getErrors?.phone}
-              </span>
-            )}
-            <label className="flex mt-4">Email</label>
-            <input
-              type="email"
-              name="email"
-              className="flex p-2 h-8 w-full mt-1"
-              placeholder="Masukkan email"
-              autoComplete="off"
-              onChange={handleChange}
-            />
-            {getErrors?.email && (
-              <span
-                ref={errorRef}
-                className={
-                  getErrors
-                    ? "flex w-full text-red-500 text-xs items-center"
-                    : "hidden"
-                }
-              >
-                {getErrors?.email}
-              </span>
-            )}
+    <div className="w-160">
+      <form onSubmit={handleSubmit}>
+        <HeaderCreate
+          titleCreate="Data Pelanggan"
+          backUrl="/dashboard/customers"
+          getProcessing={processing}
+        />
+
+        {errorMessage && (
+          <div className="p-3 mt-3 text-sm text-red-700 bg-red-100 rounded-lg">
+            {errorMessage}
           </div>
-        </form>
-      </div>
-    </>
+        )}
+
+        <div className="border border-slate-200 shadow-xl rounded-xl p-4 mt-4 bg-white">
+          <label className="block text-sm font-medium text-gray-700">
+            Nama Pelanggan *
+          </label>
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            className="flex p-2 h-9 w-full mt-1 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            placeholder="Masukkan Nama Pelanggan"
+            autoComplete="off"
+            ref={nameRef}
+            onChange={handleChange}
+            required
+          />
+          {getErrors?.name && (
+            <span className="flex w-full text-red-500 text-xs mt-1">
+              {getErrors.name[0]}
+            </span>
+          )}
+
+          <label className="flex mt-4 text-sm font-medium text-gray-700">
+            Alamat
+          </label>
+          <textarea
+            name="address"
+            value={formData.address}
+            className="flex p-2 w-full mt-1 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            placeholder="Masukkan Alamat"
+            rows={3}
+            onChange={handleChange}
+          />
+          {getErrors?.address && (
+            <span className="flex w-full text-red-500 text-xs mt-1">
+              {getErrors.address[0]}
+            </span>
+          )}
+
+          <label className="flex mt-4 text-sm font-medium text-gray-700">
+            Nomor Hp.
+          </label>
+          <input
+            type="text"
+            name="phone"
+            value={formData.phone}
+            className="flex p-2 h-9 w-full mt-1 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            placeholder="Contoh: 08123456789"
+            autoComplete="off"
+            onChange={handleChange}
+            required
+          />
+          {getErrors?.phone && (
+            <span className="flex w-full text-red-500 text-xs mt-1">
+              {getErrors.phone[0]}
+            </span>
+          )}
+
+          <label className="flex mt-4 text-sm font-medium text-gray-700">
+            Email
+          </label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            className="flex p-2 h-9 w-full mt-1 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            placeholder="Masukkan email"
+            autoComplete="off"
+            onChange={handleChange}
+          />
+          {getErrors?.email && (
+            <span className="flex w-full text-red-500 text-xs mt-1">
+              {getErrors.email[0]}
+            </span>
+          )}
+        </div>
+      </form>
+    </div>
   );
 }

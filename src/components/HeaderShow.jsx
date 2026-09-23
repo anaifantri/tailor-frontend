@@ -21,7 +21,7 @@ export default function HeaderShow({
           <BtnBack backUrl={`/dashboard${url}`} />
           <BtnEdit editUrl={`/dashboard${url}/edit/${getId}`} />
           <BtnDelete
-            deleteUrl={`/api${deleteUrl}/delete/`}
+            deleteUrl={`${deleteUrl}`}
             deleteId={getId}
             getToken={token}
             returnUrl={`/dashboard${url}`}

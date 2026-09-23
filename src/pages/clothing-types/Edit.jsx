@@ -5,59 +5,63 @@ import api from "@/apiService";
 
 import HeaderEdit from "@/components/HeaderEdit";
 import LoadingData from "@/components/LoadingData";
-import Svg from "@/components/Svg";
-import DeleteSvg from "@/Assets/Svg/DeleteSvg";
 
-export default function Show() {
+export default function Edit() {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { ulid } = useParams();
   const { token } = useAuth();
+
+  const codeRef = useRef(null);
+
   const [processing, setProcessing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const [getErrors, setGetErrors] = useState({});
+  const [errorMessage, setErrorMessage] = useState("");
+
   const [clothingType, setClothingType] = useState({
-    hashed_id: "",
+    ulid: "",
     code: "",
     type: "",
     category: "",
-    base_price: "",
+    base_price: 0,
   });
-  // const [measurements, setMeasurements] = useState([""]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const errorRef = useRef();
-  const codeRef = useRef();
-  const [getErrors, setGetErrors] = useState({});
-  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await api.get("/api/clothing-types/" + id, {
+        setLoading(true);
+        const response = await api.get(`/api/clothing-types/${ulid}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        setClothingType(response.data.clothing_type);
-        // const getMeasurements =
-        //   response.data.clothing_type.measurement_details.map(
-        //     (measurement) => measurement.measurement,
-        //   );
-        // setMeasurements(getMeasurements);
+        const data = response.data.clothing_type;
+        setClothingType({
+          ulid: data.ulid || "",
+          code: data.code || "",
+          type: data.type || "",
+          category: data.category || "",
+          base_price: data.base_price || 0,
+        });
       } catch (err) {
         if (!err?.response) {
           setError("No Server Response..!!");
         } else if (err.response?.status === 401) {
           setError("Unauthorized..!!");
         } else {
-          setError(err.response.data.message);
-          console.log(err.response.data);
+          setError(err.response?.data?.message || "Data tidak ditemukan");
         }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, []);
+    if (ulid && token) {
+      fetchData();
+    }
+  }, [ulid, token]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -69,196 +73,161 @@ export default function Show() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setGetErrors("");
-
-    const formData = new FormData();
-    formData.append("hashed_id", clothingType.hashed_id);
-    formData.append("code", clothingType.code);
-    formData.append("type", clothingType.type);
-    formData.append("category", clothingType.category);
-    formData.append("base_price", clothingType.base_price);
+    setGetErrors({});
+    setErrorMessage("");
 
     try {
       setProcessing(true);
-      const response = await api.post(
-        `/api/clothing-types/${id}/edit`,
-        formData,
+      const response = await api.put(
+        `/api/clothing-types/${ulid}`,
+        clothingType,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "mulipart/form-data",
           },
         },
       );
-      const getClothingType = response.data;
-      navigate(
-        "/dashboard/settings/clothing-types/" + getClothingType.hashed_id,
-        {
-          state: {
-            message:
-              "Perubahan data jenis pakaian dengan nama " +
-              getClothingType.type +
-              " berhasil..!!",
-          },
+
+      const updatedType = response.data.clothing_type || response.data;
+      navigate(`/dashboard/settings/clothing-types/${ulid}`, {
+        state: {
+          message: `Perubahan data jenis pakaian dengan nama ${updatedType.type || clothingType.type} berhasil..!!`,
         },
-      );
+      });
     } catch (err) {
       if (!err?.response) {
         setErrorMessage("No Server Response..!!");
       } else if (err.response?.status === 401) {
         setErrorMessage("Unauthorized..!!");
-      } else {
+      } else if (err.response?.data?.errors) {
         setGetErrors(err.response.data.errors);
-        nameRef.current.focus();
-        setErrorMessage("Update gagal..!!");
+        codeRef.current?.focus();
+        setErrorMessage("Update gagal, periksa kembali inputan Anda..!!");
+      } else {
+        setErrorMessage(
+          err.response?.data?.message || "Gagal memperbarui data..!!",
+        );
       }
     } finally {
       setProcessing(false);
     }
   };
 
-  if (loading) {
-    return <LoadingData />;
-  }
-
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
+  if (loading) return <LoadingData />;
+  if (error) return <div className="p-4 text-red-600">Error: {error}</div>;
 
   return (
-    <>
-      <div className="w-160">
-        <form onSubmit={handleSubmit}>
-          <HeaderEdit
-            titleEdit="Data Jenis Pakaian"
-            backUrl="/dashboard/settings/clothing-types"
-            getProcessing={processing}
-          />
-          <div className="border border-gray-200 shadow-lg rounded-xl px-6 py-4 mt-4">
-            <div className="flex items-center">
-              <label className="w-44">Kode</label>
-              <input
-                type="text"
-                name="code"
-                defaultValue={clothingType.code}
-                className="flex p-2 h-8 w-100"
-                placeholder="Masukkan Kode"
-                autoComplete="off"
-                ref={codeRef}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            {getErrors.code && (
-              <span
-                ref={errorRef}
-                className={
-                  getErrors
-                    ? "flex w-full text-red-500 text-xs items-center"
-                    : "hidden"
-                }
-              >
-                {getErrors.code}
-              </span>
-            )}
-            <div className="flex items-center mt-2">
-              <label className="w-44">Jenis Pakaian</label>
-              <input
-                type="text"
-                name="type"
-                defaultValue={clothingType.type}
-                className="flex p-2 h-8 w-100"
-                placeholder="Masukkan jenis pakaian"
-                autoComplete="off"
-                onChange={handleChange}
-                required
-              />
-            </div>
-            {getErrors.type && (
-              <span
-                ref={errorRef}
-                className={
-                  getErrors
-                    ? "flex w-full text-red-500 text-xs items-center"
-                    : "hidden"
-                }
-              >
-                {getErrors.type}
-              </span>
-            )}
-            <div className="flex items-center mt-2">
-              <label className="w-44">Harga</label>
-              <input
-                type="number"
-                name="base_price"
-                defaultValue={Number(clothingType.base_price)}
-                className="flex p-2 h-8 w-100 spinner-disabled"
-                autoComplete="off"
-                placeholder="Masukkan harga"
-                onChange={handleChange}
-              />
-            </div>
-            {getErrors.base_price && (
-              <span
-                ref={errorRef}
-                className={
-                  getErrors
-                    ? "flex w-full text-red-500 text-xs items-center"
-                    : "hidden"
-                }
-              >
-                {getErrors.base_price}
-              </span>
-            )}
-            <div className="flex items-center mt-2">
-              <label className="w-44">Katagori Pakaian</label>
-              <input
-                type="radio"
-                name="category"
-                value={"baju"}
-                onClick={handleChange}
-                defaultChecked={clothingType.category == "baju" ? true : false}
-                required
-              />
-              <label className="ml-1">BAJU</label>
-              <input
-                className="ml-4"
-                type="radio"
-                name="category"
-                value={"celana"}
-                onClick={handleChange}
-                defaultChecked={
-                  clothingType.category == "celana" ? true : false
-                }
-                required
-              />
-              <label className="ml-1">CELANA</label>
-              <input
-                className="ml-4"
-                type="radio"
-                name="category"
-                value={"rok"}
-                onClick={handleChange}
-                defaultChecked={clothingType.category == "rok" ? true : false}
-                required
-              />
-              <label className="ml-1">ROK</label>
-            </div>
-            {getErrors.category && (
-              <span
-                ref={errorRef}
-                className={
-                  getErrors
-                    ? "flex w-full text-red-500 text-xs items-center"
-                    : "hidden"
-                }
-              >
-                {getErrors.category}
-              </span>
-            )}
+    <div className="w-160">
+      <form onSubmit={handleSubmit}>
+        <HeaderEdit
+          titleEdit="Data Jenis Pakaian"
+          backUrl="/dashboard/settings/clothing-types"
+          getProcessing={processing}
+        />
+
+        {errorMessage && (
+          <div className="p-2 mt-2 text-sm text-red-600 bg-red-100 rounded">
+            {errorMessage}
           </div>
-        </form>
-      </div>
-    </>
+        )}
+
+        <div className="border border-gray-200 shadow-lg rounded-xl px-6 py-4 mt-4">
+          <div className="flex items-center">
+            <label className="w-44">Kode</label>
+            <input
+              type="text"
+              name="code"
+              value={clothingType.code}
+              className="flex p-2 h-8 w-100 border rounded"
+              placeholder="Masukkan Kode"
+              autoComplete="off"
+              ref={codeRef}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          {getErrors.code && (
+            <span className="flex w-full text-red-500 text-xs items-center mt-1">
+              {getErrors.code[0]}
+            </span>
+          )}
+
+          <div className="flex items-center mt-2">
+            <label className="w-44">Jenis Pakaian</label>
+            <input
+              type="text"
+              name="type"
+              value={clothingType.type}
+              className="flex p-2 h-8 w-100 border rounded"
+              placeholder="Masukkan jenis pakaian"
+              autoComplete="off"
+              onChange={handleChange}
+              required
+            />
+          </div>
+          {getErrors.type && (
+            <span className="flex w-full text-red-500 text-xs items-center mt-1">
+              {getErrors.type[0]}
+            </span>
+          )}
+
+          <div className="flex items-center mt-2">
+            <label className="w-44">Harga</label>
+            <input
+              type="number"
+              name="base_price"
+              value={Number(clothingType.base_price)}
+              className="flex p-2 h-8 w-100 border rounded spinner-disabled"
+              autoComplete="off"
+              placeholder="Masukkan harga"
+              onChange={handleChange}
+            />
+          </div>
+          {getErrors.base_price && (
+            <span className="flex w-full text-red-500 text-xs items-center mt-1">
+              {getErrors.base_price[0]}
+            </span>
+          )}
+
+          <div className="flex items-center mt-2">
+            <label className="w-44">Kategori Pakaian</label>
+            <input
+              type="radio"
+              name="category"
+              value="baju"
+              onChange={handleChange}
+              checked={clothingType.category === "baju"}
+              required
+            />
+            <label className="ml-1">BAJU</label>
+            <input
+              className="ml-4"
+              type="radio"
+              name="category"
+              value="celana"
+              onChange={handleChange}
+              checked={clothingType.category === "celana"}
+              required
+            />
+            <label className="ml-1">CELANA</label>
+            <input
+              className="ml-4"
+              type="radio"
+              name="category"
+              value="rok"
+              onChange={handleChange}
+              checked={clothingType.category === "rok"}
+              required
+            />
+            <label className="ml-1">ROK</label>
+          </div>
+          {getErrors.category && (
+            <span className="flex w-full text-red-500 text-xs items-center mt-1">
+              {getErrors.category[0]}
+            </span>
+          )}
+        </div>
+      </form>
+    </div>
   );
 }

@@ -81,7 +81,7 @@ const router = createBrowserRouter([
     element: <ResendEmailVerification />,
   },
   {
-    path: "/verify-email/:id/:hash",
+    path: "/verify-email/:ulid/:hash",
     element: <VerifyEmail />,
   },
   {
@@ -103,8 +103,8 @@ const router = createBrowserRouter([
 
           { path: "settings/users", element: <Users /> },
           { path: "settings/users/create", element: <UserCreate /> },
-          { path: "settings/users/:id", element: <UserShow /> },
-          { path: "settings/users/edit/:id", element: <UserEdit /> },
+          { path: "settings/users/:ulid", element: <UserShow /> },
+          { path: "settings/users/edit/:ulid", element: <UserEdit /> },
           {
             path: "settings/users/change-password",
             element: <ChangePassword />,
@@ -112,28 +112,31 @@ const router = createBrowserRouter([
 
           { path: "tailors/tailors", element: <Tailors /> },
           { path: "tailors/tailors/create", element: <TailorCreate /> },
-          { path: "tailors/tailors/:id", element: <TailorShow /> },
-          { path: "tailors/tailors/edit/:id", element: <TailorEdit /> },
+          { path: "tailors/tailors/:ulid", element: <TailorShow /> },
+          { path: "tailors/tailors/edit/:ulid", element: <TailorEdit /> },
 
           { path: "customers", element: <Customers /> },
           { path: "customers/create", element: <CustomerCreate /> },
-          { path: "customers/:id", element: <CustomerShow /> },
-          { path: "customers/edit/:id", element: <CustomerEdit /> },
+          { path: "customers/:ulid", element: <CustomerShow /> },
+          { path: "customers/edit/:ulid", element: <CustomerEdit /> },
 
           { path: "settings/materials", element: <Materials /> },
           { path: "settings/materials/create", element: <MaterialCreate /> },
-          { path: "settings/materials/:id", element: <MaterialShow /> },
-          { path: "settings/materials/edit/:id", element: <MaterialEdit /> },
+          { path: "settings/materials/:ulid", element: <MaterialShow /> },
+          { path: "settings/materials/edit/:ulid", element: <MaterialEdit /> },
 
           { path: "transactions/orders", element: <Orders /> },
           { path: "transactions/orders/create", element: <OrderCreate /> },
-          { path: "transactions/orders/order-pdf/:id", element: <OrderPdf /> },
           {
-            path: "transactions/orders/order-print/:id",
+            path: "transactions/orders/order-pdf/:ulid",
+            element: <OrderPdf />,
+          },
+          {
+            path: "transactions/orders/order-print/:ulid",
             element: <OrderPrint />,
           },
-          { path: "transactions/orders/:id", element: <OrderShow /> },
-          { path: "transactions/orders/edit/:id", element: <OrderEdit /> },
+          { path: "transactions/orders/:ulid", element: <OrderShow /> },
+          { path: "transactions/orders/edit/:ulid", element: <OrderEdit /> },
 
           { path: "settings/clothing-types", element: <ClothingTypes /> },
           {
@@ -141,29 +144,32 @@ const router = createBrowserRouter([
             element: <ClothingTypeCreate />,
           },
           {
-            path: "settings/clothing-types/:id",
+            path: "settings/clothing-types/:ulid",
             element: <ClothingTypeShow />,
           },
           {
-            path: "settings/clothing-types/edit/:id",
+            path: "settings/clothing-types/edit/:ulid",
             element: <ClothingTypeEdit />,
           },
 
           { path: "transactions/payments", element: <Payments /> },
-          { path: "transactions/payments/:id", element: <PaymentShow /> },
+          { path: "transactions/payments/:ulid", element: <PaymentShow /> },
           { path: "transactions/payments/create", element: <PaymentCreate /> },
-          { path: "transactions/payments/edit/:id", element: <PaymentEdit /> },
+          {
+            path: "transactions/payments/edit/:ulid",
+            element: <PaymentEdit />,
+          },
 
           {
-            path: "customers/measurement-histories/create/:id",
+            path: "customers/measurement-histories/create/:customerUlid",
             element: <MeasurementCreate />,
           },
           {
-            path: "customers/measurement-histories/:id",
+            path: "customers/measurement-histories/:ulid",
             element: <MeasurementShow />,
           },
           {
-            path: "customers/measurement-histories/edit/:id",
+            path: "customers/measurement-histories/edit/:ulid",
             element: <MeasurementEdit />,
           },
         ],
