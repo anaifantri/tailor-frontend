@@ -1,15 +1,98 @@
+import { useState, useRef } from "react";
+import { useAuth } from "@/context/AuthContext";
+
+import api from "@/apiService";
+
 import Svg from "@/components/Svg";
 import SaveSvg from "@/assets/Svg/SaveSvg";
 import SpinSvg from "@/assets/Svg/SpinSvg";
 
 export default function CustomerForm({
-  actionForm,
-  actionChange,
-  processing,
-  getErrors,
+  setCustomerOptions,
+  setSelectedCustomer,
+  setCustomer,
+  setCustomerModalOpen,
 }) {
+  const { token } = useAuth();
+  const [errorMessage, setErrorMessage] = useState("");
+  const [getErrors, setGetErrors] = useState({});
+  const errorRef = useRef();
+  const [processing, setProcessing] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({
+    code: "",
+    name: "",
+    address: "",
+    email: "",
+    phone: "",
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setNewCustomer((prevNewCustomer) => ({
+      ...prevNewCustomer,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setGetErrors("");
+
+    const dataCustomer = new FormData();
+    dataCustomer.append("code", newCustomer.code);
+    dataCustomer.append("name", newCustomer.name);
+    dataCustomer.append("email", newCustomer.email);
+    dataCustomer.append("phone", newCustomer.phone);
+    dataCustomer.append("address", newCustomer.address);
+
+    try {
+      setProcessing(true);
+      const response = await api.post("/api/customers", dataCustomer, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log(response.data);
+      const newCustomerOption = {
+        value: response.data.customer.ulid,
+        label: response.data.customer.name,
+        code: response.data.customer.code,
+        name: response.data.customer.name,
+        address: response.data.customer.address,
+        phone: response.data.customer.phone,
+        email: response.data.customer.email,
+      };
+      const getNewCustomer = {
+        ulid: response.data.customer.ulid,
+        code: response.data.customer.code,
+        name: response.data.customer.name,
+        address: response.data.customer.address,
+        phone: response.data.customer.phone,
+        email: response.data.customer.email,
+      };
+      setCustomerOptions((customerOptions) => [
+        newCustomerOption,
+        ...customerOptions,
+      ]);
+      setSelectedCustomer(newCustomerOption);
+      setCustomer(getNewCustomer);
+      alert(response.data.message);
+      setCustomerModalOpen(false);
+    } catch (err) {
+      if (!err?.response) {
+        setErrorMessage("No Server Response..!!");
+      } else if (err.response?.status === 401) {
+        setErrorMessage("Unauthorized..!!");
+      } else {
+        setGetErrors(err.response.data.errors);
+      }
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   return (
-    <form onSubmit={actionForm}>
+    <form onSubmit={handleSubmit}>
       <div className="border border-slate-200 shadow-xl rounded-xl p-4 mt-4 w-120">
         <label>Nama Pelanggan</label>
         <input
@@ -18,7 +101,7 @@ export default function CustomerForm({
           className="flex p-2 h-8 w-full mt-1"
           placeholder="Masukkan Nama Pelanggan"
           autoComplete="off"
-          onChange={actionChange}
+          onChange={handleChange}
           required
         />
         {getErrors?.name && (
@@ -39,7 +122,7 @@ export default function CustomerForm({
           className="flex p-1 w-full mt-1"
           placeholder="Masukkan Alamat"
           rows={3}
-          onChange={actionChange}
+          onChange={handleChange}
         />
         {getErrors?.address && (
           <span
@@ -60,7 +143,7 @@ export default function CustomerForm({
           className="flex p-2 h-8 w-full mt-1"
           placeholder="Masukkan Nomor Hp."
           autoComplete="off"
-          onChange={actionChange}
+          onChange={handleChange}
           required
         />
         {getErrors?.phone && (
@@ -82,7 +165,7 @@ export default function CustomerForm({
           className="flex p-2 h-8 w-full mt-1"
           placeholder="Masukkan email"
           autoComplete="off"
-          onChange={actionChange}
+          onChange={handleChange}
         />
         {getErrors?.email && (
           <span

@@ -39,10 +39,10 @@ import OrderEdit from "@/pages/orders/Edit";
 import OrderPdf from "@/pages/orders/OrderPdf";
 import OrderPrint from "@/pages/orders/OrderPrint";
 
-import ClothingTypes from "@/pages/clothing-types/Index";
-import ClothingTypeCreate from "@/pages/clothing-types/Create";
-import ClothingTypeShow from "@/pages/clothing-types/Show";
-import ClothingTypeEdit from "@/pages/clothing-types/Edit";
+import Services from "@/pages/services/Index";
+import ServiceCreate from "@/pages/services/Create";
+import ServiceShow from "@/pages/services/Show";
+import ServiceEdit from "@/pages/services/Edit";
 
 import Payments from "@/pages/payments/Index";
 import PaymentCreate from "@/pages/payments/Create";
@@ -138,18 +138,18 @@ const router = createBrowserRouter([
           { path: "transactions/orders/:ulid", element: <OrderShow /> },
           { path: "transactions/orders/edit/:ulid", element: <OrderEdit /> },
 
-          { path: "settings/clothing-types", element: <ClothingTypes /> },
+          { path: "settings/services", element: <Services /> },
           {
-            path: "settings/clothing-types/create",
-            element: <ClothingTypeCreate />,
+            path: "settings/services/create",
+            element: <ServiceCreate />,
           },
           {
-            path: "settings/clothing-types/:ulid",
-            element: <ClothingTypeShow />,
+            path: "settings/services/:ulid",
+            element: <ServiceShow />,
           },
           {
-            path: "settings/clothing-types/edit/:ulid",
-            element: <ClothingTypeEdit />,
+            path: "settings/services/edit/:ulid",
+            element: <ServiceEdit />,
           },
 
           { path: "transactions/payments", element: <Payments /> },

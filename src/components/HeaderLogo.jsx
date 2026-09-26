@@ -1,11 +1,15 @@
-import Logo from "@/assets/Images/logo-riori-tailor-02.png";
-import TextLogo from "@/assets/Images/text-riori-tailor.png";
+import Logo from "@/assets/Images/gold-logo.png";
+import TextLogo from "@/assets/Images/gold-text.png";
 
 export default function HeaderLogo() {
   return (
-    <div className="flex px-4 items-center sm:col-span-2 text-white">
-      <img className="h-8" src={Logo} alt="" />
-      <img className="h-7 ml-2" src={TextLogo} alt="" />
+    <div className="flex items-center gap-3 shrink-0">
+      <img className="h-9 w-auto" src={Logo} alt="Logo" />
+      <img
+        className="h-9 w-auto hidden sm:block"
+        src={TextLogo}
+        alt="Text Logo"
+      />
     </div>
   );
 }

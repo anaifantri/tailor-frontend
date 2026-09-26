@@ -61,6 +61,36 @@ export default function Edit() {
   const [showDetail, setShowDetail] = useState([]);
   const [measurements, setMeasurements] = useState(null);
 
+  const customSelectStyles = {
+    control: (base) => ({
+      ...base,
+      backgroundColor: "#1e293b",
+      borderColor: "#475569",
+      color: "#f8fafc",
+      minHeight: "2rem",
+      height: "2rem",
+    }),
+    singleValue: (base) => ({
+      ...base,
+      color: "#f8fafc",
+    }),
+    input: (base) => ({
+      ...base,
+      color: "#f8fafc",
+    }),
+    menu: (base) => ({
+      ...base,
+      backgroundColor: "#1e293b",
+      borderColor: "#475569",
+    }),
+    option: (base, state) => ({
+      ...base,
+      backgroundColor: state.isFocused ? "#334155" : "#1e293b",
+      color: "#f8fafc",
+      cursor: "pointer",
+    }),
+  };
+
   const handleBtnDetail = (index) => {
     if (showDetail.includes(index)) {
       setShowDetail(showDetail.filter((i) => i !== index));
@@ -277,6 +307,7 @@ export default function Edit() {
       total: getSubTotal,
     }));
   };
+
   const handleBtnShowMeasurement = (orderDetailIndex) => {
     setOrderDetailIndex(orderDetailIndex);
     setShowMeasurementModalOpen(true);
@@ -440,28 +471,30 @@ export default function Edit() {
 
   return (
     <>
-      <div className="w-300">
+      <div className="w-300 text-slate-100">
         <form onSubmit={handleSubmit}>
           <HeaderEdit
             titleEdit="Data Pesanan"
             backUrl="/dashboard/transactions/orders"
             getProcessing={processing}
           />
-          <div className="flex-all-center w-full border-3 border-stone-900 rounded-4xl h-28 mt-4">
+          <div className="flex-all-center w-full border-2 border-slate-700 bg-slate-800 rounded-3xl h-28 mt-4 shadow-lg">
             <div className="grid grid-cols-3 gap-4 w-full h-full p-4">
-              <div className="flex col-span-2">
+              <div className="flex col-span-2 items-center">
                 <BlackLogo />
               </div>
               <div>
                 <div className="flex-all-center">
-                  <span className="border-b-2 border-stone-900 font-bold text-xl col-span-1">
+                  <span className="border-b-2 border-indigo-500 font-bold text-xl col-span-1 text-indigo-400">
                     NOTA PESANAN
                   </span>
                 </div>
-                <div className="flex-all-center">
-                  <label className="w-20">NO. NOTA</label>
-                  <label>:</label>
-                  <label className="ml-2 font-bold text-lg">
+                <div className="flex-all-center mt-3">
+                  <label className="w-20 text-slate-300 text-sm">
+                    NO. NOTA
+                  </label>
+                  <label className="text-slate-400">:</label>
+                  <label className="ml-2 font-bold text-lg text-slate-100">
                     {order.number}
                   </label>
                 </div>
@@ -469,89 +502,90 @@ export default function Edit() {
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2 mt-4">
-            <div className="col-span-2 border border-stone-900 rounded-lg p-2">
+            <div className="col-span-2 border border-slate-700 bg-slate-800 rounded-xl p-3 text-slate-200">
               <div className="flex items-center">
-                <label className="w-40">Nama Pelanggan</label>
-                <label>:</label>
-                <label className="ml-2 font-semibold text-sm w-100">
+                <label className="w-40 text-slate-300">Nama Pelanggan</label>
+                <label className="text-slate-400">:</label>
+                <label className="ml-2 font-semibold text-sm w-100 text-slate-100">
                   {customer ? customer.name : "-"}
                 </label>
               </div>
               <div className="flex items-start mt-2">
-                <label className="w-40">Alamat</label>
-                <label>:</label>
-                <label className="ml-2 font-semibold text-sm w-100 h-14">
+                <label className="w-40 text-slate-300">Alamat</label>
+                <label className="text-slate-400">:</label>
+                <label className="ml-2 font-semibold text-sm w-100 h-14 text-slate-100">
                   {customer ? customer.address : "-"}
                 </label>
               </div>
               <div className="flex items-center mt-2">
-                <label className="w-40">No. Handphone</label>
-                <label>:</label>
-                <label className="ml-2 font-semibold text-sm">
+                <label className="w-40 text-slate-300">No. Handphone</label>
+                <label className="text-slate-400">:</label>
+                <label className="ml-2 font-semibold text-sm text-slate-100">
                   {customer ? customer.phone : "-"}
                 </label>
               </div>
               <div className="flex items-center mt-2">
-                <label className="w-40">Email</label>
-                <label>:</label>
-                <label className="ml-2 font-semibold text-sm">
+                <label className="w-40 text-slate-300">Email</label>
+                <label className="text-slate-400">:</label>
+                <label className="ml-2 font-semibold text-sm text-slate-100">
                   {customer ? customer.email : "-"}
                 </label>
               </div>
             </div>
-            <div className="border border-stone-900 rounded-xl p-2 texl-lg col-span-1">
+            <div className="border border-slate-700 bg-slate-800 rounded-xl p-3 text-slate-200 col-span-1">
               <div className="flex items-center">
-                <label className="w-28">Tgl. Pesan</label>
-                <label>:</label>
-                <label className="font-semibold ml-2 text-teal-900">
+                <label className="w-28 text-slate-300">Tgl. Pesan</label>
+                <label className="text-slate-400">:</label>
+                <label className="font-semibold ml-2 text-indigo-400">
                   {FormattedDateLong(order.order_date)}
                 </label>
               </div>
               <div className="flex items-center mt-2">
-                <label className="w-28">Tgl. Fitting</label>
-                <label>:</label>
+                <label className="w-28 text-slate-300">Tgl. Fitting</label>
+                <label className="text-slate-400">:</label>
                 <input
                   defaultValue={order.fitting_date}
                   name="fitting_date"
                   onChange={handleChange}
-                  className="ml-2 outline-none px-2"
+                  className="ml-2 bg-slate-900 border border-slate-700 rounded-md px-2 py-1 text-slate-100 focus:outline-none focus:border-indigo-500"
                   type="date"
                 />
               </div>
               <div className="flex items-center mt-2">
-                <label className="w-28">Tgl. Selesai</label>
-                <label>:</label>
+                <label className="w-28 text-slate-300">Tgl. Selesai</label>
+                <label className="text-slate-400">:</label>
                 <input
                   defaultValue={order.due_date}
                   name="due_date"
                   onChange={handleChange}
-                  className="ml-2 outline-none px-2"
+                  className="ml-2 bg-slate-900 border border-slate-700 rounded-md px-2 py-1 text-slate-100 focus:outline-none focus:border-indigo-500"
                   type="date"
                 />
               </div>
             </div>
           </div>
-          <div className="flex-all-center border-b-2 w-full mt-2"></div>
-          <div className="flex-all-center w-full mt-1">
-            <table className="table-auto w-full">
+          <div className="flex-all-center border-b border-slate-700 w-full mt-4"></div>
+          <div className="flex-all-center w-full mt-2">
+            <table className="table-auto w-full border-collapse">
               <thead>
-                <tr className="h-10 bg-stone-200">
-                  <th className="th-center text-xs w-10">No.</th>
-                  <th className="th-center text-sm">Jenis Pesanan</th>
-                  <th className="th-center text-sm w-36">Ukuran</th>
-                  <th className="th-center text-sm w-72">No. Kain</th>
-                  <th className="th-center text-sm w-16">Qty</th>
-                  <th className="th-center text-sm w-36">Harga</th>
-                  <th className="th-center text-sm w-40">Total</th>
-                  <th className="th-center text-sm w-24">Action</th>
+                <tr className="h-10 bg-slate-800 text-slate-300 border-b border-slate-700 text-xs uppercase tracking-wider">
+                  <th className="th-center w-10">No.</th>
+                  <th className="th-center">Jenis Pesanan</th>
+                  <th className="th-center w-36">Ukuran</th>
+                  <th className="th-center w-72">No. Kain</th>
+                  <th className="th-center w-16">Qty</th>
+                  <th className="th-center w-36">Harga</th>
+                  <th className="th-center w-40">Total</th>
+                  <th className="th-center w-24">Action</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-800">
                 {rows.map((row, index) => (
-                  <tr key={index} className="bg-white">
+                  <tr key={index} className="bg-slate-900 text-slate-200">
                     <td className="td-center">{index + 1}</td>
-                    <td className="td-left">
+                    <td className="td-left p-1">
                       <Select
+                        styles={customSelectStyles}
                         placeholder="Pilih jenis pakaian"
                         value={
                           row.value
@@ -573,12 +607,12 @@ export default function Edit() {
                           <button
                             type="button"
                             className={
-                              "flex-all-center button-primary cursor-pointer"
+                              "flex-all-center bg-indigo-600 hover:bg-indigo-500 text-white p-1.5 rounded-lg cursor-pointer transition"
                             }
                             onClick={() => handleBtnShowMeasurement(index)}
                           >
-                            <span className="mx-1">Lihat Ukuran</span>
-                            <Svg title="Menu" c={"w-5 fill-current mx-1"}>
+                            <span className="mx-1 text-xs">Lihat Ukuran</span>
+                            <Svg title="Menu" c={"w-4 fill-current mx-1"}>
                               <CheckSvg />
                             </Svg>
                           </button>
@@ -589,14 +623,14 @@ export default function Edit() {
                             <button
                               type="button"
                               className={
-                                "flex-all-center button-success cursor-pointer"
+                                "flex-all-center bg-emerald-600 hover:bg-emerald-500 text-white p-1.5 rounded-lg cursor-pointer transition"
                               }
                               onClick={() =>
                                 handleBtnMeasurement(row.value, customer, index)
                               }
                             >
-                              <span className="mx-1">Input Ukuran</span>
-                              <Svg title="Menu" c={"w-5 fill-current mx-1"}>
+                              <span className="mx-1 text-xs">Input Ukuran</span>
+                              <Svg title="Menu" c={"w-4 fill-current mx-1"}>
                                 <InputSvg />
                               </Svg>
                             </button>
@@ -604,9 +638,10 @@ export default function Edit() {
                         )
                       )}
                     </td>
-                    <td className="td-left">
+                    <td className="td-left p-1">
                       {row.value && (
                         <Select
+                          styles={customSelectStyles}
                           value={
                             row.value
                               ? materialOptions.find(
@@ -619,14 +654,13 @@ export default function Edit() {
                           }
                           options={materialOptions}
                           required={row.value}
-                          // isDisabled={row.value ? false : true}
                         />
                       )}
                     </td>
                     <td className="td-center">
                       <div className="flex w-full justify-center">
                         <input
-                          className="w-14 text-center"
+                          className="w-14 text-center bg-slate-800 border border-slate-700 rounded-md text-slate-100 py-1 focus:outline-none focus:border-indigo-500 text-xs"
                           type="number"
                           min={1}
                           defaultValue={row.qty ? row.qty : ""}
@@ -640,7 +674,7 @@ export default function Edit() {
                     <td className="td-center">
                       <div className="flex w-full justify-center">
                         <input
-                          className="px-2 w-32 text-right spinner-disabled"
+                          className="px-2 w-32 text-right spinner-disabled bg-slate-800 border border-slate-700 rounded-md text-slate-100 py-1 focus:outline-none focus:border-indigo-500 text-xs"
                           type="number"
                           min={0}
                           defaultValue={row.total ? Number(row.total) : ""}
@@ -653,10 +687,14 @@ export default function Edit() {
                     </td>
                     <td className="td-right">
                       <div
-                        className={row.value ? "flex w-full" : "hidden w-full"}
+                        className={
+                          row.value
+                            ? "flex w-full text-slate-100 text-xs"
+                            : "hidden w-full"
+                        }
                       >
                         <label className="w-3">Rp.</label>
-                        <label className="w-32 ml-2 text-right">
+                        <label className="w-32 ml-2 text-right font-medium">
                           {Number(row.total).toLocaleString()}
                         </label>
                       </div>
@@ -667,9 +705,9 @@ export default function Edit() {
                           <button
                             type="button"
                             onClick={() => removeRow(index)}
-                            className="flex-all-center p-1 m-1 rounded-md text-white bg-red-700 hover:bg-red-500 cursor-pointer"
+                            className="flex-all-center p-1.5 rounded-lg text-white bg-rose-600 hover:bg-rose-500 transition cursor-pointer"
                           >
-                            <Svg title="Delete" c={"w-5 fill-current"}>
+                            <Svg title="Delete" c={"w-4 fill-current"}>
                               <DeleteSvg />
                             </Svg>
                           </button>
@@ -678,16 +716,18 @@ export default function Edit() {
                     </td>
                   </tr>
                 ))}
-                <tr className="h-10">
+                <tr className="h-10 border-t border-slate-700">
                   <td
-                    className="td-center align-top text-sm"
+                    className="td-center align-top text-xs p-2"
                     colSpan={5}
                     rowSpan={3}
                   >
                     <OrderNotes />
                   </td>
-                  <td className="td-right text-sm font-semibold">Total</td>
-                  <td className="td-right text-sm font-semibold">
+                  <td className="td-right text-xs font-semibold text-slate-300">
+                    Total
+                  </td>
+                  <td className="td-right text-xs font-semibold text-slate-100">
                     <div className="flex w-full">
                       <label className="w-3">Rp.</label>
                       <label className="w-32 ml-2 text-right">
@@ -695,15 +735,17 @@ export default function Edit() {
                       </label>
                     </div>
                   </td>
-                  <td className="td-center bg-slate-200"></td>
+                  <td className="td-center bg-slate-800"></td>
                 </tr>
                 <tr className="h-10">
-                  <td className="td-right text-sm font-semibold">Uang Muka</td>
-                  <td className="td-right text-sm font-semibold">
+                  <td className="td-right text-xs font-semibold text-slate-300">
+                    Uang Muka
+                  </td>
+                  <td className="td-right text-xs font-semibold text-slate-100">
                     <div className="flex w-full">
                       <label className="w-5 flex">Rp.</label>
                       <input
-                        className="flex ml-2 px-1 w-full text-right spinner-disabled"
+                        className="flex ml-2 px-1 w-full text-right spinner-disabled bg-slate-800 border border-slate-700 rounded-md text-slate-100 focus:outline-none focus:border-indigo-500 text-xs"
                         title="Input uang muka"
                         type="number"
                         value={Number(downPayment)}
@@ -714,19 +756,21 @@ export default function Edit() {
                       />
                     </div>
                   </td>
-                  <td className="td-center bg-slate-200"></td>
+                  <td className="td-center bg-slate-800"></td>
                 </tr>
                 <tr className="h-10">
-                  <td className="td-right text-sm font-semibold">Sisa</td>
-                  <td className="td-right text-sm font-semibold">
+                  <td className="td-right text-xs font-semibold text-slate-300">
+                    Sisa
+                  </td>
+                  <td className="td-right text-xs font-semibold text-indigo-400">
                     <div className="flex w-full">
                       <label className="w-3">Rp.</label>
-                      <label className="w-32 ml-2 text-right">
+                      <label className="w-32 ml-2 text-right font-bold">
                         {Number(balance).toLocaleString()}
                       </label>
                     </div>
                   </td>
-                  <td className="td-center bg-slate-200"></td>
+                  <td className="td-center bg-slate-800"></td>
                 </tr>
               </tbody>
             </table>
@@ -741,21 +785,23 @@ export default function Edit() {
       >
         {showMeasurementModalOpen && (
           <div>
-            <div className="p-4 border border-gray-200 shadow-lg rounded-xl w-full mt-4">
+            <div className="p-4 border border-slate-700 bg-slate-800 shadow-lg rounded-xl w-full mt-4 text-slate-200">
               <div className="flex items-center">
-                <label className="w-44">Nama Pelanggan</label>
-                <label>:</label>
-                <label className="ml-2">{customer?.name}</label>
+                <label className="w-44 text-slate-400">Nama Pelanggan</label>
+                <label className="text-slate-500">:</label>
+                <label className="ml-2 font-medium text-slate-100">
+                  {customer?.name}
+                </label>
               </div>
               <div className="flex items-center mt-2">
-                <label className="w-44">Jenis Pakaian</label>
-                <label>:</label>
-                <label className="ml-2">
+                <label className="w-44 text-slate-400">Jenis Pakaian</label>
+                <label className="text-slate-500">:</label>
+                <label className="ml-2 font-medium text-slate-100">
                   {rows[orderDetailIndex]?.clothing_type}
                 </label>
               </div>
               <div className="mt-4">
-                <div className="flex items-center border-b p-1 w-96">
+                <div className="flex items-center border-b border-slate-700 p-2 w-96 font-semibold text-indigo-400">
                   <label className="w-44">Bagian yang di ukur</label>
                 </div>
                 {JSON.parse(orderDetails[orderDetailIndex].measurements).map(
@@ -764,12 +810,16 @@ export default function Edit() {
                       measurement.name != "" && (
                         <div
                           key={index}
-                          className="flex items-center border-b p-1 w-96"
+                          className="flex items-center border-b border-slate-700/60 p-2 w-96 hover:bg-slate-700/40 text-slate-300"
                         >
                           <label className="w-6">{index + 1}. </label>
                           <label className="w-56">{measurement.name}</label>
-                          <label className="ml-4">{measurement.value}</label>
-                          <label className="flex w-6 ml-2">cm</label>
+                          <label className="ml-4 text-indigo-300 font-medium">
+                            {measurement.value}
+                          </label>
+                          <label className="flex w-6 ml-2 text-slate-400 text-xs">
+                            cm
+                          </label>
                         </div>
                       )
                     );
@@ -777,32 +827,19 @@ export default function Edit() {
                 )}
               </div>
             </div>
-            <div className="flex justify-end mt-2">
+            <div className="flex justify-end mt-4">
               <button
                 type="button"
                 onClick={() => {
                   setShowMeasurementModalOpen(false);
                 }}
-                className="flex-all-center button-danger px-2 cursor-pointer"
+                className="flex-all-center bg-rose-600 hover:bg-rose-500 text-white font-medium px-3 py-1.5 rounded-lg cursor-pointer transition shadow"
               >
                 <Svg title="Close" c={"w-5 fill-current"}>
                   <DeleteSvg />
                 </Svg>
                 <span className="ml-1">Close</span>
               </button>
-              {/* <button
-                type="button"
-                onClick={() => {
-                  setMeasurementModalOpen(true);
-                  setShowMeasurementModalOpen(false);
-                }}
-                className="flex-all-center button-success px-2 cursor-pointer ml-2"
-              >
-                <Svg title="Close" c={"w-5 fill-current"}>
-                  <ReloadSvg />
-                </Svg>
-                <span className="ml-1">Rubah Ukuran</span>
-              </button> */}
             </div>
           </div>
         )}
@@ -813,17 +850,18 @@ export default function Edit() {
         isOpen={measurementModalOpen}
         onClose={() => setMeasurementModalOpen(false)}
       >
-        <div className="flex items-center">
+        <div className="flex items-center text-slate-200">
           <input
             name="measurmentOptions"
             value={"choose"}
             type="radio"
             defaultChecked="true"
             onClick={() => setShowInputMeasurements(false)}
+            className="accent-indigo-500"
           />
           <span className="flex ml-2">Pilih ukuran lama</span>
           <input
-            className="ml-4"
+            className="ml-4 accent-indigo-500"
             name="measurmentOptions"
             value={"input"}
             type="radio"
@@ -833,9 +871,9 @@ export default function Edit() {
         </div>
         {!showInputMeasurements ? (
           <>
-            <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm mt-4">
-              <table className="table-auto w-full divide-y divide-gray-200 bg-white text-left  text-gray-500">
-                <thead className="bg-gray-100 font-semibold text-gray-700  text-sm">
+            <div className="overflow-hidden rounded-xl border border-slate-700 shadow-sm mt-4 bg-slate-800">
+              <table className="table-auto w-full divide-y divide-slate-700 text-left text-slate-300">
+                <thead className="bg-slate-900 font-semibold text-slate-200 text-sm">
                   <tr>
                     <th className="px-6 py-3 text-center">No.</th>
                     <th className="px-6 py-3 text-center">Jenis Pakaian</th>
@@ -845,7 +883,7 @@ export default function Edit() {
                     <th className="px-6 py-3 text-center">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-slate-700 bg-slate-800">
                   {measurementHistories &&
                     measurementHistories.map((measurement, index) => {
                       const isShow = showDetail.includes(index);
@@ -855,7 +893,7 @@ export default function Edit() {
                       return (
                         <tr
                           key={index}
-                          className="hover:bg-gray-50 transition-colors text-sm"
+                          className="hover:bg-slate-700/50 transition-colors text-sm text-slate-200"
                         >
                           <td className="px-3 py-1 text-center">{index + 1}</td>
                           <td className="px-3 py-1 text-center">
@@ -871,17 +909,17 @@ export default function Edit() {
                             <div className="flex w-full">
                               {isShow ? (
                                 <div className="w-72">
-                                  <div className="w-full border-b py-1">
+                                  <div className="w-full border-b border-slate-700 py-1 text-indigo-400 font-medium">
                                     Detail Ukuran
                                   </div>
-                                  <div className="mt-2">
+                                  <div className="mt-2 space-y-1">
                                     {measurementDetails.map(
                                       (itemDetail, indexDetail) => {
                                         return (
                                           itemDetail.name != "" && (
                                             <div
                                               key={indexDetail}
-                                              className="flex items-start"
+                                              className="flex items-start text-slate-300"
                                             >
                                               <label className="w-6">
                                                 {indexDetail + 1}.{" "}
@@ -890,10 +928,10 @@ export default function Edit() {
                                                 {itemDetail.name}
                                               </label>
                                               <label>=</label>
-                                              <label className="ml-2">
+                                              <label className="ml-2 text-slate-100 font-medium">
                                                 {itemDetail.value}
                                               </label>
-                                              <label className="flex w-6 ml-2">
+                                              <label className="flex w-6 ml-2 text-slate-400">
                                                 cm
                                               </label>
                                             </div>
@@ -904,21 +942,21 @@ export default function Edit() {
                                   </div>
                                 </div>
                               ) : (
-                                <div className="w-72">
+                                <div className="w-72 text-slate-400">
                                   Tampilkan Detail Ukuran
                                 </div>
                               )}
 
                               <button
                                 type="button"
-                                className="flex justify-center items-center w-4 mx-auto hover:text-stone-900 cursor-pointer"
+                                className="flex justify-center items-center w-4 mx-auto text-slate-400 hover:text-indigo-400 cursor-pointer transition"
                                 onClick={() => handleBtnDetail(index)}
                               >
                                 <Svg
                                   title="Arrow"
                                   c={
                                     isShow
-                                      ? "nav-svg w-5 fill-current rotate-180"
+                                      ? "nav-svg w-5 fill-current rotate-180 text-indigo-400"
                                       : "nav-svg w-5 fill-current"
                                   }
                                 >
@@ -932,6 +970,7 @@ export default function Edit() {
                               <input
                                 name="measurement_history_id"
                                 type="radio"
+                                className="accent-indigo-500"
                                 value={measurement.hashed_id}
                                 onClick={() =>
                                   handleMeasurementHistory(
@@ -940,7 +979,9 @@ export default function Edit() {
                                   )
                                 }
                               />
-                              <label className="ml-1">Pilih</label>
+                              <label className="ml-1 text-slate-200">
+                                Pilih
+                              </label>
                             </div>
                           </td>
                         </tr>
@@ -950,13 +991,13 @@ export default function Edit() {
               </table>
               {!measurementHistories ||
                 (measurementHistories.length == 0 && (
-                  <div className="w-full flex-all-center text-red-700 p-2">
+                  <div className="w-full flex-all-center text-rose-400 p-3 bg-slate-800 text-sm">
                     Belum ada ukuran untuk pelanggan dan jenis pakaian yang
                     dipilih...!! silahkan input data pengukuran terlebih dahulu.
                   </div>
                 ))}
             </div>
-            <div className="flex justify-end mt-2">
+            <div className="flex justify-end mt-4">
               <button
                 type="button"
                 onClick={() => {
@@ -966,7 +1007,7 @@ export default function Edit() {
                     setMeasurementModalOpen(false);
                   }
                 }}
-                className="flex-all-center button-success px-2 cursor-pointer"
+                className="flex-all-center bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2 rounded-lg cursor-pointer transition shadow"
               >
                 <Svg title="Close" c={"w-5 fill-current"}>
                   <CheckSvg />
@@ -997,7 +1038,7 @@ export default function Edit() {
         onClose={() => setDownPaymentModalOpen(false)}
       >
         <PaymentForm data={order} action={handleChange} />
-        <div className="flex justify-end gap-2 mt-2">
+        <div className="flex justify-end gap-2 mt-4">
           <button
             onClick={() => {
               setDownPaymentModalOpen(false);
@@ -1008,7 +1049,7 @@ export default function Edit() {
                 ["payment_notes"]: "",
               }));
             }}
-            className="flex-all-center button-danger mx-1 cursor-pointer"
+            className="flex-all-center bg-rose-600 hover:bg-rose-500 text-white font-medium px-3 py-1.5 rounded-lg mx-1 cursor-pointer transition shadow"
           >
             <Svg title="Cancel" c={"w-5 fill-current mx-1"}>
               <DeleteSvg />
@@ -1022,7 +1063,7 @@ export default function Edit() {
               setDownPayment(order.amount_paid);
               setBalance(Number(subTotal) - Number(order.amount_paid));
             }}
-            className="flex-all-center button-success px-2 cursor-pointer"
+            className="flex-all-center bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-3 py-1.5 rounded-lg cursor-pointer transition shadow"
           >
             <Svg title="Close" c={"w-5 fill-current"}>
               <CheckSvg />

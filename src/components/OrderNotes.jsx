@@ -1,8 +1,8 @@
 export default function OrderNotes() {
   const notes = [
-    "Lebih dari 2 bulan barang tidak diambil, segala kehilangan / kerusakan dan lain-lain diluar tanggung jawab kami",
-    "Dengan nota tersebut barang bisa diterima",
-    "Kehilangan nota pengambilan bukan tanggung jawab kami",
+    "Barang yang tidak diambil lebih dari 2 bulan berada di luar tanggung jawab kami jika terjadi kehilangan, kerusakan, atau risiko lainnya",
+    "Pengambilan barang wajib menyertakan nota ini",
+    "Kehilangan nota pengambilan bukan merupakan tanggung jawab kami",
   ];
   return (
     <div>

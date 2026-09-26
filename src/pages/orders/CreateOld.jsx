@@ -38,7 +38,7 @@ export default function Create() {
   const errorRef = useRef();
   const customerRef = useRef(null);
   const materialRef = useRef(null);
-  const clothingTypeRef = useRef(null);
+  const serviceRef = useRef(null);
   const qtyRef = useRef(null);
   const priceRef = useRef(null);
   const fittingDateRef = useRef(null);
@@ -109,7 +109,7 @@ export default function Create() {
     {
       value: null,
       material_number: null,
-      clothing_type: null,
+      service: null,
       code: null,
       category: null,
       qty: null,
@@ -132,8 +132,8 @@ export default function Create() {
   const [customer, setCustomer] = useState(null);
   const [customerOptions, setCustomerOptions] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [clothingTypeOptions, setClothingTypeOptions] = useState([]);
-  const [clothingTypes, setClothingTypes] = useState([]);
+  const [serviceOptions, setServiceOptions] = useState([]);
+  const [services, setServices] = useState([]);
   const [materialOptions, setMaterialOptions] = useState([]);
 
   const [orderDetails, setOrderDetails] = useState([]);
@@ -214,13 +214,13 @@ export default function Create() {
     if (customerData == null) {
       alert("Silahkan pilih pelanggan terlebih dahulu..!!");
     } else {
-      const clothingTypeindex = clothingTypes.findIndex(
+      const clothingTypeindex = services.findIndex(
         (type) => type.hashed_id === clothingTypeId,
       );
 
       const getBasicMeasurements = basicMeasurements.find(
         (measurement) =>
-          measurement.name === clothingTypes[clothingTypeindex].category,
+          measurement.name === services[clothingTypeindex].category,
       );
       const formattedMeasurements = getBasicMeasurements?.measurements.map(
         (item) => ({
@@ -289,7 +289,8 @@ export default function Create() {
     }
   };
 
-  const handleSelectTypeChange = (selectedOption, index) => {
+  const handleSelectServiceChange = (selectedOption, index) => {
+    console.log(selectedOption);
     let rowIndex = index;
     const exists = rows.some((row) => row.value === selectedOption.value);
     const updatedRows = [...rows];
@@ -301,7 +302,7 @@ export default function Create() {
     } else {
       updatedRows[rowIndex].value = selectedOption.value;
       updatedRows[rowIndex].material_number = rows[index].material_number;
-      updatedRows[rowIndex].clothing_type = selectedOption.label;
+      updatedRows[rowIndex].service = selectedOption.label;
       updatedRows[rowIndex].category = selectedOption.category;
       updatedRows[rowIndex].code = selectedOption.code;
       updatedRows[rowIndex].qty = rows[index].qty;
@@ -314,7 +315,7 @@ export default function Create() {
 
     if (rowIndex === rows.length - 1 && selectedOption) {
       const newOrderDetail = {
-        clothing_type_id: selectedOption.value,
+        service_id: selectedOption.value,
         material_id: null,
         measurements: null,
         qty: 0,
@@ -328,7 +329,7 @@ export default function Create() {
         {
           value: null,
           material_number: null,
-          clothing_type: null,
+          service: null,
           category: null,
           code: null,
           qty: 0,
@@ -339,7 +340,7 @@ export default function Create() {
     } else {
       const newOrderDetails = [...orderDetails];
       const newOrderDetail = {
-        clothing_type_id: selectedOption.value,
+        service_id: selectedOption.value,
         material_id: orderDetails[rowIndex].material_id,
         measurements: orderDetails[rowIndex].measurements,
         qty: orderDetails[rowIndex].qty,
@@ -365,8 +366,8 @@ export default function Create() {
         dueDateRef.current.focus();
       }
     } else if (name == "due_date") {
-      if (clothingTypeRef.current) {
-        clothingTypeRef.current.focus();
+      if (serviceRef.current) {
+        serviceRef.current.focus();
       }
     } else if (name == "amount_paid") {
     }
@@ -486,23 +487,23 @@ export default function Create() {
     const requestMaterials = api.get("/api/materials", {
       headers,
     });
-    const requestClothingTypes = api.get("/api/clothing-types", {
+    const requestServices = api.get("/api/services", {
       headers,
     });
 
     const fetchMultipleData = async () => {
       try {
         setLoading(true);
-        const [responseCustomers, responseMaterials, responseClothingTypes] =
+        const [responseCustomers, responseMaterials, responServices] =
           await Promise.all([
             requestCustomers,
             requestMaterials,
-            requestClothingTypes,
+            requestServices,
           ]);
 
-        const formattedcustomerOptions = responseCustomers.data.data.map(
+        const formattedCustomerOptions = responseCustomers.data.data.map(
           (item) => ({
-            value: item.hashed_id,
+            value: item.ulid,
             label: item.name,
             code: item.code,
             name: item.name,
@@ -512,23 +513,24 @@ export default function Create() {
           }),
         );
 
-        const formattedClothingTypeOptions =
-          responseClothingTypes.data.data.map((item) => ({
-            value: item.hashed_id,
-            label: item.type,
+        const formattedServiceOptions = responServices.data.data.map(
+          (item) => ({
+            value: item.ulid,
+            label: item.name,
             category: item.category,
             code: item.code,
-          }));
+          }),
+        );
 
         const formattedMaterialOptions = responseMaterials.data.data.map(
           (item) => ({
-            value: item.hashed_id,
+            value: item.ulid,
             label: item.code + " | " + item.name,
           }),
         );
-        setClothingTypes(responseClothingTypes.data.data);
-        setCustomerOptions(formattedcustomerOptions);
-        setClothingTypeOptions(formattedClothingTypeOptions);
+        setServices(responServices.data.data);
+        setCustomerOptions(formattedCustomerOptions);
+        setServiceOptions(formattedServiceOptions);
         setMaterialOptions(formattedMaterialOptions);
       } catch (err) {
         if (!err?.response) {
@@ -623,8 +625,8 @@ export default function Create() {
     order.append("payment_date", formData.payment_date);
     orderDetails.map((orderDetail, index) => {
       order.append(
-        `order_details[${index}][clothing_type_id]`,
-        orderDetail.clothing_type_id,
+        `order_details[${index}][service_id]`,
+        orderDetail.service_id,
       );
       order.append(
         `order_details[${index}][measurements]`,
@@ -886,17 +888,17 @@ export default function Create() {
                         placeholder="Pilih jenis pesanan"
                         value={
                           row.value
-                            ? clothingTypeOptions.find(
+                            ? serviceOptions.find(
                                 (opt) => opt.value === row.value,
                               )
                             : null
                         }
                         onChange={(selectedOption) =>
-                          handleSelectTypeChange(selectedOption, index)
+                          handleSelectServiceChange(selectedOption, index)
                         }
-                        options={clothingTypeOptions}
+                        options={serviceOptions}
                         required={rows.length === 1}
-                        ref={clothingTypeRef}
+                        ref={serviceRef}
                       />
                     </td>
                     <td className="td-center">
@@ -1465,7 +1467,7 @@ export default function Create() {
                         >
                           <td className="px-3 py-1 text-center">{index + 1}</td>
                           <td className="px-3 py-1 text-center">
-                            {measurement.clothing_type.type}
+                            {measurement.service.type}
                           </td>
                           <td className="px-3 py-1 text-center">
                             {FormattedDateShort(measurement.measured_at)}
@@ -1590,8 +1592,8 @@ export default function Create() {
             setMeasurements={setMeasurements}
             customer={customer}
             indexOrderDetail={orderDetailIndex}
-            clothingTypeId={orderDetails[orderDetailIndex]?.clothing_type_id}
-            clothingType={rows[orderDetailIndex]?.clothing_type}
+            clothingTypeId={orderDetails[orderDetailIndex]?.service_id}
+            clothingType={rows[orderDetailIndex]?.service}
             category={rows[orderDetailIndex]?.category}
             today={today}
             setMeasurementModalOpen={setMeasurementModalOpen}
@@ -1625,7 +1627,7 @@ export default function Create() {
                 <label className="w-44">Jenis Pakaian</label>
                 <label>:</label>
                 <label className="ml-2">
-                  {rows[orderDetailIndex]?.clothing_type}
+                  {rows[orderDetailIndex]?.service}
                 </label>
               </div>
               <div className="divide-y divide-gray-200 mt-4">

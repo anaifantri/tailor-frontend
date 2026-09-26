@@ -5,6 +5,10 @@
   --width-card: 9.5in;
   --height-card: 5.5in;
   --spacing-print-margin: 0.4in;
+  --color-brand-bg: #0a1828;
+  --color-brand-secondary: #178582;
+  --color-brand-accent: #bfa181;
+  --font-serif: "Playfair Display", Georgia, serif;
 }
 
 @layer components {

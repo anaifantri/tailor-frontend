@@ -92,6 +92,7 @@ export default function PaymenForm({ data, action }) {
           type="number"
           className="ml-2 px-2 spinner-disabled w-48"
           onChange={action}
+          onFocus={(e) => e.target.select()}
         />
       </div>
       <div className="flex items-start mt-2">

@@ -1,167 +1,77 @@
-import { Link, useLocation } from "react-router-dom";
-import NavLink from "@/components/NavLink";
-import LiNavLink from "@/components/LiNavLink";
-import Svg from "@/components/Svg";
+import { NavLink } from "react-router-dom";
 
-import SettingSvg from "@/assets/Svg/SettingSvg";
-import ArrowSvg from "@/assets/Svg/ArrowSvg";
-import HomeSvg from "@/assets/Svg/HomeSvg";
-import CustomerSvg from "@/assets/Svg/CustomerSvg";
+import Svg from "@/components/Svg";
 import OrderSvg from "@/assets/Svg/OrderSvg";
+import CustomerSvg from "@/assets/Svg/CustomerSvg";
 import EmployeeSvg from "@/assets/Svg/EmployeeSvg";
+import SettingSvg from "@/assets/Svg/SettingSvg";
 
 export default function NavBar() {
-  const location = useLocation();
-  const currentPath = location.pathname;
   return (
-    <div className="flex-all-center mx-2 col-span-11 px-16">
-      <div className="grid grid-cols-5 gap-2 w-full">
-        <Link
-          className={currentPath === "/dashboard" ? "link-active" : "link"}
-          to={"/dashboard"}
-        >
-          <Svg title="Request" c={"nav-svg"}>
-            <HomeSvg />
-          </Svg>
-          <span className="text-base ml-2">Dashboard</span>
-        </Link>
-        <NavLink
-          title="Transaksi"
-          c={
-            currentPath.startsWith("/dashboard/transactions")
-              ? "nav-link-active group"
-              : "nav-link group"
-          }
-          navSvg={<OrderSvg />}
-        >
-          <LiNavLink
-            title="Daftar Pesanan"
-            c={
-              currentPath.startsWith("/dashboard/transactions/orders")
-                ? "li-nav-link-active"
-                : "li-nav-link"
-            }
-            url="/dashboard/transactions/orders"
-          >
-            <Svg title="Arrow" c={"nav-svg w-5 fill-current rotate-270"}>
-              <ArrowSvg />
-            </Svg>
-          </LiNavLink>
-          <LiNavLink
-            title="Pembayaran Pesanan"
-            c={
-              currentPath.startsWith("/dashboard/transactions/payments")
-                ? "li-nav-link-active"
-                : "li-nav-link"
-            }
-            url="/dashboard/transactions/payments"
-          >
-            <Svg title="Arrow" c={"nav-svg w-5 fill-current rotate-270"}>
-              <ArrowSvg />
-            </Svg>
-          </LiNavLink>
-          <LiNavLink title="Pengambilan Pesanan" c="li-nav-link" url="#">
-            <Svg title="Arrow" c={"nav-svg w-5 fill-current rotate-270"}>
-              <ArrowSvg />
-            </Svg>
-          </LiNavLink>
-        </NavLink>
-        <Link
-          className={
-            currentPath.startsWith("/dashboard/customers")
-              ? "link-active"
-              : "link"
-          }
-          to={"/dashboard/customers"}
-        >
-          <Svg title="Request" c={"nav-svg"}>
-            <CustomerSvg />
-          </Svg>
-          <span className="text-base ml-2">Data Pelanggan</span>
-        </Link>
-        <NavLink
-          title="Data Tukang"
-          c={
-            currentPath.startsWith("/dashboard/tailors")
-              ? "nav-link-active group"
-              : "nav-link group"
-          }
-          navSvg={<EmployeeSvg />}
-        >
-          <LiNavLink
-            title="Daftar Nama Tukang"
-            c={
-              currentPath.startsWith("/dashboard/tailors/tailors")
-                ? "li-nav-link-active"
-                : "li-nav-link"
-            }
-            url="/dashboard/tailors/tailors"
-          >
-            <Svg title="Arrow" c={"nav-svg w-5 fill-current rotate-270"}>
-              <ArrowSvg />
-            </Svg>
-          </LiNavLink>
-          <LiNavLink title="Pekerjaan Tukang" c="li-nav-link" url="#">
-            <Svg title="Arrow" c={"nav-svg w-5 fill-current rotate-270"}>
-              <ArrowSvg />
-            </Svg>
-          </LiNavLink>
-          <LiNavLink title="Pembayaran Tukang" c="li-nav-link" url="#">
-            <Svg title="Arrow" c={"nav-svg w-5 fill-current rotate-270"}>
-              <ArrowSvg />
-            </Svg>
-          </LiNavLink>
-        </NavLink>
-        <NavLink
-          title="Pengaturan"
-          c={
-            currentPath.startsWith("/dashboard/settings")
-              ? "nav-link-active group"
-              : "nav-link group"
-          }
-          navSvg={<SettingSvg />}
-        >
-          <LiNavLink
-            title="Data Pengguna"
-            c={
-              currentPath.startsWith("/dashboard/settings/users")
-                ? "li-nav-link-active"
-                : "li-nav-link"
-            }
-            url="/dashboard/settings/users"
-          >
-            <Svg title="Arrow" c={"nav-svg w-5 fill-current rotate-270"}>
-              <ArrowSvg />
-            </Svg>
-          </LiNavLink>
-          <LiNavLink
-            title="Data Kain"
-            c={
-              currentPath.startsWith("/dashboard/settings/materials")
-                ? "li-nav-link-active"
-                : "li-nav-link"
-            }
-            url="/dashboard/settings/materials"
-          >
-            <Svg title="Arrow" c={"nav-svg w-5 fill-current rotate-270"}>
-              <ArrowSvg />
-            </Svg>
-          </LiNavLink>
-          <LiNavLink
-            title="Jenis Pakaian"
-            c={
-              currentPath.startsWith("/dashboard/settings/clothing-types")
-                ? "li-nav-link-active"
-                : "li-nav-link"
-            }
-            url="/dashboard/settings/clothing-types"
-          >
-            <Svg title="Arrow" c={"nav-svg w-5 fill-current rotate-270"}>
-              <ArrowSvg />
-            </Svg>
-          </LiNavLink>
-        </NavLink>
-      </div>
-    </div>
+    <nav className="hidden lg:flex items-center gap-2 bg-slate-950/60 p-1.5 rounded-2xl border border-slate-800/80 text-brand-accent">
+      <NavLink
+        to="/dashboard/transactions/orders"
+        className={({ isActive }) =>
+          `px-6 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+            isActive
+              ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+              : "hover:text-white hover:bg-slate-800/50"
+          }`
+        }
+      >
+        <Svg title="Pesanan" c="w-3.5 h-3.5 fill-current">
+          <OrderSvg />
+        </Svg>
+        <span>Pesanan</span>
+      </NavLink>
+
+      <NavLink
+        to="/dashboard/customers"
+        className={({ isActive }) =>
+          `px-6 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+            isActive
+              ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+              : "hover:text-white hover:bg-slate-800/50"
+          }`
+        }
+      >
+        <Svg title="Pelanggan" c="w-3.5 h-3.5 fill-current">
+          <CustomerSvg />
+        </Svg>
+        <span>Pelanggan</span>
+      </NavLink>
+
+      <NavLink
+        to="/dashboard/tailors/tailors"
+        className={({ isActive }) =>
+          `px-6 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+            isActive
+              ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+              : "hover:text-white hover:bg-slate-800/50"
+          }`
+        }
+      >
+        <Svg title="Penjahit" c="w-3.5 h-3.5 fill-current">
+          <EmployeeSvg />
+        </Svg>
+        <span>Penjahit</span>
+      </NavLink>
+
+      <NavLink
+        to="/dashboard/settings/materials"
+        className={({ isActive }) =>
+          `px-6 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+            isActive
+              ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+              : "hover:text-white hover:bg-slate-800/50"
+          }`
+        }
+      >
+        <Svg title="Pengaturan" c="w-3.5 h-3.5 fill-current">
+          <SettingSvg />
+        </Svg>
+        <span>Data Bahan</span>
+      </NavLink>
+    </nav>
   );
 }

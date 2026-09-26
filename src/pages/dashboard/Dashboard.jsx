@@ -1,150 +1,131 @@
 import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-// import { Swiper, SwiperSlide } from "swiper/react";
-// import { Navigation, Pagination, Autoplay } from "swiper/modules";
-
 import InputSearch from "@/components/InputSearch";
 import OrderChart from "@/components/OrderChart";
 
-// import "swiper/css";
-// import "swiper/css/navigation";
-// import "swiper/css/pagination";
-
-// const slides = [
-//   {
-//     id: 1,
-//     title: "Lacak Pesanan Pelanggan",
-//   },
-//   {
-//     id: 2,
-//     title: "Performa Pesanan Bulanan",
-//   },
-// ];
-// Contoh komponen custom yang akan dimasukkan ke dalam slider
-const CardProduct = ({ title, price, category, color }) => (
-  <div
-    className={`p-6 rounded-2xl text-white ${color} shadow-lg flex flex-col justify-between h-72`}
-  >
-    <div>
-      <span className="text-xs uppercase tracking-wider bg-white/20 px-3 py-1 rounded-full">
-        {category}
-      </span>
-      <h3 className="text-2xl font-bold mt-4">{title}</h3>
-    </div>
-    <div>
-      <p className="text-sm opacity-80">Mulai dari</p>
-      <p className="text-3xl font-extrabold">{price}</p>
-      <button className="mt-4 w-full py-2 bg-white text-gray-900 font-semibold rounded-xl hover:bg-opacity-90 transition">
-        Beli Sekarang
-      </button>
-    </div>
-  </div>
-);
-
 function Dashboard() {
   const { user } = useAuth();
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [activeTab, setActiveTab] = useState(0);
 
-  // Daftar komponen yang dimasukkan ke slider
-  const items = [<InputSearch />, <OrderChart />];
-
-  const prevSlide = () => {
-    setCurrentIndex((prev) => (prev === 0 ? items.length - 1 : prev - 1));
-  };
-
-  const nextSlide = () => {
-    setCurrentIndex((prev) => (prev === items.length - 1 ? 0 : prev + 1));
-  };
+  const tabs = [
+    { id: 0, label: "Lacak Pesanan Pelanggan", component: <InputSearch /> },
+    { id: 1, label: "Performa Pesanan Bulanan", component: <OrderChart /> },
+  ];
 
   return (
-    <>
-      <div className="w-full mx-auto py-2 px-4">
-        {/* Container utama slider */}
-        <div className="relative overflow-hidden rounded-2xl">
-          {/* Track tempat komponen disusun secara horizontal */}
-          <div
-            className="flex transition-transform duration-500 ease-out"
-            style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-          >
-            {items.map((item, index) => (
-              <div
-                key={index}
-                className="w-full shrink-0 flex justify-center items-start overflow-hidden rounded-4xl border bg-white border-gray-200 shadow-sm p-4"
-              >
-                {item}
-              </div>
-            ))}
-          </div>
-
-          {/* Navigasi Kiri */}
-          <button
-            onClick={prevSlide}
-            className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 text-gray-800 shadow-md hover:bg-white transition"
-          >
-            ❮
-          </button>
-
-          {/* Navigasi Kanan */}
-          <button
-            onClick={nextSlide}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 text-gray-800 shadow-md hover:bg-white transition"
-          >
-            ❯
-          </button>
-        </div>
-
-        {/* Indikator Titik (Dots) */}
-        <div className="flex justify-center gap-2 mt-4">
-          {items.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentIndex(index)}
-              className={`h-2.5 rounded-full transition-all ${
-                currentIndex === index ? "w-8 bg-blue-600" : "w-2.5 bg-gray-300"
-              }`}
-            />
-          ))}
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Banner Ringkasan */}
+      <div className="relative overflow-hidden bg-linear-to-r from-indigo-900/60 via-purple-900/40 to-slate-900 border border-slate-800 p-6 md:p-8 rounded-3xl shadow-xl">
+        <div className="relative z-10 max-w-2xl space-y-2">
+          <span className="text-xs uppercase tracking-wider font-semibold text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
+            Overview Sistem
+          </span>
+          <h2 className="text-2xl md:text-3xl font-extrabold text-white">
+            Selamat Datang, {user?.name || "Pengguna"}!
+          </h2>
+          <p className="text-slate-300 text-xs md:text-sm leading-relaxed">
+            Kelola transaksi tailoring, lacak pesanan pelanggan, dan analisa
+            statistik penjualan Anda dalam satu tempat.
+          </p>
         </div>
       </div>
-      {/* <div className="overflow-hidden w-full h-160 rounded-xl border border-gray-200 shadow-sm">
-        <Swiper
-          modules={[Navigation, Pagination, Autoplay]}
-          spaceBetween={20}
-          slidesPerView={1}
-          navigation
-          pagination={{ clickable: true }}
-          // autoplay={{ delay: 3000, disableOnInteraction: false }}
-          // loop={true}
-          className="rounded-2xl overflow-hidden shadow-lg"
-        >
-          {slides.map((slide) => (
-            <SwiperSlide key={slide.id}>
-              <div className="relative h-160 w-full p-10">
-                <InputSearch />
-                <div className="absolute inset-0 bg-black/30 flex items-end p-6">
-                  <h2 className="text-white text-xl md:text-2xl font-bold">
-                    {slide.title}
-                  </h2>
-                </div>
-              </div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
-      </div> */}
-      {/* <div className="w-full">
-        <div className="flex w-full justify-center p-2">
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-sm">
           <div>
-            <label className="flex w-full justify-center text-lg font-semibold text-stone-700 mt-8">
-              Lacak Pesanan Pelanggan
-            </label>
-            <InputSearch />
+            <p className="text-xs font-medium text-slate-400">Total Pesanan</p>
+            <p className="text-2xl font-bold text-white mt-1">1,248</p>
+          </div>
+          <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl">
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+              />
+            </svg>
           </div>
         </div>
-        <div className="flex w-full justify-center p-2 mt-6">
-          <OrderChart />
+
+        <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-sm">
+          <div>
+            <p className="text-xs font-medium text-slate-400">Dalam Proses</p>
+            <p className="text-2xl font-bold text-amber-400 mt-1">42</p>
+          </div>
+          <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl">
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
         </div>
-      </div> */}
-    </>
+
+        <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-sm sm:col-span-2 lg:col-span-1">
+          <div>
+            <p className="text-xs font-medium text-slate-400">
+              Pesanan Selesai
+            </p>
+            <p className="text-2xl font-bold text-emerald-400 mt-1">310</p>
+          </div>
+          <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      {/* Tab Panel */}
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 md:p-6 shadow-xl space-y-6">
+        <div className="flex flex-col sm:flex-row items-center justify-between border-b border-slate-800 pb-4 gap-4">
+          <div className="flex gap-2 bg-slate-950 p-1.5 rounded-2xl border border-slate-800/80 w-full sm:w-auto">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 sm:flex-initial px-4 py-2 text-xs md:text-sm font-semibold rounded-xl transition-all duration-200 ${
+                  activeTab === tab.id
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-slate-950/50 rounded-2xl p-4 md:p-6 border border-slate-800/60">
+          {tabs[activeTab].component}
+        </div>
+      </div>
+    </div>
   );
 }
 

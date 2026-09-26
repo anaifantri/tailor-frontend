@@ -4,12 +4,10 @@ import RightNav from "@/components/RightNav";
 
 export default function HeaderLayout() {
   return (
-    <header className="sticky top-0 z-50 bg-gray-900/90 backdrop-blur-md items-center w-full">
-      <div className="grid grid-cols-2 sm:grid-cols-16 w-full bg-linear-to-b from-stone-900/80 via-stone-700/80 to-stone-900/80 backdrop-blur-md h-16 shadow-xl border-b border-white/10">
-        <HeaderLogo />
-        <NavBar />
-        <RightNav />
-      </div>
+    <header className="h-16 w-full bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 md:px-6 flex items-center justify-between sticky top-0 z-50 gap-4 shrink-0">
+      <HeaderLogo />
+      <NavBar />
+      <RightNav />
     </header>
   );
 }
