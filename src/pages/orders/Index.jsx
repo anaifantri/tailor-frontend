@@ -19,8 +19,6 @@ import DeleteSvg from "@/assets/Svg/DeleteSvg";
 
 export default function Index() {
   const [searchParams] = useSearchParams();
-  const deleteMessage = searchParams.get("message");
-  const failedDelete = searchParams.get("failed");
   const location = useLocation();
   const { token } = useAuth();
   const message = location.state?.message;
@@ -78,10 +76,12 @@ export default function Index() {
             Authorization: `Bearer ${token}`,
           },
         });
-        setOrders(response.data.data);
-        setCurrentPage(response.data.current_page);
-        setTotalPages(response.data.last_page);
-        setTotalItems(response.data.total);
+        const apiPayload = response.data.data;
+
+        setOrders(apiPayload.data);
+        setCurrentPage(apiPayload.meta.current_page);
+        setTotalPages(apiPayload.meta.last_page);
+        setTotalItems(apiPayload.meta.total);
       } catch (error) {
         setError(error);
         console.log(error);
@@ -90,7 +90,7 @@ export default function Index() {
       }
     };
     fetchData();
-  }, [currentPage, perPage, month, year, search]);
+  }, [currentPage, perPage, month, year, search, message]);
 
   const handleBtnDetail = (index) => {
     if (showDetail.includes(index)) {
@@ -133,14 +133,8 @@ export default function Index() {
           year={year}
           search={search}
         />
-        {deleteMessage && (
-          <SuccessMessage message={deleteMessage} duration="3000" />
-        )}
-        {failedDelete && (
-          <FailedMessage message={failedDelete} duration="3000" />
-        )}
-        {message && <SuccessMessage message={message} duration="3000" />}
-        {failed && <FailedMessage message={failed} duration="3000" />}
+        {message && <SuccessMessage message={message} duration="9000" />}
+        {failed && <FailedMessage message={failed} duration="9000" />}
 
         <div className="overflow-hidden rounded-xl border border-slate-700 shadow-lg mt-4 bg-slate-800">
           <table className="table-auto w-full divide-y divide-slate-700 text-left text-sm text-slate-300">
@@ -153,6 +147,7 @@ export default function Index() {
                 <th className="py-3 px-2 text-center">Detail Pesanan</th>
                 <th className="py-3 px-2 text-center">Total Harga</th>
                 <th className="py-3 px-2 text-center">Pembayaran</th>
+                <th className="py-3 px-2 text-center">Keterangan</th>
                 <th className="py-3 px-2 text-center">Progress</th>
                 <th className="py-3 px-2 text-center">Action</th>
               </tr>
@@ -216,7 +211,7 @@ export default function Index() {
                               {order.order_details.map((item, index) => (
                                 <tr key={index}>
                                   <td className="px-2 py-1 text-center text-slate-200">
-                                    {item.clothing_type.type}
+                                    {item.service_name}
                                   </td>
                                   <td className="px-2 py-1 text-center">
                                     <div className="w-full flex-all-center">
@@ -250,11 +245,7 @@ export default function Index() {
                                     ).toLocaleString()}
                                   </td>
                                   <td className="px-2 py-1 text-center text-indigo-300">
-                                    {item.production_progress
-                                      ? item.production_progress[
-                                          item.production_progress.length - 1
-                                        ].status
-                                      : "-"}
+                                    {item.current_progress.status}
                                   </td>
                                 </tr>
                               ))}
@@ -304,7 +295,7 @@ export default function Index() {
                       <div className="flex w-full">
                         <label className="w-3 text-slate-400">Rp.</label>
                         <label className="w-16 ml-2 text-right font-medium text-slate-100">
-                          {Number(order.total).toLocaleString()}
+                          {Number(order.subtotal).toLocaleString()}
                         </label>
                       </div>
                     </td>
@@ -316,18 +307,18 @@ export default function Index() {
                         </label>
                       </div>
                     </td>
-                    <td className="px-3 py-2 text-xs">
+                    <td className="px-3 py-2 text-xs text-center">
                       {order?.payment_status ? order.payment_status : "-"}
                     </td>
-                    <td className="px-3 py-2 text-xs">
+                    <td className="px-3 py-2 text-xs text-center">
                       {order?.status ? order.status : "-"}
                     </td>
                     <td className="px-3 py-2 text-center">
                       <TdAction
-                        showUrl={`/dashboard/transactions/orders/${order.hashed_id}`}
-                        editUrl={`/dashboard/transactions/orders/edit/${order.hashed_id}`}
-                        deleteUrl="/api/orders/delete/"
-                        deleteId={order.hashed_id}
+                        showUrl={`/dashboard/transactions/orders/${order.ulid}`}
+                        editUrl={`/dashboard/transactions/orders/edit/${order.ulid}`}
+                        deleteUrl="/api/orders"
+                        deleteId={order.ulid}
                         getToken={token}
                         returnUrl="/dashboard/transactions/orders"
                       />

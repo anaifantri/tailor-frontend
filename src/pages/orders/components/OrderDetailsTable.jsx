@@ -181,6 +181,25 @@ export default function OrderDetailsTable({
           </tr>
           <tr>
             <td className="pr-2 py-2 text-right border border-slate-700 font-semibold text-slate-300">
+              Diskon
+            </td>
+            <td className="w-32 text-right border border-slate-700 font-semibold text-slate-100">
+              <div className="flex justify-center w-32 px-1">
+                <input
+                  className="p-1 text-right w-full text-xs bg-slate-800 border border-slate-700 rounded-md text-slate-100 focus:outline-none spinner-disabled"
+                  type="number"
+                  min={0}
+                  disabled={subTotal <= 0}
+                  value={discount}
+                  onChange={onDiscountChange}
+                  onFocus={(e) => e.target.select()}
+                />
+              </div>
+            </td>
+            <td className="py-2 border border-slate-700 bg-slate-800" />
+          </tr>
+          <tr>
+            <td className="pr-2 py-2 text-right border border-slate-700 font-semibold text-slate-300">
               Uang Muka
             </td>
             <td className="w-32 text-right border border-slate-700 font-semibold text-slate-100">
@@ -193,25 +212,6 @@ export default function OrderDetailsTable({
                   min={0}
                   value={downPayment}
                   onClick={onOpenDownPaymentModal}
-                  onFocus={(e) => e.target.select()}
-                />
-              </div>
-            </td>
-            <td className="py-2 border border-slate-700 bg-slate-800" />
-          </tr>
-          <tr>
-            <td className="pr-2 py-2 text-right border border-slate-700 font-semibold text-slate-300">
-              Diskon
-            </td>
-            <td className="w-32 text-right border border-slate-700 font-semibold text-slate-100">
-              <div className="flex justify-center w-32 px-1">
-                <input
-                  className="p-1 text-right w-full text-xs bg-slate-800 border border-slate-700 rounded-md text-slate-100 focus:outline-none spinner-disabled"
-                  type="number"
-                  min={0}
-                  disabled={subTotal <= 0}
-                  value={discount}
-                  onChange={onDiscountChange}
                   onFocus={(e) => e.target.select()}
                 />
               </div>

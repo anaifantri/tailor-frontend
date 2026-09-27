@@ -14,7 +14,6 @@ function Dashboard() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Banner Ringkasan */}
       <div className="relative overflow-hidden bg-linear-to-r from-indigo-900/60 via-purple-900/40 to-slate-900 border border-slate-800 p-6 md:p-8 rounded-3xl shadow-xl">
         <div className="relative z-10 max-w-2xl space-y-2">
           <span className="text-xs uppercase tracking-wider font-semibold text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
@@ -30,7 +29,6 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-sm">
           <div>
@@ -101,7 +99,6 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Tab Panel */}
       <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 md:p-6 shadow-xl space-y-6">
         <div className="flex flex-col sm:flex-row items-center justify-between border-b border-slate-800 pb-4 gap-4">
           <div className="flex gap-2 bg-slate-950 p-1.5 rounded-2xl border border-slate-800/80 w-full sm:w-auto">

@@ -5,7 +5,7 @@ export default function HeaderEdit({ titleEdit, backUrl, getProcessing }) {
   return (
     <>
       <div className="grid grid-cols-2 gap-1 w-full border border-gray-200 shadow-lg rounded-lg p-2">
-        <div className="flex w-full font-semibold text-lg">
+        <div className="flex w-full font-semibold text-lg text-brand-accent">
           Edit {titleEdit}
         </div>
 

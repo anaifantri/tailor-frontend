@@ -1,34 +1,30 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
 import Select from "react-select";
 
 import api from "@/apiService";
 
 import HeaderCreate from "@/components/HeaderCreate";
-import LoadingData from "@/Components/LoadingData";
-import Svg from "@/components/Svg";
-import DeleteSvg from "@/Assets/Svg/DeleteSvg";
+import LoadingData from "@/components/LoadingData";
 
 export default function Create() {
   const today = new Intl.DateTimeFormat("en-CA").format(new Date());
   const navigate = useNavigate();
   const { customerUlid } = useParams();
-  const { token } = useAuth();
 
   const [processing, setProcessing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [customer, setCustomer] = useState(null);
   const [measurementDetails, setMeasurementDetails] = useState([]);
-  const [selectedClothingType, setSelectedClothingType] = useState(null);
-  const [clothingTypeOptions, setClothingTypeOptions] = useState([]);
+  const [selectedService, setSelectedService] = useState(null);
+  const [serviceOptions, setServiceOptions] = useState([]);
 
   const [getErrors, setGetErrors] = useState({});
   const [errorMessage, setErrorMessage] = useState("");
 
   const [formData, setFormData] = useState({
     category: "",
-    clothing_type_ulid: "",
+    service_ulid: "",
     measured_by: "",
     measured_at: today,
     notes: "",
@@ -73,20 +69,20 @@ export default function Create() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [responseCustomer, responseClothingTypes] = await Promise.all([
+        const [responseCustomer, responseServices] = await Promise.all([
           api.get(`/api/customers/${customerUlid}`),
-          api.get("/api/clothing-types"),
+          api.get("/api/services"),
         ]);
 
-        // Parsing options dari API clothing-types
-        const formattedClothingTypeOptions =
-          responseClothingTypes.data.data.map((item) => ({
+        const formattedServiceOptions = responseServices.data.data
+          .filter((item) => item.category === "tailoring")
+          .map((item) => ({
             value: item.ulid,
-            label: item.type || item.name,
+            label: item.code + " | " + item.name,
             category: item.category,
           }));
 
-        setClothingTypeOptions(formattedClothingTypeOptions);
+        setServiceOptions(formattedServiceOptions);
         setCustomer(
           responseCustomer.data.data || responseCustomer.data.customer,
         );
@@ -102,24 +98,27 @@ export default function Create() {
     fetchData();
   }, [customerUlid]);
 
-  const handleSelectTypeChange = (selectedOption) => {
-    setSelectedClothingType(selectedOption);
+  const handleSelectServiceChange = (selectedOption) => {
+    setSelectedService(selectedOption);
     setFormData((prev) => ({
       ...prev,
-      clothing_type_ulid: selectedOption.value,
-      category: selectedOption.category,
+      service_ulid: selectedOption?.value || "",
+      category: selectedOption?.category || "",
     }));
+  };
 
-    const preset = presetMeasurements.find(
-      (m) => m.name.toLowerCase() === selectedOption.category?.toLowerCase(),
+  const handleCategory = (e) => {
+    const foundPreset = presetMeasurements.find(
+      (preset) => preset.name.toLowerCase() === e.target.value.toLowerCase(),
     );
 
-    const initialDetails = preset
-      ? preset.items.map((item) => ({ name: item, value: "" }))
-      : [];
-
-    // Sisakan 1 slot kosong tambahan di akhir untuk entri manual
-    setMeasurementDetails([...initialDetails, { name: "", value: "" }]);
+    if (foundPreset) {
+      const formattedMeasurements = foundPreset.items.map((itemName) => ({
+        name: itemName,
+        value: "",
+      }));
+      setMeasurementDetails(formattedMeasurements);
+    }
   };
 
   const handleChange = (e) => {
@@ -134,43 +133,30 @@ export default function Create() {
     setMeasurementDetails(updatedDetails);
   };
 
-  const removeMeasurementDetail = (indexToRemove) => {
-    if (measurementDetails.length <= 1) {
-      alert("Minimal harus ada 1 bagian yang diukur");
-      return;
-    }
-    setMeasurementDetails((prev) =>
-      prev.filter((_, index) => index !== indexToRemove),
-    );
-  };
-
-  const addEmptyMeasurementRow = () => {
-    setMeasurementDetails((prev) => [...prev, { name: "", value: "" }]);
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setGetErrors({});
     setErrorMessage("");
 
-    if (!formData.clothing_type_ulid) {
+    if (!formData.service_ulid) {
       alert("Silakan pilih jenis pakaian terlebih dahulu!");
       return;
     }
 
-    // Filter baris detail yang nama pengukurannya terisi
     const cleanedDetails = measurementDetails.filter(
       (item) => item.name.trim() !== "",
     );
 
     if (cleanedDetails.length === 0) {
-      alert("Detail ukuran tidak boleh kosong!");
+      alert(
+        "Detail ukuran tidak boleh kosong, silahkan pilih katagori dan inpput ukuran terlebih dahulu..!!!",
+      );
       return;
     }
 
     const payload = {
       customer_ulid: customerUlid,
-      clothing_type_ulid: formData.clothing_type_ulid,
+      service_ulid: formData.service_ulid,
       category: formData.category,
       measured_by: formData.measured_by,
       measured_at: formData.measured_at,
@@ -201,191 +187,208 @@ export default function Create() {
   if (loading) return <LoadingData />;
 
   return (
-    <div className="w-300">
+    <div className="max-w-6xl mx-auto p-6 space-y-6">
       <form onSubmit={handleSubmit}>
         <HeaderCreate
-          titleCreate="Data Pengukuran"
-          backUrl={`/customers/${customerUlid}`}
+          titleCreate="Tambah Data Pengukuran"
+          backUrl={`/dashboard/customers/${customerUlid}`}
           getProcessing={processing}
         />
 
         {errorMessage && (
-          <div className="p-3 my-2 text-sm text-red-700 bg-red-100 rounded-md">
+          <div className="mt-4 p-4 text-sm text-red-700 bg-red-50 rounded-lg border border-red-200">
             {errorMessage}
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4 mt-4">
-          {/* Sisi Kiri: Informasi Pelanggan & Pengukuran */}
-          <div className="divide-y divide-gray-200 p-4 border border-gray-200 shadow-lg rounded-xl w-full mt-1">
-            <label className="flex font-semibold w-full p-2 bg-gray-200 rounded-md border border-gray-300 shadow-sm">
-              INFORMASI PELANGGAN
-            </label>
-            <div className="flex items-center p-2">
-              <label className="w-40">Nama Pelanggan</label>
-              <label>:</label>
-              <label className="ml-2 font-semibold">
-                {customer?.name || "-"}
-              </label>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-2">
+          <div className="border-slate-800 bg-slate-900 rounded-xl shadow-sm p-4 space-y-5 border">
+            <div>
+              <h3 className="text-sm font-semibold bg-slate-950/80 text-slate-300 border-b border-slate-800 p-2.5 rounded-lg border uppercase tracking-wide">
+                Informasi Pelanggan
+              </h3>
+              <div className="mt-3 space-y-2 text-sm text-gray-400 px-1">
+                <div className="flex items-center">
+                  <span className="w-36 text-slate-400">Nama Pelanggan</span>
+                  <span className="mr-2">:</span>
+                  <span className="font-medium text-gray-100">
+                    {customer?.name || "-"}
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  <span className="w-36 text-slate-400">Nomor Telepon</span>
+                  <span className="mr-2">:</span>
+                  <span className="font-medium text-gray-100">
+                    {customer?.phone || "-"}
+                  </span>
+                </div>
+                <div className="flex items-start">
+                  <span className="w-36 text-slate-400 pt-1">Alamat</span>
+                  <span className="mr-2 pt-1">:</span>
+                  <span className="font-medium text-gray-100 pt-1 w-80">
+                    {customer?.address || "-"} klklkl
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center p-2">
-              <label className="w-40">Nomor Telepon</label>
-              <label>:</label>
-              <label className="ml-2">{customer?.phone || "-"}</label>
+
+            <div className="pt-2 border-t border-slate-100">
+              <h3 className="text-sm font-semibold bg-slate-950/80 text-slate-300 border-b border-slate-800 p-2.5 rounded-lg border uppercase tracking-wide">
+                Informasi Pengukuran
+              </h3>
+              <div className="mt-3 space-y-3 text-sm px-1">
+                <div>
+                  <div className="flex items-center">
+                    <label className="w-36 text-gray-400">Diukur Oleh</label>
+                    <span className="mr-2">:</span>
+                    <input
+                      name="measured_by"
+                      value={formData.measured_by}
+                      onChange={handleChange}
+                      type="text"
+                      className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      placeholder="Masukkan nama pengukur"
+                      required
+                    />
+                  </div>
+                  {getErrors?.measured_by && (
+                    <span className="text-red-500 text-xs ml-38 mt-1 block">
+                      {getErrors.measured_by[0]}
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <div className="flex items-center">
+                    <label className="w-36 text-gray-400">Tanggal Ukur</label>
+                    <span className="mr-2">:</span>
+                    <input
+                      name="measured_at"
+                      onChange={handleChange}
+                      type="date"
+                      value={formData.measured_at}
+                      className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      required
+                    />
+                  </div>
+                  {getErrors?.measured_at && (
+                    <span className="text-red-500 text-xs ml-38 mt-1 block">
+                      {getErrors.measured_at[0]}
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <div className="flex items-center">
+                    <label className="w-36 text-gray-400">Jenis Pakaian</label>
+                    <span className="mr-2">:</span>
+                    <div className="flex-1">
+                      <Select
+                        className="text-sm text-gray-800"
+                        classNamePrefix="react-select"
+                        placeholder="Pilih jenis pakaian"
+                        value={selectedService}
+                        onChange={handleSelectServiceChange}
+                        options={serviceOptions}
+                        isClearable
+                        required
+                      />
+                    </div>
+                  </div>
+                  {getErrors?.service_ulid && (
+                    <span className="text-red-500 text-xs ml-38 mt-1 block">
+                      {getErrors.service_ulid[0]}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="flex p-2">
-              <label className="w-40">Alamat</label>
-              <label>:</label>
+
+            <div className="pt-2 border-t border-slate-100">
+              <h3 className="text-sm font-semibold bg-slate-950/80 text-slate-300 border-b border-slate-800 p-2.5 rounded-lg border uppercase tracking-wide">
+                Keterangan
+              </h3>
               <textarea
-                className="ml-2 w-96 border rounded-sm border-gray-200 p-1 font-semibold text-sm bg-gray-50"
+                name="notes"
+                placeholder="Masukkan keterangan tambahan..."
                 rows={3}
-                readOnly
-                value={customer?.address || "-"}
+                value={formData.notes}
+                onChange={handleChange}
+                className="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white mt-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
-            </div>
-
-            <label className="flex font-semibold w-full p-2 mt-4 bg-gray-200 rounded-md border border-gray-300 shadow-sm">
-              INFORMASI PENGUKURAN
-            </label>
-            <div className="p-2">
-              <div className="flex items-center">
-                <label className="w-40">Diukur Oleh</label>
-                <label>:</label>
-                <input
-                  name="measured_by"
-                  value={formData.measured_by}
-                  onChange={handleChange}
-                  type="text"
-                  className="ml-2 px-2 border rounded-md h-8 text-sm w-80"
-                  placeholder="Masukkan nama pengukur"
-                  required
-                />
-              </div>
-              {getErrors?.measured_by && (
-                <span className="text-red-500 text-xs ml-42 mt-1 block">
-                  {getErrors.measured_by[0]}
+              {getErrors?.notes && (
+                <span className="text-red-500 text-xs mt-1 block">
+                  {getErrors.notes[0]}
                 </span>
               )}
             </div>
-
-            <div className="p-2">
-              <div className="flex items-center">
-                <label className="w-40">Tanggal Ukur</label>
-                <label>:</label>
-                <input
-                  name="measured_at"
-                  onChange={handleChange}
-                  type="date"
-                  value={formData.measured_at}
-                  className="ml-2 px-2 border rounded-md h-8 text-sm"
-                  required
-                />
-              </div>
-              {getErrors?.measured_at && (
-                <span className="text-red-500 text-xs ml-42 mt-1 block">
-                  {getErrors.measured_at[0]}
-                </span>
-              )}
-            </div>
-
-            <div className="p-2">
-              <div className="flex items-center">
-                <label className="w-40">Pilih Jenis Pakaian</label>
-                <label>:</label>
-                <Select
-                  classNames={{
-                    control: () =>
-                      "!h-8 !min-h-8 bg-white border border-gray-300 rounded-md ml-2 w-80",
-                    valueContainer: () => "!h-8 flex items-center",
-                    indicatorsContainer: () => "!h-8",
-                  }}
-                  placeholder="Pilih jenis pakaian"
-                  value={selectedClothingType}
-                  onChange={handleSelectTypeChange}
-                  options={clothingTypeOptions}
-                  required
-                />
-              </div>
-              {getErrors?.clothing_type_ulid && (
-                <span className="text-red-500 text-xs ml-42 mt-1 block">
-                  {getErrors.clothing_type_ulid[0]}
-                </span>
-              )}
-            </div>
-
-            <label className="flex font-semibold mt-4 p-2 bg-gray-200 rounded-md border border-gray-300 shadow-sm">
-              Keterangan
-            </label>
-            <textarea
-              name="notes"
-              placeholder="Masukkan keterangan tambahan"
-              rows={4}
-              value={formData.notes}
-              onChange={handleChange}
-              className="w-full border rounded-sm border-gray-200 p-1 font-semibold text-sm bg-gray-50 mt-2"
-            />
-            {getErrors?.notes && (
-              <span className="text-red-500 text-xs mt-1 block">
-                {getErrors.notes[0]}
-              </span>
-            )}
           </div>
 
-          {/* Sisi Kanan: Detail Ukuran */}
-          <div className="p-4 border border-gray-200 shadow-lg rounded-xl w-full">
-            <div className="flex justify-between items-center font-semibold w-full p-2 bg-gray-200 rounded-md border border-gray-300 shadow-sm">
-              <span>Detail Ukuran</span>
-              <button
-                type="button"
-                onClick={addEmptyMeasurementRow}
-                className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
-              >
-                + Tambah Baris
-              </button>
-            </div>
+          <div className="border-slate-800 bg-slate-900 rounded-xl shadow-sm flex flex-col justify-between p-4 border">
+            <div>
+              <div className="flex justify-between items-center bg-slate-950/80 text-slate-300 border-b border-slate-800 p-2.5 rounded-lg border">
+                <span className="text-sm font-semibold text-gray-300 uppercase tracking-wide">
+                  Detail Ukuran
+                </span>
+              </div>
+              <div className="flex-all-center text-sm font-semibold bg-slate-950/80 text-slate-300 border-b border-slate-800 p-2 mt-2 rounded-lg border uppercase tracking-wide">
+                <label>Katagori :</label>
+                <input
+                  type="radio"
+                  onClick={handleCategory}
+                  name="category"
+                  value={"baju"}
+                  className="ml-4"
+                />
+                <span className="ml-2">Baju</span>
+                <input
+                  type="radio"
+                  onClick={handleCategory}
+                  name="category"
+                  value={"celana"}
+                  className="ml-4"
+                />
+                <span className="ml-2">Celana</span>
+                <input
+                  type="radio"
+                  name="category"
+                  onClick={handleCategory}
+                  value={"rok"}
+                  className="ml-4"
+                />
+                <span className="ml-2">Rok</span>
+              </div>
 
-            <div className="mt-4 text-sm">
-              {measurementDetails?.map((measurement, index) => (
-                <div
-                  key={index}
-                  className="flex items-center border-b p-1 w-full"
-                >
-                  <label className="w-6">{index + 1}.</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={measurement.name}
-                    onChange={(e) => handleMeasurementsChange(e, index)}
-                    className="w-56 px-2 border rounded-md h-8"
-                    placeholder="Nama bagian (cth: Panjang Rok)"
-                  />
-                  <input
-                    type="text"
-                    name="value"
-                    placeholder="Ukuran"
-                    onChange={(e) => handleMeasurementsChange(e, index)}
-                    value={measurement.value}
-                    className="w-28 px-2 ml-2 text-center border rounded-md h-8"
-                  />
-                  <label className="w-6 ml-2">cm</label>
-                  <button
-                    title="Hapus"
-                    type="button"
-                    onClick={() => removeMeasurementDetail(index)}
-                    className="button-danger ml-auto cursor-pointer p-1"
+              <div className="mt-4 space-y-2">
+                {measurementDetails?.map((measurement, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-2 border-b border-slate-100 pb-2"
                   >
-                    <Svg title="Delete" c={"w-5 fill-current"}>
-                      <DeleteSvg />
-                    </Svg>
-                  </button>
-                </div>
-              ))}
+                    <span className="w-6 text-xs text-slate-400 text-center font-medium">
+                      {index + 1}.
+                    </span>
+                    <span className="flex-1 font-medium text-slate-400">
+                      {measurement.name}
+                    </span>
+                    <input
+                      type="text"
+                      name="value"
+                      placeholder="Ukuran"
+                      value={measurement.value}
+                      onChange={(e) => handleMeasurementsChange(e, index)}
+                      className="w-24 px-3 py-1.5 text-center border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <span className="text-xs text-slate-400 w-6">cm</span>
+                  </div>
+                ))}
+              </div>
+              {getErrors?.measurement_details && (
+                <span className="text-red-500 text-xs mt-2 block">
+                  {getErrors.measurement_details[0]}
+                </span>
+              )}
             </div>
-            {getErrors?.measurement_details && (
-              <span className="text-red-500 text-xs mt-2 block">
-                {getErrors.measurement_details[0]}
-              </span>
-            )}
           </div>
         </div>
       </form>

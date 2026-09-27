@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 import api from "@/apiService";
 
 import FormattedDateLong from "@/utils/FormattedDateLong";
-import LoadingData from "@/Components/LoadingData";
+import LoadingData from "@/components/LoadingData";
 import BtnBack from "@/components/BtnBack";
 import BtnEdit from "@/components/BtnEdit";
 import BtnDelete from "@/components/BtnDelete";
 
 export default function Show() {
   const { ulid } = useParams();
+  const { token } = useAuth();
   const [loading, setLoading] = useState(true);
   const [measurementHistory, setMeasurementHistory] = useState(null);
   const [error, setError] = useState(null);
@@ -20,9 +22,7 @@ export default function Show() {
       try {
         setLoading(true);
         const response = await api.get(`/api/measurement-histories/${ulid}`);
-        // Backend mengembalikan object bertingkat data
         setMeasurementHistory(response.data.data);
-        console.log(response.data.data);
       } catch (err) {
         setError(err.response?.data?.message || "Data ukuran tidak ditemukan.");
       } finally {
@@ -37,21 +37,22 @@ export default function Show() {
 
   if (error) {
     return (
-      <div className="p-4 text-red-600 bg-red-100 rounded-md">{error}</div>
+      <div className="max-w-6xl mx-auto p-4 my-6 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
+        {error}
+      </div>
     );
   }
 
   const customer = measurementHistory?.customer;
-  const clothingType = measurementHistory?.clothing_type;
   const details = measurementHistory?.measurement_details || [];
 
   return (
-    <div className="w-300">
-      <div className="grid grid-cols-2 gap-2 w-full border-b pb-2">
-        <div className="flex w-full font-semibold text-lg items-center">
+    <div className="max-w-6xl mx-auto p-6 space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-4 border-b border-slate-200 gap-4 text-brand-accent">
+        <h1 className="text-xl font-bold tracking-tight">
           Detail Data Pengukuran
-        </div>
-        <div className="flex justify-end w-full gap-2">
+        </h1>
+        <div className="flex items-center gap-2">
           <BtnBack backUrl={`/dashboard/customers/${customer?.ulid}`} />
           <BtnEdit
             editUrl={`/dashboard/customers/measurement-histories/edit/${ulid}`}
@@ -65,81 +66,101 @@ export default function Show() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mt-4">
-        {/* Sisi Kiri: Informasi Pelanggan dan Pengukuran */}
-        <div className="p-4 border border-gray-200 shadow-lg rounded-xl w-full">
-          <div className="divide-y divide-gray-200">
-            <label className="flex font-semibold w-full p-2 bg-gray-200 rounded-md border border-gray-300 shadow-sm">
-              INFORMASI PELANGGAN
-            </label>
-            <div className="flex items-center p-2">
-              <label className="w-40">Nama Pelanggan</label>
-              <label>:</label>
-              <label className="ml-2 font-semibold">
-                {customer?.name || "-"}
-              </label>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="border-slate-800 bg-slate-900 border overflow-hidden shadow-inner rounded-xl p-5 space-y-5">
+          <div>
+            <h3 className="bg-slate-950/80 text-slate-400 border-b border-slate-800 text-sm font-semibold p-2.5 rounded-lg border uppercase tracking-wide">
+              Informasi Pelanggan
+            </h3>
+            <div className="mt-3 space-y-2 text-sm text-slate-600 px-1">
+              <div className="flex items-center">
+                <span className="w-36 text-slate-400">Nama Pelanggan</span>
+                <span className="mr-2">:</span>
+                <span className="font-medium text-slate-300">
+                  {customer?.name || "-"}
+                </span>
+              </div>
             </div>
+          </div>
 
-            <label className="flex font-semibold w-full p-2 mt-4 bg-gray-200 rounded-md border border-gray-300 shadow-sm">
-              INFORMASI PENGUKURAN
-            </label>
-            <div className="flex items-center p-2">
-              <label className="w-40">Kategori Pakaian</label>
-              <label>:</label>
-              <label className="ml-2 font-semibold uppercase">
-                {measurementHistory?.category || "-"}
-              </label>
+          <div className="pt-2 border-t border-slate-100">
+            <h3 className="bg-slate-950/80 text-slate-400 border-b border-slate-800 text-sm font-semibold p-2.5 rounded-lg border uppercase tracking-wide">
+              Informasi Pengukuran
+            </h3>
+            <div className="mt-3 space-y-2 text-sm text-slate-600 px-1">
+              <div className="flex items-center">
+                <span className="w-36 text-slate-400">Kategori Pakaian</span>
+                <span className="mr-2">:</span>
+                <span className="font-semibold text-slate-300 uppercase">
+                  {measurementHistory?.category || "-"}
+                </span>
+              </div>
+              <div className="flex items-center">
+                <span className="w-36 text-slate-400">Jenis Pakaian</span>
+                <span className="mr-2">:</span>
+                <span className="font-semibold text-slate-300 uppercase">
+                  {measurementHistory?.service?.name || "-"}
+                </span>
+              </div>
+              <div className="flex items-center">
+                <span className="w-36 text-slate-400">Tanggal Ukur</span>
+                <span className="mr-2">:</span>
+                <span className="font-medium text-slate-300">
+                  {measurementHistory?.measured_at
+                    ? FormattedDateLong(measurementHistory.measured_at)
+                    : "-"}
+                </span>
+              </div>
+              <div className="flex items-center">
+                <span className="w-36 text-slate-400">Diukur Oleh</span>
+                <span className="mr-2">:</span>
+                <span className="font-medium text-slate-300">
+                  {measurementHistory?.measured_by || "-"}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center p-2">
-              <label className="w-40">Jenis Pakaian</label>
-              <label>:</label>
-              <label className="ml-2 font-semibold uppercase">
-                {clothingType?.type || "-"}
-              </label>
-            </div>
-            <div className="flex items-center p-2">
-              <label className="w-40">Tanggal Ukur</label>
-              <label>:</label>
-              <label className="ml-2 font-semibold">
-                {measurementHistory?.measured_at
-                  ? FormattedDateLong(measurementHistory.measured_at)
-                  : "-"}
-              </label>
-            </div>
-            <div className="flex items-center p-2">
-              <label className="w-40">Diukur Oleh</label>
-              <label>:</label>
-              <label className="ml-2 font-semibold">
-                {measurementHistory?.measured_by || "-"}
-              </label>
-            </div>
+          </div>
 
-            <label className="flex font-semibold mt-4 p-2 bg-gray-200 rounded-md border border-gray-300 shadow-sm">
+          <div className="pt-2 border-t border-slate-100">
+            <h3 className="bg-slate-950/80 text-slate-400 border-b border-slate-800 text-sm font-semibold p-2.5 rounded-lg border uppercase tracking-wide">
               Keterangan
-            </label>
-            <div className="border border-gray-200 shadow-inner rounded-md w-full min-h-16 px-2 py-1 mt-2 bg-gray-50 text-sm">
+            </h3>
+            <div className="text-slate-400 border border-slate-800 text-sm rounded-lg p-3 mt-2 min-h-20">
               {measurementHistory?.notes || "Tidak ada keterangan."}
             </div>
           </div>
         </div>
 
-        {/* Sisi Kanan: Detail Ukuran */}
-        <div className="p-4 border border-gray-200 shadow-lg rounded-xl w-full">
-          <div className="flex font-semibold w-full p-2 bg-gray-200 rounded-md border border-gray-300 shadow-sm">
-            <label className="w-40">Detail Ukuran</label>
-          </div>
-          <div className="mt-2 divide-y divide-gray-100">
-            {details.map((measurement, index) => (
-              <div key={index} className="flex items-center py-2 px-1 text-sm">
-                <span className="w-6 text-gray-500">{index + 1}.</span>
-                <span className="w-48 font-medium">{measurement.name}</span>
-                <span className="mr-2">:</span>
-                <span className="font-semibold text-blue-700">
-                  {measurement.value}
-                </span>
-                <span className="ml-1 text-gray-500">cm</span>
-              </div>
-            ))}
+        <div className="border-slate-800 bg-slate-900 border rounded-xl shadow-sm p-5">
+          <h3 className="bg-slate-950/80 text-slate-400 border-b border-slate-800 text-sm font-semibold p-2.5 rounded-lg border uppercase tracking-wide">
+            Detail Ukuran
+          </h3>
+          <div className="p-2 divide-y divide-slate-100">
+            {details.length > 0 ? (
+              details.map((measurement, index) => (
+                <div
+                  key={index}
+                  className="flex items-center py-2.5 px-4 text-sm hover:bg-slate-700 rounded-md transition"
+                >
+                  <span className="w-8 text-xs text-slate-400 font-medium">
+                    {index + 1}.
+                  </span>
+                  <span className="flex-1 font-medium text-slate-400">
+                    {measurement.name}
+                  </span>
+                  <span className="font-bold w-12 text-center text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded border border-indigo-100">
+                    {measurement.value}
+                  </span>
+                  <span className="ml-2 text-xs text-slate-400 font-medium">
+                    cm
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="text-slate-400 text-sm py-4 text-center">
+                Tidak ada detail ukuran.
+              </p>
+            )}
           </div>
         </div>
       </div>

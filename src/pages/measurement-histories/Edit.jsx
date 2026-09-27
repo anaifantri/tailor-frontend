@@ -4,9 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import api from "@/apiService";
 
 import HeaderEdit from "@/components/HeaderEdit";
-import LoadingData from "@/Components/LoadingData";
-import Svg from "@/components/Svg";
-import DeleteSvg from "@/Assets/Svg/DeleteSvg";
+import LoadingData from "@/components/LoadingData";
 
 export default function Edit() {
   const navigate = useNavigate();
@@ -16,12 +14,12 @@ export default function Edit() {
   const [loading, setLoading] = useState(true);
 
   const [customer, setCustomer] = useState(null);
-  const [clothingType, setClothingType] = useState(null);
+  const [service, setService] = useState(null);
   const [measurementDetails, setMeasurementDetails] = useState([]);
 
   const [formData, setFormData] = useState({
     customer_ulid: "",
-    clothing_type_ulid: "",
+    service_ulid: "",
     category: "",
     measured_by: "",
     measured_at: "",
@@ -40,7 +38,7 @@ export default function Edit() {
 
         setFormData({
           customer_ulid: data.customer?.ulid || "",
-          clothing_type_ulid: data.clothing_type?.ulid || "",
+          service_ulid: data.service?.ulid || "",
           category: data.category || "",
           measured_by: data.measured_by || "",
           measured_at: data.measured_at || "",
@@ -48,7 +46,7 @@ export default function Edit() {
         });
 
         setCustomer(data.customer);
-        setClothingType(data.clothing_type);
+        setService(data.service);
         setMeasurementDetails(
           Array.isArray(data.measurement_details)
             ? data.measurement_details
@@ -78,20 +76,6 @@ export default function Edit() {
     setMeasurementDetails(updatedDetails);
   };
 
-  const removeMeasurementDetail = (indexToRemove) => {
-    if (measurementDetails.length <= 1) {
-      alert("Minimal harus ada 1 bagian yang diukur");
-      return;
-    }
-    setMeasurementDetails((prev) =>
-      prev.filter((_, index) => index !== indexToRemove),
-    );
-  };
-
-  const addEmptyMeasurementRow = () => {
-    setMeasurementDetails((prev) => [...prev, { name: "", value: "" }]);
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setGetErrors({});
@@ -108,7 +92,6 @@ export default function Edit() {
 
     try {
       setProcessing(true);
-      // REST API standar Laravel: PUT/PATCH JSON ke /api/measurement-histories/{ulid}
       await api.put(`/api/measurement-histories/${ulid}`, payload);
 
       navigate(`/dashboard/customers/${customer?.ulid}`, {
@@ -131,154 +114,164 @@ export default function Edit() {
   if (loading) return <LoadingData />;
 
   return (
-    <div className="w-300">
+    <div className="max-w-6xl mx-auto p-6 space-y-6">
       <form onSubmit={handleSubmit}>
         <HeaderEdit
           titleEdit="Edit Data Pengukuran"
-          backUrl={`/customers/${customer?.ulid}`}
+          backUrl={`/dashboard/customers/${customer?.ulid}`}
           getProcessing={processing}
         />
 
         {errorMessage && (
-          <div className="p-3 my-2 text-sm text-red-700 bg-red-100 rounded-md">
+          <div className="mt-4 p-4 text-sm text-red-700 bg-red-50 rounded-lg border border-red-200">
             {errorMessage}
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4 mt-4">
-          <div className="divide-y divide-gray-200 p-4 border border-gray-200 shadow-lg rounded-xl w-full mt-1">
-            <label className="flex font-semibold w-full p-2 bg-gray-200 rounded-md border border-gray-300 shadow-sm">
-              INFORMASI PELANGGAN
-            </label>
-            <div className="flex items-center p-2">
-              <label className="w-40">Nama Pelanggan</label>
-              <label>:</label>
-              <label className="ml-2 font-semibold">
-                {customer?.name || "-"}
-              </label>
-            </div>
-
-            <label className="flex font-semibold w-full p-2 mt-4 bg-gray-200 rounded-md border border-gray-300 shadow-sm">
-              INFORMASI PENGUKURAN
-            </label>
-            <div className="flex items-center p-2">
-              <label className="w-40">Kategori Pakaian</label>
-              <label>:</label>
-              <label className="ml-2 font-semibold uppercase">
-                {formData.category || "-"}
-              </label>
-            </div>
-            <div className="flex items-center p-2">
-              <label className="w-40">Jenis Pakaian</label>
-              <label>:</label>
-              <label className="ml-2 font-semibold uppercase">
-                {clothingType?.type || "-"}
-              </label>
-            </div>
-
-            <div className="p-2">
-              <div className="flex items-center">
-                <label className="w-40">Diukur Oleh</label>
-                <label>:</label>
-                <input
-                  name="measured_by"
-                  value={formData.measured_by}
-                  onChange={handleChange}
-                  type="text"
-                  className="ml-2 px-2 border rounded-md h-8 text-sm w-72"
-                  placeholder="Nama pengukur"
-                  required
-                />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          <div className="border-slate-800 bg-slate-900 rounded-xl shadow-sm p-5 space-y-5">
+            <div>
+              <h3 className="bg-slate-950/80 text-slate-300 border-b border-slate-800 p-2.5 rounded-lg border uppercase tracking-wide">
+                Informasi Pelanggan
+              </h3>
+              <div className="mt-3 space-y-2 text-sm text-slate-600 px-1">
+                <div className="flex items-center">
+                  <span className="w-36 text-slate-500">Nama Pelanggan</span>
+                  <span className="mr-2">:</span>
+                  <span className="font-medium text-gray-100">
+                    {customer?.name || "-"}
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  <span className="w-36 text-slate-500">Nomor Telepon</span>
+                  <span className="mr-2">:</span>
+                  <span className="font-medium text-gray-100">
+                    {customer?.phone || "-"}
+                  </span>
+                </div>
               </div>
-              {getErrors?.measured_by && (
-                <span className="text-red-500 text-xs ml-42 mt-1 block">
-                  {getErrors.measured_by[0]}
+            </div>
+
+            <div className="pt-2 border-t border-slate-100">
+              <h3 className="bg-slate-950/80 text-slate-300 border-b border-slate-800 p-2.5 rounded-lg border uppercase tracking-wide">
+                Informasi Pengukuran
+              </h3>
+              <div className="mt-3 space-y-3 text-sm px-1">
+                <div className="flex items-center">
+                  <span className="w-36 text-slate-500">Kategori Pakaian</span>
+                  <span className="mr-2">:</span>
+                  <span className="font-semibold text-gray-100 uppercase">
+                    {formData.category || "-"}
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  <span className="w-36 text-slate-500">Jenis Pakaian</span>
+                  <span className="mr-2">:</span>
+                  <span className="font-semibold text-gray-100 uppercase">
+                    {service?.name || "-"}
+                  </span>
+                </div>
+
+                <div>
+                  <div className="flex items-center">
+                    <label className="w-36 text-slate-600">Diukur Oleh</label>
+                    <span className="mr-2">:</span>
+                    <input
+                      name="measured_by"
+                      value={formData.measured_by}
+                      onChange={handleChange}
+                      type="text"
+                      className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      placeholder="Nama pengukur"
+                      required
+                    />
+                  </div>
+                  {getErrors?.measured_by && (
+                    <span className="text-red-500 text-xs ml-38 mt-1 block">
+                      {getErrors.measured_by[0]}
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <div className="flex items-center">
+                    <label className="w-36 text-slate-600">Tanggal Ukur</label>
+                    <span className="mr-2">:</span>
+                    <input
+                      name="measured_at"
+                      value={formData.measured_at}
+                      onChange={handleChange}
+                      type="date"
+                      className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      required
+                    />
+                  </div>
+                  {getErrors?.measured_at && (
+                    <span className="text-red-500 text-xs ml-38 mt-1 block">
+                      {getErrors.measured_at[0]}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-slate-100">
+              <h3 className="bg-slate-950/80 text-slate-300 border-b border-slate-800 p-2.5 rounded-lg border uppercase tracking-wide">
+                Keterangan
+              </h3>
+              <textarea
+                name="notes"
+                placeholder="Masukkan keterangan tambahan..."
+                value={formData.notes}
+                rows={3}
+                onChange={handleChange}
+                className="w-full border border-slate-800 text-sm rounded-lg p-2.5 bg-gray-100 mt-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              {getErrors?.notes && (
+                <span className="text-red-500 text-xs mt-1 block">
+                  {getErrors.notes[0]}
                 </span>
               )}
             </div>
-
-            <div className="p-2">
-              <div className="flex items-center">
-                <label className="w-40">Tanggal Ukur</label>
-                <label>:</label>
-                <input
-                  name="measured_at"
-                  value={formData.measured_at}
-                  onChange={handleChange}
-                  type="date"
-                  className="ml-2 px-2 border rounded-md h-8 text-sm"
-                  required
-                />
-              </div>
-              {getErrors?.measured_at && (
-                <span className="text-red-500 text-xs ml-42 mt-1 block">
-                  {getErrors.measured_at[0]}
-                </span>
-              )}
-            </div>
-
-            <label className="flex font-semibold mt-4 p-2 bg-gray-200 rounded-md border border-gray-300 shadow-sm">
-              Keterangan
-            </label>
-            <textarea
-              name="notes"
-              placeholder="Masukkan keterangan tambahan"
-              value={formData.notes}
-              rows={4}
-              onChange={handleChange}
-              className="w-full border rounded-sm border-gray-200 p-1 font-semibold text-sm bg-gray-50 mt-2"
-            />
           </div>
 
-          {/* Sisi Kanan: Detail Ukuran */}
-          <div className="p-4 border border-gray-200 shadow-lg rounded-xl w-full">
-            <div className="flex justify-between items-center font-semibold w-full p-2 bg-gray-200 rounded-md border border-gray-300 shadow-sm">
-              <span>Detail Ukuran</span>
-              <button
-                type="button"
-                onClick={addEmptyMeasurementRow}
-                className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
-              >
-                + Tambah Baris
-              </button>
-            </div>
+          <div className="border-slate-800 bg-slate-900 rounded-xl shadow-sm p-5 flex flex-col justify-between">
+            <div>
+              <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-950/80 text-slate-300 border-b border-slate-800">
+                <span className="text-sm font-semibold text-gray-300 uppercase tracking-wide">
+                  Detail Ukuran
+                </span>
+              </div>
 
-            <div className="mt-4 text-sm">
-              {measurementDetails?.map((measurement, index) => (
-                <div
-                  key={index}
-                  className="flex items-center border-b p-1 w-full"
-                >
-                  <label className="w-6">{index + 1}.</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={measurement.name}
-                    onChange={(e) => handleMeasurementsChange(e, index)}
-                    className="w-56 px-2 border rounded-md h-8"
-                    placeholder="Nama bagian"
-                  />
-                  <input
-                    type="text"
-                    name="value"
-                    placeholder="Ukuran"
-                    onChange={(e) => handleMeasurementsChange(e, index)}
-                    value={measurement.value}
-                    className="w-28 px-2 ml-2 text-center border rounded-md h-8"
-                  />
-                  <label className="w-6 ml-2">cm</label>
-                  <button
-                    title="Hapus"
-                    type="button"
-                    onClick={() => removeMeasurementDetail(index)}
-                    className="button-danger ml-auto cursor-pointer p-1"
+              <div className="mt-4 space-y-2">
+                {measurementDetails?.map((measurement, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-2 border-b border-slate-100 pb-2"
                   >
-                    <Svg title="Delete" c={"w-5 fill-current"}>
-                      <DeleteSvg />
-                    </Svg>
-                  </button>
-                </div>
-              ))}
+                    <span className="w-6 text-xs text-slate-300 text-center font-medium">
+                      {index + 1}.
+                    </span>
+                    <span className="flex-1 font-medium text-slate-400">
+                      {measurement.name}
+                    </span>
+                    <input
+                      type="text"
+                      name="value"
+                      placeholder="Ukuran"
+                      onChange={(e) => handleMeasurementsChange(e, index)}
+                      value={measurement.value}
+                      className="w-24 px-3 py-1.5 text-center border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <span className="text-xs text-slate-500 w-6">cm</span>
+                  </div>
+                ))}
+              </div>
+              {getErrors?.measurement_details && (
+                <span className="text-red-500 text-xs mt-2 block">
+                  {getErrors.measurement_details[0]}
+                </span>
+              )}
             </div>
           </div>
         </div>
